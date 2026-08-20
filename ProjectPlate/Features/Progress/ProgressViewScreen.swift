@@ -203,7 +203,7 @@ private struct ProgressContent: View {
                     )
                     .foregroundStyle(Color.brandInk)
                 }
-                .chartYAxisLabel(viewModel.unitSystem == .imperial ? "lb" : "kg")
+                .chartYAxisLabel(viewModel.unitSystem == .us ? "lb" : "kg")
                 .frame(height: 180)
                 .accessibilityLabel("Weight trend chart")
             } else {
@@ -256,7 +256,7 @@ private struct ProgressContent: View {
     }
 
     private func chartY(_ kg: Double) -> Double {
-        viewModel.unitSystem == .imperial ? kg * 2.2046226218 : kg
+        viewModel.unitSystem == .us ? kg * 2.2046226218 : kg
     }
 }
 
@@ -277,7 +277,7 @@ struct AddWeightSheet: View {
         NavigationStack {
             Form {
                 Section("Weight") {
-                    TextField(unitSystem == .imperial ? "Pounds" : "Kilograms", text: $weightText)
+                    TextField(unitSystem == .us ? "Pounds" : "Kilograms", text: $weightText)
                         .keyboardType(.decimalPad)
                     DatePicker("Date", selection: $recordedAt, displayedComponents: [.date, .hourAndMinute])
                     TextField("Note (optional)", text: $note)
@@ -311,7 +311,7 @@ struct AddWeightSheet: View {
         }
         isSaving = true
         errorMessage = nil
-        let kg = unitSystem == .imperial ? value / 2.2046226218 : value
+        let kg = unitSystem == .us ? value / 2.2046226218 : value
         let entry = WeightEntry(
             recordedAt: recordedAt,
             kilograms: kg,
