@@ -11,8 +11,8 @@ settings:
     SWIFT_VERSION: "5.10"
     TARGETED_DEVICE_FAMILY: "1"
     IPHONEOS_DEPLOYMENT_TARGET: "18.0"
-    MARKETING_VERSION: "1.2.3"
-    CURRENT_PROJECT_VERSION: "18"
+    MARKETING_VERSION: "1.2.4"
+    CURRENT_PROJECT_VERSION: "19"
     SWIFT_STRICT_CONCURRENCY: complete
 targets:
   ProjectPlate:
@@ -36,6 +36,7 @@ targets:
         INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: Project Plate turns your spoken meal into calories and macros for quick add.
         INFOPLIST_KEY_NSHealthShareUsageDescription: Project Plate reads weight from Apple Health when you enable sync, so Progress can stay up to date.
         INFOPLIST_KEY_NSHealthUpdateUsageDescription: Project Plate writes meals and weight you log to Apple Health when sync is on.
+        INFOPLIST_KEY_NSSupportsLiveActivities: YES
         # Optional managed backend. Leave empty for on-device mock analysis (Simulator / CI).
         INFOPLIST_KEY_PLATE_API_BASE_URL: ""
         INFOPLIST_KEY_PLATE_API_TOKEN: ""

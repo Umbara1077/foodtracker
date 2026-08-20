@@ -17,6 +17,7 @@ struct SettingsView: View {
     @State private var freeScansRemaining: Int?
     @State private var subscriptionMessage: String?
     @AppStorage("plate.save_meal_photos") private var saveMealPhotos = true
+    @AppStorage(TodayLiveActivityPolicy.preferenceKey) private var liveActivityEnabled = true
     @State private var consentVersionLabel = "Not accepted"
     @State private var privacyMessage: String?
     @State private var isPrivacyWorking = false
@@ -98,6 +99,19 @@ struct SettingsView: View {
                             .foregroundStyle(Color.textSecondary)
                     }
                 }
+                Section("Lock Screen") {
+                    Toggle("Show today’s calories", isOn: $liveActivityEnabled)
+                        .accessibilityHint("Updates a Live Activity on the Lock Screen and Dynamic Island while you log meals")
+                        .onChange(of: liveActivityEnabled) { _, enabled in
+                            TodayLiveActivityPolicy.setEnabled(enabled)
+                            if !enabled {
+                                Task { await TodayLiveActivityController.endAll() }
+                            }
+                        }
+                    Text("Appears after onboarding when you open Today. Ends at midnight.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
+                }
                 Section("Privacy") {
                     Toggle("Save meal photos on device", isOn: $saveMealPhotos)
                         .accessibilityHint("Photos stay on this iPhone when enabled")
@@ -135,7 +149,7 @@ struct SettingsView: View {
                     }
                 }
                 Section("About") {
-                    LabeledContent("Version", value: "1.2.3")
+                    LabeledContent("Version", value: "1.2.4")
                     Text("Nutrition estimates are for informational tracking and may be inaccurate. This app does not provide medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)

@@ -68,7 +68,9 @@ final class TodayViewModel {
                 now: day,
                 calendar: calendar
             )
-            WidgetSnapshotStore.save(WidgetSnapshotStore.make(target: target, totals: totals))
+            let snapshot = WidgetSnapshotStore.make(target: target, totals: totals)
+            WidgetSnapshotStore.save(snapshot)
+            TodayLiveActivityController.sync(with: snapshot, calendar: calendar)
         } catch {
             errorMessage = "Could not load today’s diary."
         }

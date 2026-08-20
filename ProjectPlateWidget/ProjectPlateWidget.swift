@@ -118,5 +118,6 @@ struct TodayCaloriesWidget: Widget {
 struct ProjectPlateWidgetBundle: WidgetBundle {
     var body: some Widget {
         TodayCaloriesWidget()
+        TodayLiveActivityWidget()
     }
 }
