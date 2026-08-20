@@ -49,7 +49,7 @@ struct AppEnvironment: Sendable {
             profileRepository: profiles,
             targetRepository: targets,
             savedMealRepository: savedMeals,
-            syncService: CloudKitSyncService()
+            syncService: makeSyncService()
         )
         return AppEnvironment(
             mealRepository: meals,

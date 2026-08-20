@@ -2,16 +2,17 @@ import CloudKit
 import Foundation
 
 /// Private-database CloudKit adapter. Domain types stay in SyncRecord payloads.
+/// `CKContainer` is created lazily — constructing this type must not touch CloudKit
+/// (unsigned CI / XCTest hosts lack the iCloud entitlement and will trap otherwise).
 actor CloudKitSyncService: SyncService {
     static let recordType = "PlateSyncRecord"
     static let containerIdentifier = "iCloud.com.projectplate.app"
 
-    private let container: CKContainer
-    private let database: CKDatabase
+    private let containerIdentifier: String
+    private var container: CKContainer?
 
-    init(container: CKContainer = CKContainer(identifier: CloudKitSyncService.containerIdentifier)) {
-        self.container = container
-        self.database = container.privateCloudDatabase
+    init(containerIdentifier: String = CloudKitSyncService.containerIdentifier) {
+        self.containerIdentifier = containerIdentifier
     }
 
     func sync() async throws {
@@ -19,7 +20,7 @@ actor CloudKitSyncService: SyncService {
     }
 
     func upload(localChanges: [SyncRecord]) async throws {
-        try await ensureAccount()
+        let database = try await privateDatabase()
         guard !localChanges.isEmpty else { return }
 
         let records = localChanges.map(Self.makeCKRecord)
@@ -47,7 +48,7 @@ actor CloudKitSyncService: SyncService {
     }
 
     func fetchRemoteChanges(since token: String?) async throws -> SyncBatch {
-        try await ensureAccount()
+        let database = try await privateDatabase()
         _ = token
         let query = CKQuery(recordType: Self.recordType, predicate: NSPredicate(value: true))
         query.sortDescriptors = [NSSortDescriptor(key: "updatedAt", ascending: true)]
@@ -86,11 +87,20 @@ actor CloudKitSyncService: SyncService {
         return SyncBatch(records: collected, serverChangeToken: ISO8601DateFormatter().string(from: Date()))
     }
 
-    private func ensureAccount() async throws {
+    private func privateDatabase() async throws -> CKDatabase {
+        let container = resolvedContainer()
         let status = try await container.accountStatus()
         guard status == .available else {
             throw SyncServiceError.accountUnavailable
         }
+        return container.privateCloudDatabase
+    }
+
+    private func resolvedContainer() -> CKContainer {
+        if let container { return container }
+        let created = CKContainer(identifier: containerIdentifier)
+        container = created
+        return created
     }
 
     static func makeCKRecord(from syncRecord: SyncRecord) -> CKRecord {
