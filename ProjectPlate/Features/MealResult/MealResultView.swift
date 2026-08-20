@@ -10,6 +10,7 @@ struct MealResultView: View {
 
     @State private var isSaving = false
     @State private var errorMessage: String?
+    @State private var showCorrection = false
 
     var body: some View {
         NavigationStack {
@@ -29,6 +30,17 @@ struct MealResultView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Back", action: onCancel)
                 }
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Send correction") {
+                        showCorrection = true
+                    }
+                }
+            }
+            .sheet(isPresented: $showCorrection) {
+                CorrectionFeedbackView(
+                    mealTitle: draft.title,
+                    estimatedCalories: draft.nutrients.calories
+                )
             }
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: Spacing.space8) {

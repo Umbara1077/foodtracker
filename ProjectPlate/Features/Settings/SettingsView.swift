@@ -127,9 +127,19 @@ struct SettingsView: View {
                             .foregroundStyle(Color.textSecondary)
                     }
                 }
+                Section("TestFlight") {
+                    NavigationLink {
+                        TestFlightToolsView()
+                    } label: {
+                        Label("Beta tools", systemImage: "airplane")
+                    }
+                }
                 Section("About") {
-                    LabeledContent("Version", value: "0.10.0")
+                    LabeledContent("Version", value: "1.0.0")
                     Text("Nutrition estimates are for informational tracking and may be inaccurate. This app does not provide medical advice.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
+                    Text("Working title — brand clearance required before public launch.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                 }

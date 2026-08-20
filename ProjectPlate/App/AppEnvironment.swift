@@ -13,6 +13,7 @@ struct AppEnvironment: Sendable {
     var healthSync: any HealthSyncClient
     var diary: DiaryService
     var dataMaintenance: DataMaintenanceService
+    var correctionStore: any CorrectionFeedbackStore
     var subscriptions: any SubscriptionServicing
     var aiScanQuota: LocalAIScanQuotaStore
     var backendConfiguration: BackendConfiguration
@@ -56,6 +57,7 @@ struct AppEnvironment: Sendable {
                 profileRepository: profiles,
                 targetRepository: targets
             ),
+            correctionStore: LocalCorrectionFeedbackStore(),
             subscriptions: StoreKitPurchaseManager(),
             aiScanQuota: LocalAIScanQuotaStore(dailyLimit: 3),
             backendConfiguration: backend,
@@ -127,6 +129,9 @@ struct AppEnvironment: Sendable {
                 weightRepository: weightRepo,
                 profileRepository: profiles,
                 targetRepository: targets
+            ),
+            correctionStore: LocalCorrectionFeedbackStore(
+                defaults: UserDefaults(suiteName: "plate.preview.corrections") ?? .standard
             ),
             subscriptions: MockPurchaseManager(),
             aiScanQuota: LocalAIScanQuotaStore(dailyLimit: 3),

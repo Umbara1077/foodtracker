@@ -36,10 +36,10 @@ Or:
 - **Phase 7** — Progress: weight logging, Swift Charts trend, calorie/protein consistency (CI verified)
 - **Phase 8** — Apple Health meal/weight sync with dedupe + Settings toggle (CI verified)
 - **Phase 9** — StoreKit 2 Pro paywall, restore, free AI-scan quota gating (CI verified)
-- **Phase 10** — Privacy consent, policy/terms, export/delete, analytics hygiene, crash breadcrumbs
-- **Next: Phase 11** — TestFlight / field validation
+- **Phase 10** — Privacy consent, policy/terms, export/delete, analytics hygiene, crash breadcrumbs (CI verified)
+- **Phase 11** — TestFlight support: correction capture, fixture AI benchmark, readiness checklist; paywall A/B off by default (CI verified). Cohort ops (25–50 testers) are outside the repo.
 
-App Store screenshot packs and UI snapshot suites remain manual Mac follow-ups before submission.
+App Store screenshot packs and UI snapshot suites remain manual Mac follow-ups before submission. See [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md).
 
 ## Cloud AI backend
 

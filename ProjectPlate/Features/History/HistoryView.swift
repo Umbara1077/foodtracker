@@ -134,6 +134,7 @@ struct HistoryView: View {
 
 private struct HistoryContent: View {
     @Bindable var viewModel: HistoryViewModel
+    @State private var correctionMeal: MealRecord?
 
     var body: some View {
         VStack(spacing: Spacing.space16) {
@@ -177,10 +178,25 @@ private struct HistoryContent: View {
                                         }
                                     }
                                     .swipeActions(edge: .leading) {
+                                        Button("Correct") {
+                                            correctionMeal = meal
+                                        }
+                                        .tint(Color.brandInk)
                                         Button("To today") {
                                             Task { await viewModel.duplicateToToday(meal) }
                                         }
                                         .tint(Color.brandPrimary)
+                                    }
+                                    .contextMenu {
+                                        Button("Send correction") {
+                                            correctionMeal = meal
+                                        }
+                                        Button("Log to today") {
+                                            Task { await viewModel.duplicateToToday(meal) }
+                                        }
+                                        Button("Delete", role: .destructive) {
+                                            Task { await viewModel.deleteMeal(meal) }
+                                        }
                                     }
                             }
                         }
@@ -193,6 +209,12 @@ private struct HistoryContent: View {
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
             }
+        }
+        .sheet(item: $correctionMeal) { meal in
+            CorrectionFeedbackView(
+                mealTitle: meal.title,
+                estimatedCalories: meal.nutrients.calories
+            )
         }
         .sheet(isPresented: $viewModel.showQuickAdd) {
             QuickAddSheet {

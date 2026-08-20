@@ -121,6 +121,7 @@ struct TodayView: View {
 
 private struct TodayContent: View {
     @Bindable var viewModel: TodayViewModel
+    @State private var correctionMeal: MealRecord?
 
     var body: some View {
         ScrollView {
@@ -142,6 +143,12 @@ private struct TodayContent: View {
             }
             .padding(.horizontal, Spacing.screenHorizontal)
             .padding(.vertical, Spacing.space24)
+        }
+        .sheet(item: $correctionMeal) { meal in
+            CorrectionFeedbackView(
+                mealTitle: meal.title,
+                estimatedCalories: meal.nutrients.calories
+            )
         }
         .sheet(isPresented: $viewModel.showQuickAdd) {
             QuickAddSheet {
@@ -263,6 +270,9 @@ private struct TodayContent: View {
                 ForEach(viewModel.meals) { meal in
                     MealRowView(meal: meal)
                         .contextMenu {
+                            Button("Send correction") {
+                                correctionMeal = meal
+                            }
                             Button("Log again") {
                                 Task { await viewModel.duplicateMeal(meal) }
                             }
