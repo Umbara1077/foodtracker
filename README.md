@@ -42,6 +42,7 @@ Or:
 - **Phase 13** — Scan retry: one auto-retry for transient failures, failed-scan recovery (retry / retake / manual), slow-analysis hints (CI verified)
 - **Phase 14** — Weekly digest on Progress (7-day tracking summary, supportive copy) (CI verified)
 - **Phase 15** — Home Screen widget (Today calories remaining via App Group snapshot) (CI verified)
+- **Phase 16** — Tracking streak (days with meals logged; supportive copy, no shame) (CI verified)
 
 App Store screenshot packs and UI snapshot suites remain manual Mac follow-ups before submission. See [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md).
 

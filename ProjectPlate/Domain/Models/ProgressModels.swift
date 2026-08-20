@@ -217,6 +217,99 @@ enum ProgressMath {
         }
         return "You tracked \(daysTracked) day\(daysTracked == 1 ? "" : "s") this week."
     }
+
+    /// “Days tracked” streak — days with ≥ `minimumMealsPerDay` meals (PRODUCT_SPEC §94).
+    /// Does not shame a broken streak; if today is empty, current can still count through yesterday.
+    static func trackingStreak(
+        dailyTotals: [(date: Date, totals: DayNutritionTotals)],
+        now: Date = .now,
+        calendar: Calendar = .current,
+        minimumMealsPerDay: Int = 1
+    ) -> TrackingStreak {
+        let qualified: Set<Date> = Set(
+            dailyTotals
+                .filter { $0.totals.mealCount >= minimumMealsPerDay }
+                .map { calendar.startOfDay(for: $0.date) }
+        )
+        let today = calendar.startOfDay(for: now)
+        let anchor: Date
+        if qualified.contains(today) {
+            anchor = today
+        } else if let yesterday = calendar.date(byAdding: .day, value: -1, to: today),
+                  qualified.contains(yesterday) {
+            anchor = yesterday
+        } else {
+            let longest = longestRun(in: qualified, calendar: calendar)
+            return TrackingStreak(
+                current: 0,
+                longest: longest,
+                minimumMealsPerDay: minimumMealsPerDay,
+                includesToday: false
+            )
+        }
+
+        var current = 0
+        var cursor = anchor
+        while qualified.contains(cursor) {
+            current += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = previous
+        }
+        let longest = max(current, longestRun(in: qualified, calendar: calendar))
+        return TrackingStreak(
+            current: current,
+            longest: longest,
+            minimumMealsPerDay: minimumMealsPerDay,
+            includesToday: qualified.contains(today)
+        )
+    }
+
+    private static func longestRun(in days: Set<Date>, calendar: Calendar) -> Int {
+        guard !days.isEmpty else { return 0 }
+        let sorted = days.sorted()
+        var best = 1
+        var run = 1
+        for index in 1..<sorted.count {
+            let previous = sorted[index - 1]
+            let day = sorted[index]
+            if let expected = calendar.date(byAdding: .day, value: 1, to: previous),
+               calendar.isDate(expected, inSameDayAs: day) {
+                run += 1
+                best = max(best, run)
+            } else {
+                run = 1
+            }
+        }
+        return best
+    }
+}
+
+struct TrackingStreak: Sendable, Equatable {
+    var current: Int
+    var longest: Int
+    var minimumMealsPerDay: Int
+    var includesToday: Bool
+
+    static let zero = TrackingStreak(current: 0, longest: 0, minimumMealsPerDay: 1, includesToday: false)
+
+    var title: String {
+        if current == 0 {
+            return "No active streak"
+        }
+        return "\(current)-day streak"
+    }
+
+    var subtitle: String {
+        if current == 0 {
+            return "Log a meal today to start a tracking streak."
+        }
+        if includesToday {
+            return longest > current
+                ? "Best so far: \(longest) days."
+                : "Keep logging — no calorie shame, just showing up."
+        }
+        return "Log today to keep your \(current)-day streak going."
+    }
 }
 
 protocol WeightRepository: Sendable {

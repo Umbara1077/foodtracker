@@ -13,6 +13,7 @@ final class TodayViewModel {
     var target: NutritionTargetSnapshot?
     var meals: [MealRecord] = []
     var frequentMeals: [SavedMealTemplate] = []
+    var streak: TrackingStreak = .zero
     var totals: DayNutritionTotals = .zero
     var isLoading = true
     var errorMessage: String?
@@ -46,15 +47,26 @@ final class TodayViewModel {
     func load(calendar: Calendar = .current) async {
         isLoading = true
         errorMessage = nil
+        let streakStart = calendar.date(byAdding: .day, value: -120, to: calendar.startOfDay(for: day)) ?? day
         do {
             async let targetTask = targetRepository.currentTarget(on: day)
             async let mealsTask = mealRepository.meals(on: day, calendar: calendar)
             async let totalsTask = mealRepository.totals(on: day, calendar: calendar)
             async let frequentTask = savedMeals.frequent(limit: 5)
+            async let streakTask = mealRepository.dailyTotals(
+                from: streakStart,
+                to: calendar.startOfDay(for: day),
+                calendar: calendar
+            )
             target = try await targetTask
             meals = try await mealsTask
             totals = try await totalsTask
             frequentMeals = try await frequentTask
+            streak = ProgressMath.trackingStreak(
+                dailyTotals: try await streakTask,
+                now: day,
+                calendar: calendar
+            )
             WidgetSnapshotStore.save(WidgetSnapshotStore.make(target: target, totals: totals))
         } catch {
             errorMessage = "Could not load today’s diary."
@@ -149,6 +161,7 @@ private struct TodayContent: View {
                         .frame(maxWidth: .infinity)
                 } else {
                     hero
+                    streakChip
                     quickActions
                     frequentSection
                     mealsSection
@@ -227,6 +240,32 @@ private struct TodayContent: View {
                 systemImage: "target",
                 description: Text("Finish onboarding to set your daily calories and macros.")
             )
+        }
+    }
+
+    @ViewBuilder
+    private var streakChip: some View {
+        if viewModel.streak.current > 0 || viewModel.streak.longest > 0 {
+            HStack(spacing: Spacing.space12) {
+                Image(systemName: "flame.fill")
+                    .foregroundStyle(Color.brandPrimary)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: Spacing.space4) {
+                    Text(viewModel.streak.title)
+                        .font(Typography.supporting.weight(.semibold))
+                        .foregroundStyle(Color.textPrimary)
+                    Text(viewModel.streak.subtitle)
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(Spacing.cardPaddingCompact)
+            .background(Color.surfaceSecondary.opacity(0.7))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(viewModel.streak.title). \(viewModel.streak.subtitle)")
         }
     }
 

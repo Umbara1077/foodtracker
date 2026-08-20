@@ -89,6 +89,52 @@ struct ProgressMathTests {
         #expect(!highlight.lowercased().contains("miss"))
     }
 
+    @Test("Tracking streak counts consecutive qualified days without shame copy")
+    func trackingStreak() {
+        let calendar = Calendar(identifier: .gregorian)
+        let today = calendar.startOfDay(for: Date(timeIntervalSince1970: 1_700_000_000))
+        let d1 = calendar.date(byAdding: .day, value: -2, to: today)!
+        let d2 = calendar.date(byAdding: .day, value: -1, to: today)!
+        let earlier = calendar.date(byAdding: .day, value: -10, to: today)!
+        let earlier2 = calendar.date(byAdding: .day, value: -9, to: today)!
+        let earlier3 = calendar.date(byAdding: .day, value: -8, to: today)!
+        let streak = ProgressMath.trackingStreak(
+            dailyTotals: [
+                (earlier, DayNutritionTotals(nutrients: .zero, mealCount: 2)),
+                (earlier2, DayNutritionTotals(nutrients: .zero, mealCount: 2)),
+                (earlier3, DayNutritionTotals(nutrients: .zero, mealCount: 2)),
+                (d1, DayNutritionTotals(nutrients: .zero, mealCount: 1)),
+                (d2, DayNutritionTotals(nutrients: .zero, mealCount: 2)),
+                (today, DayNutritionTotals(nutrients: .zero, mealCount: 1)),
+            ],
+            now: today,
+            calendar: calendar
+        )
+        #expect(streak.current == 3)
+        #expect(streak.longest == 3)
+        #expect(streak.includesToday)
+        #expect(streak.title == "3-day streak")
+        #expect(!streak.subtitle.lowercased().contains("lost"))
+        #expect(!streak.subtitle.lowercased().contains("broke"))
+    }
+
+    @Test("Empty today keeps streak through yesterday")
+    func streakHoldsYesterday() {
+        let calendar = Calendar(identifier: .gregorian)
+        let today = calendar.startOfDay(for: Date(timeIntervalSince1970: 1_700_000_000))
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+        let streak = ProgressMath.trackingStreak(
+            dailyTotals: [
+                (yesterday, DayNutritionTotals(nutrients: .zero, mealCount: 2)),
+            ],
+            now: today,
+            calendar: calendar
+        )
+        #expect(streak.current == 1)
+        #expect(!streak.includesToday)
+        #expect(streak.subtitle.contains("keep"))
+    }
+
     @Test("Progress range start is before end")
     func ranges() {
         let end = Date()

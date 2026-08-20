@@ -14,6 +14,7 @@ final class ProgressViewModel {
     var latest: WeightEntry?
     var consistency: ConsistencyStats = .zero
     var weeklyDigest: WeeklyDigest = .empty
+    var streak: TrackingStreak = .zero
     var unitSystem: UnitSystem = .metric
     var isLoading = true
     var errorMessage: String?
@@ -42,6 +43,7 @@ final class ProgressViewModel {
         let start = range.startDate(relativeTo: end, calendar: calendar)
         let weekEnd = calendar.startOfDay(for: end)
         let weekStart = calendar.date(byAdding: .day, value: -6, to: weekEnd) ?? weekEnd
+        let streakStart = calendar.date(byAdding: .day, value: -120, to: weekEnd) ?? weekEnd
         do {
             async let weightTask = weightRepository.entries(from: start, to: end)
             async let latestTask = weightRepository.latest()
@@ -50,6 +52,7 @@ final class ProgressViewModel {
             async let dailyTask = mealRepository.dailyTotals(from: start, to: end, calendar: calendar)
             async let weekMealsTask = mealRepository.dailyTotals(from: weekStart, to: weekEnd, calendar: calendar)
             async let weekWeightsTask = weightRepository.entries(from: weekStart, to: end)
+            async let streakMealsTask = mealRepository.dailyTotals(from: streakStart, to: weekEnd, calendar: calendar)
 
             entries = try await weightTask
             latest = try await latestTask
@@ -63,6 +66,11 @@ final class ProgressViewModel {
                 target: target,
                 weekStart: weekStart,
                 weekEnd: weekEnd
+            )
+            streak = ProgressMath.trackingStreak(
+                dailyTotals: try await streakMealsTask,
+                now: end,
+                calendar: calendar
             )
         } catch {
             errorMessage = "Could not load progress."
@@ -140,6 +148,7 @@ private struct ProgressContent: View {
                     ProgressView().frame(maxWidth: .infinity)
                 } else {
                     weeklyDigestCard
+                    streakCard
                     weightCard
                     consistencyCard
                 }
@@ -236,6 +245,32 @@ private struct ProgressContent: View {
                 .foregroundStyle(Color.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var streakCard: some View {
+        let streak = viewModel.streak
+        return VStack(alignment: .leading, spacing: Spacing.space12) {
+            Text("Tracking streak")
+                .font(Typography.sectionHeading)
+                .foregroundStyle(Color.textPrimary)
+            Text(streak.title)
+                .font(Typography.heroNumeric(36))
+                .foregroundStyle(Color.textPrimary)
+            Text(streak.subtitle)
+                .font(Typography.supporting)
+                .foregroundStyle(Color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+            if streak.longest > 0 {
+                Text("Best: \(streak.longest) day\(streak.longest == 1 ? "" : "s")")
+                    .font(Typography.caption)
+                    .foregroundStyle(Color.textSecondary)
+            }
+        }
+        .padding(Spacing.cardPaddingCompact)
+        .background(Color.surfacePrimary)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(streak.title). \(streak.subtitle)")
     }
 
     private var weightCard: some View {
