@@ -144,6 +144,7 @@ struct FoodSearchView: View {
         case .openFoodFacts: "OFF"
         case .userCustom: "Custom"
         case .aiEstimate: "Estimate"
+        case .nutritionLabelOCR: "Label"
         }
     }
 }

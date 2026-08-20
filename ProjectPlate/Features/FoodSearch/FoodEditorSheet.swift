@@ -82,7 +82,11 @@ struct FoodEditorSheet: View {
                     }
                 }
             }
-            .navigationTitle(inputMethod == .barcode ? "Add barcode item" : "Add food")
+            .navigationTitle(
+                inputMethod == .barcode
+                    ? "Add barcode item"
+                    : inputMethod == .labelScan ? "Add from label" : "Add food"
+            )
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -105,6 +109,7 @@ struct FoodEditorSheet: View {
         case .openFoodFacts: "Open Food Facts"
         case .userCustom: "Custom"
         case .aiEstimate: "AI estimate — review recommended"
+        case .nutritionLabelOCR: "Nutrition label OCR — review recommended"
         }
     }
 

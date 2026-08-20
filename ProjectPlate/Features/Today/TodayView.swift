@@ -20,6 +20,7 @@ final class TodayViewModel {
     var showQuickAdd = false
     var showFoodSearch = false
     var showBarcode = false
+    var showLabelScan = false
 
     init(
         mealRepository: any MealRepository,
@@ -197,6 +198,11 @@ private struct TodayContent: View {
                 Task { await viewModel.load() }
             }
         }
+        .sheet(isPresented: $viewModel.showLabelScan) {
+            NutritionLabelScannerView {
+                Task { await viewModel.load() }
+            }
+        }
     }
 
     @ViewBuilder
@@ -270,48 +276,66 @@ private struct TodayContent: View {
     }
 
     private var quickActions: some View {
-        HStack(spacing: Spacing.space12) {
-            Button {
-                viewModel.showQuickAdd = true
-            } label: {
-                Label("Quick add", systemImage: "plus.circle.fill")
-                    .font(Typography.supporting.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Spacing.space16)
-                    .foregroundStyle(Color.brandInk)
-                    .background(Color.brandPrimary)
-                    .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Quick add meal")
+        VStack(spacing: Spacing.space12) {
+            HStack(spacing: Spacing.space12) {
+                Button {
+                    viewModel.showQuickAdd = true
+                } label: {
+                    Label("Quick add", systemImage: "plus.circle.fill")
+                        .font(Typography.supporting.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.space16)
+                        .foregroundStyle(Color.brandInk)
+                        .background(Color.brandPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Quick add meal")
 
-            Button {
-                viewModel.showFoodSearch = true
-            } label: {
-                Label("Search", systemImage: "magnifyingglass")
-                    .font(Typography.supporting.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Spacing.space16)
-                    .foregroundStyle(Color.textPrimary)
-                    .background(Color.surfacePrimary)
-                    .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                Button {
+                    viewModel.showFoodSearch = true
+                } label: {
+                    Label("Search", systemImage: "magnifyingglass")
+                        .font(Typography.supporting.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.space16)
+                        .foregroundStyle(Color.textPrimary)
+                        .background(Color.surfacePrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Search foods")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Search foods")
 
-            Button {
-                viewModel.showBarcode = true
-            } label: {
-                Label("Barcode", systemImage: "barcode.viewfinder")
-                    .font(Typography.supporting.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Spacing.space16)
-                    .foregroundStyle(Color.textPrimary)
-                    .background(Color.surfacePrimary)
-                    .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+            HStack(spacing: Spacing.space12) {
+                Button {
+                    viewModel.showBarcode = true
+                } label: {
+                    Label("Barcode", systemImage: "barcode.viewfinder")
+                        .font(Typography.supporting.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.space16)
+                        .foregroundStyle(Color.textPrimary)
+                        .background(Color.surfacePrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Scan barcode")
+
+                Button {
+                    viewModel.showLabelScan = true
+                } label: {
+                    Label("Label", systemImage: "doc.text.viewfinder")
+                        .font(Typography.supporting.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.space16)
+                        .foregroundStyle(Color.textPrimary)
+                        .background(Color.surfacePrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Scan nutrition label")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Scan barcode")
         }
     }
 

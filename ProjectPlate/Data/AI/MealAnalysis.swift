@@ -249,6 +249,7 @@ struct MealAnalysisService: MealAnalysisServing {
         case .openFoodFacts: "Open Food Facts"
         case .userCustom: "Custom"
         case .aiEstimate: "AI estimate — review recommended"
+        case .nutritionLabelOCR: "Nutrition label OCR — review recommended"
         }
     }
 }

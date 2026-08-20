@@ -44,6 +44,7 @@ Or:
 - **Phase 15** — Home Screen widget (Today calories remaining via App Group snapshot) (CI verified)
 - **Phase 16** — Tracking streak (days with meals logged; supportive copy, no shame) (CI verified)
 - **Phase 17** — Voice-assisted Quick Add (Speech → parse calories/macros) (CI verified)
+- **Phase 18** — Nutrition label OCR → portion review / save (CI verified)
 
 App Store screenshot packs and UI snapshot suites remain manual Mac follow-ups before submission. See [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md).
 

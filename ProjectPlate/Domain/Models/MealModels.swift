@@ -7,6 +7,7 @@ enum MealInputMethod: String, Codable, Sendable {
     case photoScan
     case duplicated
     case voice
+    case labelScan
 }
 
 struct MealRecord: Identifiable, Codable, Sendable, Equatable {

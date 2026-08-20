@@ -6,6 +6,7 @@ enum NutritionSource: String, Codable, Sendable {
     case openFoodFacts
     case userCustom
     case aiEstimate
+    case nutritionLabelOCR
 }
 
 struct NutritionFoodID: Hashable, Codable, Sendable {
@@ -89,6 +90,7 @@ enum NutritionResolver {
             case .openFoodFacts: score += 0.10
             case .userCustom: score += 0.08
             case .aiEstimate: score += 0.03
+            case .nutritionLabelOCR: score += 0.05
             }
 
             // slight boost for having a default serving
