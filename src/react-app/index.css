@@ -1,0 +1,59 @@
+:root {
+	--ink: #10261f;
+	--ink-soft: #3d5a4f;
+	--paper: #e8f2ec;
+	--paper-deep: #d5e8dc;
+	--brand: #14352e;
+	--citrus: #c8f560;
+	--leaf: #2f6b55;
+	--mist: rgba(20, 53, 46, 0.08);
+	--glow: rgba(200, 245, 96, 0.35);
+	--danger: #b42318;
+	--radius: 1.25rem;
+	--font-display: "Syne", sans-serif;
+	--font-body: "Figtree", sans-serif;
+	color: var(--ink);
+	background: var(--paper);
+	font-family: var(--font-body);
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+	min-height: 100%;
+}
+
+body {
+	margin: 0;
+	min-width: 320px;
+	background:
+		radial-gradient(1200px 600px at 12% -10%, rgba(200, 245, 96, 0.28), transparent 55%),
+		radial-gradient(900px 500px at 100% 0%, rgba(47, 107, 85, 0.22), transparent 50%),
+		linear-gradient(165deg, #f3faf5 0%, #e8f2ec 42%, #dceee3 100%);
+	color: var(--ink);
+}
+
+button,
+input,
+select,
+textarea {
+	font: inherit;
+}
+
+button {
+	cursor: pointer;
+}
+
+img {
+	max-width: 100%;
+	display: block;
+}
