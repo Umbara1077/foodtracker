@@ -16,6 +16,7 @@ final class UserProfileEntity {
     var formulaSexRaw: String?
     var macroPreferenceRaw: String
     var cloudAIConsentVersion: String?
+    var cloudAIConsentDate: Date?
     var healthKitEnabled: Bool
 
     init(from profile: UserProfile) {
@@ -32,6 +33,7 @@ final class UserProfileEntity {
         self.formulaSexRaw = profile.formulaSex?.rawValue
         self.macroPreferenceRaw = profile.macroPreference.rawValue
         self.cloudAIConsentVersion = profile.cloudAIConsentVersion
+        self.cloudAIConsentDate = profile.cloudAIConsentDate
         self.healthKitEnabled = profile.healthKitEnabled
     }
 
@@ -49,6 +51,7 @@ final class UserProfileEntity {
         formulaSexRaw = profile.formulaSex?.rawValue
         macroPreferenceRaw = profile.macroPreference.rawValue
         cloudAIConsentVersion = profile.cloudAIConsentVersion
+        cloudAIConsentDate = profile.cloudAIConsentDate
         healthKitEnabled = profile.healthKitEnabled
     }
 
@@ -67,6 +70,7 @@ final class UserProfileEntity {
             macroPreference: MacroPreference(rawValue: macroPreferenceRaw) ?? .balanced,
             onboardingComplete: onboardingComplete,
             cloudAIConsentVersion: cloudAIConsentVersion,
+            cloudAIConsentDate: cloudAIConsentDate,
             healthKitEnabled: healthKitEnabled
         )
     }

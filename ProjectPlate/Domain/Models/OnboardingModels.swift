@@ -177,6 +177,7 @@ struct UserProfile: Codable, Sendable, Equatable {
     var macroPreference: MacroPreference
     var onboardingComplete: Bool
     var cloudAIConsentVersion: String?
+    var cloudAIConsentDate: Date?
     var healthKitEnabled: Bool
 
     static let blank = UserProfile(
@@ -193,6 +194,7 @@ struct UserProfile: Codable, Sendable, Equatable {
         macroPreference: .balanced,
         onboardingComplete: false,
         cloudAIConsentVersion: nil,
+        cloudAIConsentDate: nil,
         healthKitEnabled: false
     )
 }

@@ -1,9 +1,12 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @Environment(\.appEnvironment) private var environment
     @State private var showDesignSystem = false
     @State private var showPaywall = false
+    @State private var showDeleteConfirm = false
+    @State private var exportDocument: ExportDocument?
     @State private var targetSummary: String = "Loading…"
     @State private var healthEnabled = false
     @State private var healthStatusText = "Checking…"
@@ -13,6 +16,10 @@ struct SettingsView: View {
     @State private var entitlementIsPro = false
     @State private var freeScansRemaining: Int?
     @State private var subscriptionMessage: String?
+    @AppStorage("plate.save_meal_photos") private var saveMealPhotos = true
+    @State private var consentVersionLabel = "Not accepted"
+    @State private var privacyMessage: String?
+    @State private var isPrivacyWorking = false
 
     var body: some View {
         NavigationStack {
@@ -33,6 +40,7 @@ struct SettingsView: View {
                         )
                     }
                     Button("See Project Plate Pro") {
+                        environment.analytics.track(.paywallViewed)
                         showPaywall = true
                     }
                     Button("Restore purchases") {
@@ -91,11 +99,36 @@ struct SettingsView: View {
                     }
                 }
                 Section("Privacy") {
-                    Text("Cloud AI disclosure, export, and delete — Phase 10")
-                        .foregroundStyle(Color.textSecondary)
+                    Toggle("Save meal photos on device", isOn: $saveMealPhotos)
+                        .accessibilityHint("Photos stay on this iPhone when enabled")
+
+                    LabeledContent("AI consent", value: consentVersionLabel)
+
+                    NavigationLink("Privacy policy") {
+                        PrivacyPolicyView()
+                    }
+                    NavigationLink("Terms of use") {
+                        TermsOfUseView()
+                    }
+
+                    Button("Export my data") {
+                        Task { await exportData() }
+                    }
+                    .disabled(isPrivacyWorking)
+
+                    Button("Delete my data", role: .destructive) {
+                        showDeleteConfirm = true
+                    }
+                    .disabled(isPrivacyWorking)
+
+                    if let privacyMessage {
+                        Text(privacyMessage)
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    }
                 }
                 Section("About") {
-                    LabeledContent("Version", value: "0.9.0")
+                    LabeledContent("Version", value: "0.10.0")
                     Text("Nutrition estimates are for informational tracking and may be inaccurate. This app does not provide medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
@@ -113,6 +146,35 @@ struct SettingsView: View {
                 PaywallView {
                     Task { await refreshSubscription() }
                 }
+            }
+            .fileExporter(
+                isPresented: Binding(
+                    get: { exportDocument != nil },
+                    set: { if !$0 { exportDocument = nil } }
+                ),
+                document: exportDocument,
+                contentType: .json,
+                defaultFilename: "project-plate-export"
+            ) { result in
+                switch result {
+                case .success:
+                    privacyMessage = "Export saved."
+                    environment.analytics.track(.dataExported)
+                case .failure:
+                    privacyMessage = "Export cancelled or failed."
+                }
+            }
+            .confirmationDialog(
+                "Delete all local data?",
+                isPresented: $showDeleteConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Delete everything", role: .destructive) {
+                    Task { await deleteData() }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This removes meals, weight entries, and resets onboarding on this iPhone. It cannot be undone.")
             }
             #if DEBUG
             .sheet(isPresented: $showDesignSystem) {
@@ -133,6 +195,13 @@ struct SettingsView: View {
         }
         if let profile = try? await environment.profileRepository.loadProfile() {
             healthEnabled = profile.healthKitEnabled
+            if let version = profile.cloudAIConsentVersion {
+                consentVersionLabel = version == PrivacyConstants.cloudAIConsentVersion
+                    ? "Accepted (\(version))"
+                    : "Out of date (\(version))"
+            } else {
+                consentVersionLabel = "Not accepted"
+            }
         }
         healthStatusText = statusLabel(environment.healthSync.authorizationStatus())
         await refreshSubscription()
@@ -162,6 +231,35 @@ struct SettingsView: View {
             subscriptionMessage = entitlement.isPro ? "Pro restored." : "No Pro subscription found."
         } catch {
             subscriptionMessage = "Restore failed."
+            environment.crashReporter.record(error: error, context: "subscriptions.restore")
+        }
+    }
+
+    private func exportData() async {
+        isPrivacyWorking = true
+        privacyMessage = nil
+        defer { isPrivacyWorking = false }
+        do {
+            let data = try await environment.dataMaintenance.exportJSON()
+            exportDocument = ExportDocument(data: data)
+        } catch {
+            privacyMessage = error.localizedDescription
+            environment.crashReporter.record(error: error, context: "privacy.export")
+        }
+    }
+
+    private func deleteData() async {
+        isPrivacyWorking = true
+        privacyMessage = nil
+        defer { isPrivacyWorking = false }
+        do {
+            try await environment.dataMaintenance.deleteAllLocalData()
+            environment.analytics.track(.dataDeleted)
+            privacyMessage = "Local data deleted. Restart onboarding from a fresh install state."
+            await refresh()
+        } catch {
+            privacyMessage = error.localizedDescription
+            environment.crashReporter.record(error: error, context: "privacy.delete")
         }
     }
 
@@ -189,6 +287,7 @@ struct SettingsView: View {
         } catch {
             healthEnabled = false
             healthMessage = "Could not update Health settings."
+            environment.crashReporter.record(error: error, context: "health.toggle")
         }
     }
 
@@ -203,6 +302,7 @@ struct SettingsView: View {
                 : "Imported \(count) weight\(count == 1 ? "" : "s") from Apple Health."
         } catch {
             healthMessage = "Could not import Health weights."
+            environment.crashReporter.record(error: error, context: "health.import")
         }
     }
 
@@ -213,6 +313,23 @@ struct SettingsView: View {
         case .sharingDenied: "Write access denied — diary still works"
         case .sharingAuthorized: "Connected"
         }
+    }
+}
+
+struct ExportDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.json] }
+    var data: Data
+
+    init(data: Data) {
+        self.data = data
+    }
+
+    init(configuration: ReadConfiguration) throws {
+        data = configuration.file.regularFileContents ?? Data()
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: data)
     }
 }
 

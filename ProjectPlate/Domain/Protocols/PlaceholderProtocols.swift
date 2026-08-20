@@ -23,6 +23,11 @@ enum AnalyticsEvent: Sendable {
     case barcodeOpened
     case mealSaved
     case mealDeleted
+    case paywallViewed
+    case cloudAIConsentAccepted
+    case cloudAIConsentDeclined
+    case dataExported
+    case dataDeleted
 }
 
 struct SettingsStore: Sendable {

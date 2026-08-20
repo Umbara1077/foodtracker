@@ -8,6 +8,7 @@ final class AppRouter {
     var selectedTab: RootTab = .today
     var isScannerPresented = false
     var isPaywallPresented = false
+    var isConsentPresented = false
     var needsOnboarding = true
     var isBootstrapping = true
 
@@ -25,6 +26,14 @@ final class AppRouter {
 
     func dismissPaywall() {
         isPaywallPresented = false
+    }
+
+    func openConsent() {
+        isConsentPresented = true
+    }
+
+    func dismissConsent() {
+        isConsentPresented = false
     }
 
     func completeOnboarding() {

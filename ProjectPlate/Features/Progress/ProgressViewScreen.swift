@@ -118,6 +118,7 @@ struct ProgressViewScreen: View {
 
 private struct ProgressContent: View {
     @Bindable var viewModel: ProgressViewModel
+    @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
 
     var body: some View {
         ScrollView {
@@ -206,6 +207,8 @@ private struct ProgressContent: View {
                 .chartYAxisLabel(viewModel.unitSystem == .us ? "lb" : "kg")
                 .frame(height: 180)
                 .accessibilityLabel("Weight trend chart")
+                .accessibilityHidden(accessibilityReduceMotion)
+                .opacity(accessibilityReduceMotion ? 0.85 : 1)
             } else {
                 ContentUnavailableView(
                     "No weight trend yet",

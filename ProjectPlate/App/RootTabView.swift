@@ -65,6 +65,16 @@ struct RootTabView: View {
                         // After unlock, user can tap Scan again.
                     }
                 }
+                .sheet(isPresented: $router.isConsentPresented) {
+                    CloudAIConsentView(
+                        onAccept: {
+                            Task { await acceptConsentAndScan() }
+                        },
+                        onDecline: {
+                            environment.analytics.track(.cloudAIConsentDeclined)
+                        }
+                    )
+                }
             }
         }
         .task {
@@ -73,13 +83,41 @@ struct RootTabView: View {
     }
 
     private func openScannerOrPaywall() async {
+        if await needsCloudAIConsent() {
+            router.openConsent()
+            return
+        }
         let entitlement = await environment.subscriptions.currentEntitlement()
         let remaining = await environment.aiScanQuota.remaining(isPro: entitlement.isPro)
         if remaining <= 0 {
+            environment.analytics.track(.paywallViewed)
             router.openPaywall()
         } else {
             router.openScanner()
         }
+    }
+
+    private func needsCloudAIConsent() async -> Bool {
+        let profile = try? await environment.profileRepository.loadProfile()
+        return profile?.cloudAIConsentVersion != PrivacyConstants.cloudAIConsentVersion
+    }
+
+    private func acceptConsentAndScan() async {
+        environment.analytics.track(.cloudAIConsentAccepted)
+        do {
+            var profile = try await environment.profileRepository.loadProfile() ?? {
+                var blank = UserProfile.blank
+                blank.onboardingComplete = true
+                return blank
+            }()
+            profile.cloudAIConsentVersion = PrivacyConstants.cloudAIConsentVersion
+            profile.cloudAIConsentDate = .now
+            try await environment.profileRepository.saveProfile(profile)
+        } catch {
+            environment.crashReporter.record(error: error, context: "consent.save")
+        }
+        router.dismissConsent()
+        await openScannerOrPaywall()
     }
 
     private func bootstrap() async {

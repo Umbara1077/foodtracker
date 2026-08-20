@@ -8,7 +8,7 @@ enum MealInputMethod: String, Codable, Sendable {
     case duplicated
 }
 
-struct MealRecord: Identifiable, Sendable, Equatable {
+struct MealRecord: Identifiable, Codable, Sendable, Equatable {
     var id: UUID
     var eatenAt: Date
     var mealType: MealType
