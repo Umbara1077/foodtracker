@@ -8,6 +8,8 @@ protocol MealRepository: Sendable {
     func meal(id: UUID) async throws -> MealRecord?
     /// Days in range that have at least one meal (for history dots).
     func daysWithMeals(from start: Date, to end: Date, calendar: Calendar) async throws -> Set<DateComponents>
+    /// Per-day totals from `start` through `end` (inclusive start-of-day bounds).
+    func dailyTotals(from start: Date, to end: Date, calendar: Calendar) async throws -> [(date: Date, totals: DayNutritionTotals)]
 }
 
 protocol AnalyticsClient: Sendable {

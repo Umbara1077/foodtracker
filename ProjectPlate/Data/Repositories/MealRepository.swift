@@ -66,6 +66,19 @@ actor SwiftDataMealRepository: MealRepository {
         }
         return days
     }
+
+    func dailyTotals(from start: Date, to end: Date, calendar: Calendar) async throws -> [(date: Date, totals: DayNutritionTotals)] {
+        var result: [(date: Date, totals: DayNutritionTotals)] = []
+        var cursor = calendar.startOfDay(for: start)
+        let endDay = calendar.startOfDay(for: end)
+        while cursor <= endDay {
+            let totals = try await totals(on: cursor, calendar: calendar)
+            result.append((cursor, totals))
+            guard let next = calendar.date(byAdding: .day, value: 1, to: cursor) else { break }
+            cursor = next
+        }
+        return result
+    }
 }
 
 actor InMemoryMealRepository: MealRepository {
@@ -109,5 +122,18 @@ actor InMemoryMealRepository: MealRepository {
             days.insert(calendar.dateComponents([.year, .month, .day], from: meal.eatenAt))
         }
         return days
+    }
+
+    func dailyTotals(from start: Date, to end: Date, calendar: Calendar) async throws -> [(date: Date, totals: DayNutritionTotals)] {
+        var result: [(date: Date, totals: DayNutritionTotals)] = []
+        var cursor = calendar.startOfDay(for: start)
+        let endDay = calendar.startOfDay(for: end)
+        while cursor <= endDay {
+            let dayTotals = try await totals(on: cursor, calendar: calendar)
+            result.append((cursor, dayTotals))
+            guard let next = calendar.date(byAdding: .day, value: 1, to: cursor) else { break }
+            cursor = next
+        }
+        return result
     }
 }

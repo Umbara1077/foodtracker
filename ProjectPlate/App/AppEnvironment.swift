@@ -7,6 +7,7 @@ struct AppEnvironment: Sendable {
     var mealRepository: any MealRepository
     var profileRepository: any ProfileRepository
     var targetRepository: any TargetRepository
+    var weightRepository: any WeightRepository
     var nutritionRepository: any NutritionRepository
     var mealAnalysisService: any MealAnalysisServing
     var backendConfiguration: BackendConfiguration
@@ -23,6 +24,7 @@ struct AppEnvironment: Sendable {
             mealRepository: SwiftDataMealRepository(modelContainer: modelContainer),
             profileRepository: SwiftDataProfileRepository(modelContainer: modelContainer),
             targetRepository: SwiftDataTargetRepository(modelContainer: modelContainer),
+            weightRepository: SwiftDataWeightRepository(modelContainer: modelContainer),
             nutritionRepository: nutrition,
             mealAnalysisService: MealAnalysisService(
                 visionProvider: vision,
@@ -46,6 +48,8 @@ struct AppEnvironment: Sendable {
         var profile = UserProfile.blank
         profile.onboardingComplete = true
         profile.goalType = .maintainWeight
+        profile.currentWeightKg = 72.4
+        profile.unitSystem = .metric
 
         let sampleMeal = MealRecord(
             mealType: .lunch,
@@ -54,6 +58,14 @@ struct AppEnvironment: Sendable {
             inputMethod: .quickAdd
         )
 
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let weights = [
+            WeightEntry(recordedAt: calendar.date(byAdding: .day, value: -14, to: today)!, kilograms: 73.2),
+            WeightEntry(recordedAt: calendar.date(byAdding: .day, value: -7, to: today)!, kilograms: 72.8),
+            WeightEntry(recordedAt: today, kilograms: 72.4),
+        ]
+
         let nutrition = LocalNutritionRepository()
         let backend = BackendConfiguration(baseURL: nil, appToken: nil, installID: "preview")
         let quota = ScanQuotaStore()
@@ -61,6 +73,7 @@ struct AppEnvironment: Sendable {
             mealRepository: InMemoryMealRepository(meals: [sampleMeal]),
             profileRepository: InMemoryProfileRepository(profile: profile),
             targetRepository: InMemoryTargetRepository(targets: [target]),
+            weightRepository: InMemoryWeightRepository(entries: weights),
             nutritionRepository: nutrition,
             mealAnalysisService: MealAnalysisService(
                 visionProvider: MockMealVisionProvider(fixture: .chickenRiceBowl, delayNanoseconds: 0),

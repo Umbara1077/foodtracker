@@ -106,3 +106,42 @@ final class NutritionTargetEntity {
         )
     }
 }
+
+@Model
+final class WeightEntryEntity {
+    @Attribute(.unique) var id: UUID
+    var recordedAt: Date
+    var kilograms: Double
+    var note: String?
+    var sourceRaw: String
+    var healthKitUUID: String?
+
+    init(from entry: WeightEntry) {
+        self.id = entry.id
+        self.recordedAt = entry.recordedAt
+        self.kilograms = entry.kilograms
+        self.note = entry.note
+        self.sourceRaw = entry.source.rawValue
+        self.healthKitUUID = entry.healthKitUUID
+    }
+
+    func apply(_ entry: WeightEntry) {
+        id = entry.id
+        recordedAt = entry.recordedAt
+        kilograms = entry.kilograms
+        note = entry.note
+        sourceRaw = entry.source.rawValue
+        healthKitUUID = entry.healthKitUUID
+    }
+
+    func asDomain() -> WeightEntry {
+        WeightEntry(
+            id: id,
+            recordedAt: recordedAt,
+            kilograms: kilograms,
+            note: note,
+            source: WeightSource(rawValue: sourceRaw) ?? .local,
+            healthKitUUID: healthKitUUID
+        )
+    }
+}
