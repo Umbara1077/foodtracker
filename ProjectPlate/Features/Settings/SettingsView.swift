@@ -135,7 +135,7 @@ struct SettingsView: View {
                     }
                 }
                 Section("About") {
-                    LabeledContent("Version", value: "1.1.1")
+                    LabeledContent("Version", value: "1.1.2")
                     Text("Nutrition estimates are for informational tracking and may be inaccurate. This app does not provide medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)

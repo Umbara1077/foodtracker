@@ -41,6 +41,54 @@ struct ProgressMathTests {
         #expect(stats.targetCalories == 2000)
     }
 
+    @Test("Weekly digest averages logged days and builds a supportive highlight")
+    func weeklyDigest() {
+        let calendar = Calendar(identifier: .gregorian)
+        let weekEnd = calendar.startOfDay(for: Date(timeIntervalSince1970: 1_700_000_000))
+        let weekStart = calendar.date(byAdding: .day, value: -6, to: weekEnd)!
+        let mid = calendar.date(byAdding: .day, value: 3, to: weekStart)!
+        let target = NutritionTargetSnapshot(
+            calories: 2000,
+            proteinGrams: 150,
+            carbGrams: 200,
+            fatGrams: 60,
+            source: .manual
+        )
+        let digest = ProgressMath.weeklyDigest(
+            dailyTotals: [
+                (weekStart, DayNutritionTotals(nutrients: NutrientSet(calories: 1800, protein: 140, carbs: 0, fat: 0), mealCount: 2)),
+                (mid, DayNutritionTotals(nutrients: NutrientSet(calories: 2200, protein: 160, carbs: 0, fat: 0), mealCount: 3)),
+            ],
+            weightEntries: [
+                WeightEntry(recordedAt: weekStart, kilograms: 80),
+                WeightEntry(recordedAt: weekEnd, kilograms: 79.4),
+            ],
+            target: target,
+            weekStart: weekStart,
+            weekEnd: weekEnd
+        )
+        #expect(digest.daysTracked == 2)
+        #expect(digest.mealsLogged == 5)
+        #expect(digest.averageCalories == 2000)
+        #expect(digest.averageProtein == 150)
+        #expect(digest.weightChangeKg == -0.6)
+        #expect(digest.highlight.contains("Protein") || digest.highlight.contains("tracked"))
+    }
+
+    @Test("Empty week digest avoids shame copy")
+    func emptyWeekHighlight() {
+        let highlight = ProgressMath.weeklyHighlight(
+            daysTracked: 0,
+            mealsLogged: 0,
+            averageProtein: 0,
+            targetProtein: 150,
+            weightChangeKg: nil
+        )
+        #expect(highlight.contains("Log a couple meals"))
+        #expect(!highlight.lowercased().contains("fail"))
+        #expect(!highlight.lowercased().contains("miss"))
+    }
+
     @Test("Progress range start is before end")
     func ranges() {
         let end = Date()

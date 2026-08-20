@@ -91,6 +91,33 @@ struct ConsistencyStats: Sendable, Equatable {
     }
 }
 
+/// Rolling 7-day summary for Progress (PRODUCT_SPEC §94 weekly summary).
+struct WeeklyDigest: Sendable, Equatable {
+    var weekStart: Date
+    var weekEnd: Date
+    var daysTracked: Int
+    var mealsLogged: Int
+    var averageCalories: Double
+    var averageProtein: Double
+    var targetCalories: Double
+    var targetProtein: Double
+    var weightChangeKg: Double?
+    var highlight: String
+
+    static let empty = WeeklyDigest(
+        weekStart: .now,
+        weekEnd: .now,
+        daysTracked: 0,
+        mealsLogged: 0,
+        averageCalories: 0,
+        averageProtein: 0,
+        targetCalories: 0,
+        targetProtein: 0,
+        weightChangeKg: nil,
+        highlight: "Log a couple meals this week to see your digest."
+    )
+}
+
 enum ProgressMath {
     static func weightChangeKg(entries: [WeightEntry]) -> Double? {
         let sorted = entries.sorted { $0.recordedAt < $1.recordedAt }
@@ -121,6 +148,74 @@ enum ProgressMath {
             targetProtein: Double(target?.proteinGrams ?? 0),
             daysLogged: logged.count
         )
+    }
+
+    static func weeklyDigest(
+        dailyTotals: [(date: Date, totals: DayNutritionTotals)],
+        weightEntries: [WeightEntry],
+        target: NutritionTargetSnapshot?,
+        weekStart: Date,
+        weekEnd: Date
+    ) -> WeeklyDigest {
+        let loggedDays = dailyTotals.filter { $0.totals.mealCount > 0 }
+        let mealsLogged = loggedDays.reduce(0) { $0 + $1.totals.mealCount }
+        let daysTracked = loggedDays.count
+        let avgCal: Double
+        let avgPro: Double
+        if loggedDays.isEmpty {
+            avgCal = 0
+            avgPro = 0
+        } else {
+            avgCal = loggedDays.map(\.totals.nutrients.calories).reduce(0, +) / Double(loggedDays.count)
+            avgPro = loggedDays.map(\.totals.nutrients.protein).reduce(0, +) / Double(loggedDays.count)
+        }
+        let targetCal = Double(target?.calories ?? 0)
+        let targetPro = Double(target?.proteinGrams ?? 0)
+        let weightDelta = weightChangeKg(entries: weightEntries)
+        return WeeklyDigest(
+            weekStart: weekStart,
+            weekEnd: weekEnd,
+            daysTracked: daysTracked,
+            mealsLogged: mealsLogged,
+            averageCalories: avgCal,
+            averageProtein: avgPro,
+            targetCalories: targetCal,
+            targetProtein: targetPro,
+            weightChangeKg: weightDelta,
+            highlight: weeklyHighlight(
+                daysTracked: daysTracked,
+                mealsLogged: mealsLogged,
+                averageProtein: avgPro,
+                targetProtein: targetPro,
+                weightChangeKg: weightDelta
+            )
+        )
+    }
+
+    /// Supportive copy only — no calorie shame (PRODUCT_SPEC §94).
+    static func weeklyHighlight(
+        daysTracked: Int,
+        mealsLogged: Int,
+        averageProtein: Double,
+        targetProtein: Double,
+        weightChangeKg: Double?
+    ) -> String {
+        if daysTracked == 0 {
+            return "Log a couple meals this week to see your digest."
+        }
+        if daysTracked >= 5 {
+            return "Solid week of tracking — \(daysTracked) days logged."
+        }
+        if targetProtein > 0, averageProtein >= targetProtein * 0.9 {
+            return "Protein stayed close to your target this week."
+        }
+        if mealsLogged >= 10 {
+            return "You’ve built a useful log this week (\(mealsLogged) meals)."
+        }
+        if let delta = weightChangeKg, abs(delta) >= 0.2 {
+            return "You tracked \(daysTracked) days. Weight moved \(String(format: "%+.1f", delta)) kg over the week."
+        }
+        return "You tracked \(daysTracked) day\(daysTracked == 1 ? "" : "s") this week."
     }
 }
 

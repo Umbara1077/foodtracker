@@ -13,6 +13,7 @@ final class ProgressViewModel {
     var entries: [WeightEntry] = []
     var latest: WeightEntry?
     var consistency: ConsistencyStats = .zero
+    var weeklyDigest: WeeklyDigest = .empty
     var unitSystem: UnitSystem = .metric
     var isLoading = true
     var errorMessage: String?
@@ -39,12 +40,16 @@ final class ProgressViewModel {
         errorMessage = nil
         let end = Date()
         let start = range.startDate(relativeTo: end, calendar: calendar)
+        let weekEnd = calendar.startOfDay(for: end)
+        let weekStart = calendar.date(byAdding: .day, value: -6, to: weekEnd) ?? weekEnd
         do {
             async let weightTask = weightRepository.entries(from: start, to: end)
             async let latestTask = weightRepository.latest()
             async let profileTask = profileRepository.loadProfile()
             async let targetTask = targetRepository.currentTarget(on: end)
             async let dailyTask = mealRepository.dailyTotals(from: start, to: end, calendar: calendar)
+            async let weekMealsTask = mealRepository.dailyTotals(from: weekStart, to: weekEnd, calendar: calendar)
+            async let weekWeightsTask = weightRepository.entries(from: weekStart, to: end)
 
             entries = try await weightTask
             latest = try await latestTask
@@ -52,6 +57,13 @@ final class ProgressViewModel {
             let target = try await targetTask
             let daily = try await dailyTask
             consistency = ProgressMath.consistency(dailyTotals: daily, target: target)
+            weeklyDigest = ProgressMath.weeklyDigest(
+                dailyTotals: try await weekMealsTask,
+                weightEntries: try await weekWeightsTask,
+                target: target,
+                weekStart: weekStart,
+                weekEnd: weekEnd
+            )
         } catch {
             errorMessage = "Could not load progress."
         }
@@ -127,6 +139,7 @@ private struct ProgressContent: View {
                 if viewModel.isLoading {
                     ProgressView().frame(maxWidth: .infinity)
                 } else {
+                    weeklyDigestCard
                     weightCard
                     consistencyCard
                 }
@@ -160,6 +173,69 @@ private struct ProgressContent: View {
         }
         .pickerStyle(.segmented)
         .accessibilityLabel("Progress range")
+    }
+
+    private var weeklyDigestCard: some View {
+        let digest = viewModel.weeklyDigest
+        return VStack(alignment: .leading, spacing: Spacing.space16) {
+            Text("This week")
+                .font(Typography.sectionHeading)
+                .foregroundStyle(Color.textPrimary)
+            Text(digest.highlight)
+                .font(Typography.supporting)
+                .foregroundStyle(Color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: Spacing.space12) {
+                digestStat(
+                    title: "Days",
+                    value: "\(digest.daysTracked)",
+                    subtitle: "tracked"
+                )
+                digestStat(
+                    title: "Meals",
+                    value: "\(digest.mealsLogged)",
+                    subtitle: "logged"
+                )
+                digestStat(
+                    title: "Avg cal",
+                    value: digest.daysTracked == 0 ? "—" : "\(Int(digest.averageCalories.rounded()))",
+                    subtitle: digest.targetCalories > 0
+                        ? "of \(Int(digest.targetCalories))"
+                        : "per day"
+                )
+            }
+
+            if digest.daysTracked > 0 {
+                MacroProgressView(
+                    label: "Avg protein this week",
+                    current: digest.averageProtein,
+                    goal: max(digest.targetProtein, 1),
+                    unit: "g",
+                    tint: .macroProtein
+                )
+            }
+        }
+        .padding(Spacing.cardPaddingCompact)
+        .background(Color.surfacePrimary)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Weekly digest. \(digest.highlight)")
+    }
+
+    private func digestStat(title: String, value: String, subtitle: String) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.space4) {
+            Text(title)
+                .font(Typography.caption)
+                .foregroundStyle(Color.textSecondary)
+            Text(value)
+                .font(Typography.macroValue)
+                .foregroundStyle(Color.textPrimary)
+            Text(subtitle)
+                .font(Typography.caption)
+                .foregroundStyle(Color.textSecondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var weightCard: some View {
