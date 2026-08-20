@@ -33,7 +33,7 @@ struct SettingsView: View {
                         .foregroundStyle(Color.textSecondary)
                 }
                 Section("About") {
-                    LabeledContent("Version", value: "0.3.0")
+                    LabeledContent("Version", value: "0.4.0")
                     Text("Nutrition estimates are for informational tracking and may be inaccurate. This app does not provide medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)

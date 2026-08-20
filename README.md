@@ -29,5 +29,6 @@ Or:
 - **Phase 0** — App shell, design system (CI verified)
 - **Phase 1** — Onboarding + targets (CI verified)
 - **Phase 2** — Local diary / Quick Add / History (CI verified)
-- **Phase 3** — Camera scan + mock analysis → review → save
-- **Next: Phase 4** — Real nutrition repository (USDA search)
+- **Phase 3** — Camera scan + mock analysis → review → save (CI verified)
+- **Phase 4** — Nutrition catalog search + food editor; scan resolves via catalog
+- **Next: Phase 5** — Cloud AI meal analysis backend

@@ -14,6 +14,7 @@ final class TodayViewModel {
     var isLoading = true
     var errorMessage: String?
     var showQuickAdd = false
+    var showFoodSearch = false
 
     init(
         mealRepository: any MealRepository,
@@ -141,6 +142,11 @@ private struct TodayContent: View {
                 Task { await viewModel.load() }
             }
         }
+        .sheet(isPresented: $viewModel.showFoodSearch) {
+            FoodSearchView {
+                Task { await viewModel.load() }
+            }
+        }
     }
 
     @ViewBuilder
@@ -202,6 +208,20 @@ private struct TodayContent: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Quick add meal")
+
+            Button {
+                viewModel.showFoodSearch = true
+            } label: {
+                Label("Search", systemImage: "magnifyingglass")
+                    .font(Typography.supporting.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Spacing.space16)
+                    .foregroundStyle(Color.textPrimary)
+                    .background(Color.surfacePrimary)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Search foods")
         }
     }
 
@@ -239,12 +259,17 @@ private struct TodayContent: View {
             Text("Nothing logged yet.")
                 .font(Typography.sectionHeading)
                 .foregroundStyle(Color.textPrimary)
-            Text("Quick add a meal you already know, or use Scan when photo logging is ready.")
+            Text("Search the food catalog, quick-add a meal you know, or scan a plate.")
                 .font(Typography.supporting)
                 .foregroundStyle(Color.textSecondary)
                 .multilineTextAlignment(.center)
-            PrimaryButton(title: "Quick add") {
-                viewModel.showQuickAdd = true
+            VStack(spacing: Spacing.space12) {
+                PrimaryButton(title: "Search foods") {
+                    viewModel.showFoodSearch = true
+                }
+                SecondaryButton(title: "Quick add") {
+                    viewModel.showQuickAdd = true
+                }
             }
         }
         .frame(maxWidth: .infinity)

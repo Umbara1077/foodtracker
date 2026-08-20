@@ -3,10 +3,11 @@ import Testing
 import Foundation
 
 struct MealAnalysisTests {
-    @Test("Mock vision + fixture nutrition produces a reviewable draft")
+    @Test("Mock vision + catalog nutrition produces a reviewable draft")
     func chickenBowlAnalysis() async throws {
         let service = MealAnalysisService(
-            visionProvider: MockMealVisionProvider(fixture: .chickenRiceBowl, delayNanoseconds: 0)
+            visionProvider: MockMealVisionProvider(fixture: .chickenRiceBowl, delayNanoseconds: 0),
+            nutritionRepository: LocalNutritionRepository()
         )
         var stages: [MealAnalysisStage] = []
         let draft = try await service.analyze(
@@ -19,14 +20,18 @@ struct MealAnalysisTests {
         #expect(draft.nutrients.calories > 0)
         #expect(draft.calorieRangeHigh >= draft.calorieRangeLow)
         #expect(stages.contains(.identifyingFood))
+        #expect(stages.contains(.resolvingNutrition))
         #expect(stages.contains(.complete))
         #expect(draft.source == .photoScan)
+        // Catalog should resolve chicken / rice / avocado; sauce may use fixture fallback.
+        #expect(draft.items.contains(where: { $0.nutritionSourceLabel.contains("Catalog") }))
     }
 
     @Test("Empty image data fails")
     func emptyImage() async throws {
         let service = MealAnalysisService(
-            visionProvider: MockMealVisionProvider(delayNanoseconds: 0)
+            visionProvider: MockMealVisionProvider(delayNanoseconds: 0),
+            nutritionRepository: LocalNutritionRepository()
         )
         do {
             _ = try await service.analyze(
@@ -45,7 +50,8 @@ struct MealAnalysisTests {
     @Test("Empty plate fixture yields no items")
     func emptyPlate() async throws {
         let service = MealAnalysisService(
-            visionProvider: MockMealVisionProvider(fixture: .emptyPlate, delayNanoseconds: 0)
+            visionProvider: MockMealVisionProvider(fixture: .emptyPlate, delayNanoseconds: 0),
+            nutritionRepository: LocalNutritionRepository()
         )
         let draft = try await service.analyze(
             imageData: Data(repeating: 2, count: 8),

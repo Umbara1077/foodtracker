@@ -1,6 +1,6 @@
 import Foundation
 
-/// Deterministic fixture provider for Phase 3 — no network / no API keys.
+/// Deterministic fixture provider for Phase 3/4 — no network / no API keys.
 struct MockMealVisionProvider: MealVisionProvider {
     let id = "mock-fixture"
 
@@ -50,7 +50,7 @@ struct MockMealVisionProvider: MealVisionProvider {
                     ),
                     VisionFoodItem(
                         displayName: "Avocado",
-                        canonicalQuery: "avocado raw",
+                        canonicalQuery: "avocado",
                         estimatedGrams: 55,
                         gramRangeLow: 40,
                         gramRangeHigh: 70,
@@ -74,7 +74,7 @@ struct MockMealVisionProvider: MealVisionProvider {
                 items: [
                     VisionFoodItem(
                         displayName: "Greek yogurt",
-                        canonicalQuery: "greek yogurt plain",
+                        canonicalQuery: "greek yogurt",
                         estimatedGrams: 170,
                         gramRangeLow: 150,
                         gramRangeHigh: 190,
@@ -111,7 +111,7 @@ struct MockMealVisionProvider: MealVisionProvider {
     }
 }
 
-/// Phase 3 nutrition resolver: maps canonical queries to per-100g fixtures (USDA-shaped, local only).
+/// Small fallback table when catalog search misses.
 enum FixtureNutritionDatabase {
     struct Entry {
         let name: String
@@ -120,45 +120,19 @@ enum FixtureNutritionDatabase {
     }
 
     static let entries: [String: Entry] = [
-        "chicken breast grilled": Entry(
-            name: "Grilled chicken breast",
-            per100g: NutrientSet(calories: 165, protein: 31, carbs: 0, fat: 3.6),
-            sourceLabel: "Fixture · USDA-shaped"
-        ),
-        "white rice cooked": Entry(
-            name: "Cooked white rice",
-            per100g: NutrientSet(calories: 130, protein: 2.7, carbs: 28, fat: 0.3),
-            sourceLabel: "Fixture · USDA-shaped"
-        ),
-        "avocado raw": Entry(
-            name: "Avocado",
-            per100g: NutrientSet(calories: 160, protein: 2, carbs: 8.5, fat: 14.7),
-            sourceLabel: "Fixture · USDA-shaped"
-        ),
         "savory sauce": Entry(
             name: "Savory sauce",
             per100g: NutrientSet(calories: 120, protein: 1, carbs: 8, fat: 9),
             sourceLabel: "Fixture estimate"
         ),
-        "greek yogurt plain": Entry(
-            name: "Greek yogurt",
-            per100g: NutrientSet(calories: 97, protein: 9, carbs: 3.6, fat: 5),
-            sourceLabel: "Fixture · USDA-shaped"
-        ),
-        "granola": Entry(
-            name: "Granola",
-            per100g: NutrientSet(calories: 471, protein: 10, carbs: 64, fat: 20),
-            sourceLabel: "Fixture · USDA-shaped"
-        ),
-        "blueberries": Entry(
-            name: "Blueberries",
-            per100g: NutrientSet(calories: 57, protein: 0.7, carbs: 14.5, fat: 0.3),
-            sourceLabel: "Fixture · USDA-shaped"
-        ),
     ]
 
     static func lookup(_ query: String) -> Entry {
-        if let hit = entries[query.lowercased()] { return hit }
+        let key = query.lowercased()
+        if let hit = entries[key] { return hit }
+        if let hit = entries.first(where: { key.contains($0.key) || $0.key.contains(key) })?.value {
+            return hit
+        }
         return Entry(
             name: query,
             per100g: NutrientSet(calories: 150, protein: 8, carbs: 15, fat: 6),
@@ -167,18 +141,31 @@ enum FixtureNutritionDatabase {
     }
 
     static func scale(_ per100g: NutrientSet, grams: Double) -> NutrientSet {
-        let factor = grams / 100.0
-        return NutrientSet(
-            calories: (per100g.calories * factor).rounded(),
-            protein: (per100g.protein * factor * 10).rounded() / 10,
-            carbs: (per100g.carbs * factor * 10).rounded() / 10,
-            fat: (per100g.fat * factor * 10).rounded() / 10
+        NutritionResolver.nutrients(
+            for: NutritionFood(
+                id: "tmp",
+                source: .aiEstimate,
+                name: "tmp",
+                brand: nil,
+                serving: nil,
+                per100g: per100g
+            ),
+            grams: grams
         )
     }
 }
 
 struct MealAnalysisService: MealAnalysisServing {
     let visionProvider: any MealVisionProvider
+    let nutritionRepository: any NutritionRepository
+
+    init(
+        visionProvider: any MealVisionProvider,
+        nutritionRepository: any NutritionRepository
+    ) {
+        self.visionProvider = visionProvider
+        self.nutritionRepository = nutritionRepository
+    }
 
     func analyze(
         imageData: Data,
@@ -196,23 +183,23 @@ struct MealAnalysisService: MealAnalysisServing {
         onStage(.resolvingNutrition)
         var items: [ResolvedMealItem] = []
         for visionItem in draft.items {
-            let entry = FixtureNutritionDatabase.lookup(visionItem.canonicalQuery)
-            let nutrients = FixtureNutritionDatabase.scale(entry.per100g, grams: visionItem.estimatedGrams)
-            let low = FixtureNutritionDatabase.scale(entry.per100g, grams: visionItem.gramRangeLow)
-            let high = FixtureNutritionDatabase.scale(entry.per100g, grams: visionItem.gramRangeHigh)
+            let food = try await resolveFood(for: visionItem, locale: Locale(identifier: context.localeIdentifier))
+            let nutrients = NutritionResolver.nutrients(for: food, grams: visionItem.estimatedGrams)
+            let low = NutritionResolver.nutrients(for: food, grams: visionItem.gramRangeLow)
+            let high = NutritionResolver.nutrients(for: food, grams: visionItem.gramRangeHigh)
             items.append(
                 ResolvedMealItem(
                     id: visionItem.id,
-                    displayName: visionItem.displayName,
+                    displayName: food.name,
                     grams: visionItem.estimatedGrams,
                     gramRangeLow: visionItem.gramRangeLow,
                     gramRangeHigh: visionItem.gramRangeHigh,
                     nutrients: nutrients,
-                    per100g: entry.per100g,
+                    per100g: food.per100g,
                     calorieRangeLow: low.calories,
                     calorieRangeHigh: high.calories,
                     confidence: MealConfidence.from(score: visionItem.confidence),
-                    nutritionSourceLabel: entry.sourceLabel,
+                    nutritionSourceLabel: sourceLabel(food.source),
                     userEdited: false
                 )
             )
@@ -231,14 +218,44 @@ struct MealAnalysisService: MealAnalysisServing {
             originalImageData: normalized
         )
     }
+
+    private func resolveFood(for item: VisionFoodItem, locale: Locale) async throws -> NutritionFood {
+        let query = NutritionSearchQuery(
+            text: item.canonicalQuery,
+            brand: item.brandOrRestaurant,
+            preparation: item.preparation,
+            locale: locale
+        )
+        let candidates = try await nutritionRepository.search(query)
+        if let best = candidates.first, best.score >= 0.12 {
+            return best.food
+        }
+
+        let entry = FixtureNutritionDatabase.lookup(item.canonicalQuery)
+        return NutritionFood(
+            id: "fixture.\(item.canonicalQuery)",
+            source: .aiEstimate,
+            name: item.displayName,
+            brand: item.brandOrRestaurant,
+            serving: ServingDescriptor(label: "portion", grams: item.estimatedGrams),
+            per100g: entry.per100g
+        )
+    }
+
+    private func sourceLabel(_ source: NutritionSource) -> String {
+        switch source {
+        case .usdaShapedFixture: "Catalog · USDA-shaped"
+        case .usdaFoodDataCentral: "USDA FoodData Central"
+        case .openFoodFacts: "Open Food Facts"
+        case .userCustom: "Custom"
+        case .aiEstimate: "AI estimate — review recommended"
+        }
+    }
 }
 
 enum ImagePreprocessor {
-    /// Phase 3: basic size cap without UIKit dependency in unit tests.
-    /// Real JPEG resize happens in the UI layer before calling analysis.
     static func normalizeForUpload(_ data: Data, maxBytes: Int = 2_500_000) -> Data {
         if data.count <= maxBytes { return data }
-        // Keep a prefix only as a last resort for oversized mock payloads in tests.
         return data.prefix(maxBytes)
     }
 }

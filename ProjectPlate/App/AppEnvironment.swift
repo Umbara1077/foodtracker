@@ -7,17 +7,21 @@ struct AppEnvironment: Sendable {
     var mealRepository: any MealRepository
     var profileRepository: any ProfileRepository
     var targetRepository: any TargetRepository
+    var nutritionRepository: any NutritionRepository
     var mealAnalysisService: any MealAnalysisServing
     var settings: SettingsStore
     var analytics: any AnalyticsClient
 
     static func live(modelContainer: ModelContainer) -> AppEnvironment {
-        AppEnvironment(
+        let nutrition = LocalNutritionRepository()
+        return AppEnvironment(
             mealRepository: SwiftDataMealRepository(modelContainer: modelContainer),
             profileRepository: SwiftDataProfileRepository(modelContainer: modelContainer),
             targetRepository: SwiftDataTargetRepository(modelContainer: modelContainer),
+            nutritionRepository: nutrition,
             mealAnalysisService: MealAnalysisService(
-                visionProvider: MockMealVisionProvider(fixture: .chickenRiceBowl)
+                visionProvider: MockMealVisionProvider(fixture: .chickenRiceBowl),
+                nutritionRepository: nutrition
             ),
             settings: SettingsStore(),
             analytics: NoOpAnalyticsClient()
@@ -43,12 +47,15 @@ struct AppEnvironment: Sendable {
             inputMethod: .quickAdd
         )
 
+        let nutrition = LocalNutritionRepository()
         return AppEnvironment(
             mealRepository: InMemoryMealRepository(meals: [sampleMeal]),
             profileRepository: InMemoryProfileRepository(profile: profile),
             targetRepository: InMemoryTargetRepository(targets: [target]),
+            nutritionRepository: nutrition,
             mealAnalysisService: MealAnalysisService(
-                visionProvider: MockMealVisionProvider(fixture: .chickenRiceBowl, delayNanoseconds: 0)
+                visionProvider: MockMealVisionProvider(fixture: .chickenRiceBowl, delayNanoseconds: 0),
+                nutritionRepository: nutrition
             ),
             settings: SettingsStore(),
             analytics: NoOpAnalyticsClient()

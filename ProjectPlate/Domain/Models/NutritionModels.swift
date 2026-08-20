@@ -1,0 +1,121 @@
+import Foundation
+
+enum NutritionSource: String, Codable, Sendable {
+    case usdaShapedFixture
+    case usdaFoodDataCentral
+    case openFoodFacts
+    case userCustom
+    case aiEstimate
+}
+
+struct NutritionFoodID: Hashable, Codable, Sendable {
+    var rawValue: String
+}
+
+struct ServingDescriptor: Codable, Sendable, Equatable {
+    var label: String
+    var grams: Double
+}
+
+struct NutritionFood: Codable, Sendable, Equatable, Identifiable {
+    var id: String
+    var source: NutritionSource
+    var name: String
+    var brand: String?
+    var serving: ServingDescriptor?
+    var per100g: NutrientSet
+
+    var nutritionFoodID: NutritionFoodID { NutritionFoodID(rawValue: id) }
+}
+
+struct NutritionCandidate: Identifiable, Sendable, Equatable {
+    var id: String { food.id }
+    var food: NutritionFood
+    var score: Double
+}
+
+struct NutritionSearchQuery: Sendable {
+    var text: String
+    var brand: String?
+    var preparation: String?
+    var locale: Locale
+}
+
+protocol NutritionRepository: Sendable {
+    func search(_ query: NutritionSearchQuery) async throws -> [NutritionCandidate]
+    func details(id: NutritionFoodID) async throws -> NutritionFood
+}
+
+enum NutritionResolver {
+    /// Spec §34.5 ranking weights.
+    static func rank(
+        candidates: [NutritionFood],
+        query: NutritionSearchQuery
+    ) -> [NutritionCandidate] {
+        let q = query.text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty else { return [] }
+
+        return candidates.map { food in
+            let name = food.name.lowercased()
+            let brand = (food.brand ?? "").lowercased()
+            var score = 0.0
+
+            // lexical similarity 0.35
+            if name == q {
+                score += 0.35
+            } else if name.hasPrefix(q) {
+                score += 0.28
+            } else if name.contains(q) || q.split(separator: " ").allSatisfy({ name.contains($0) }) {
+                score += 0.18
+            } else {
+                score += tokenOverlap(q, name) * 0.35
+            }
+
+            // prep match 0.20
+            if let prep = query.preparation?.lowercased(), !prep.isEmpty {
+                if name.contains(prep) { score += 0.20 }
+            }
+
+            // brand match 0.20
+            if let brandQuery = query.brand?.lowercased(), !brandQuery.isEmpty {
+                if brand.contains(brandQuery) || brandQuery.contains(brand) { score += 0.20 }
+            }
+
+            // source confidence 0.15
+            switch food.source {
+            case .usdaFoodDataCentral, .usdaShapedFixture: score += 0.15
+            case .openFoodFacts: score += 0.10
+            case .userCustom: score += 0.08
+            case .aiEstimate: score += 0.03
+            }
+
+            // slight boost for having a default serving
+            if food.serving != nil { score += 0.02 }
+
+            return NutritionCandidate(food: food, score: min(score, 1.0))
+        }
+        .filter { $0.score > 0.05 }
+        .sorted { $0.score > $1.score }
+    }
+
+    private static func tokenOverlap(_ query: String, _ name: String) -> Double {
+        let qTokens = Set(query.split(separator: " ").map(String.init))
+        let nTokens = Set(name.split(separator: " ").map(String.init))
+        guard !qTokens.isEmpty else { return 0 }
+        let overlap = qTokens.intersection(nTokens).count
+        return Double(overlap) / Double(qTokens.count)
+    }
+
+    static func nutrients(for food: NutritionFood, grams: Double) -> NutrientSet {
+        let factor = grams / 100.0
+        return NutrientSet(
+            calories: (food.per100g.calories * factor).rounded(),
+            protein: (food.per100g.protein * factor * 10).rounded() / 10,
+            carbs: (food.per100g.carbs * factor * 10).rounded() / 10,
+            fat: (food.per100g.fat * factor * 10).rounded() / 10,
+            fiber: food.per100g.fiber.map { ($0 * factor * 10).rounded() / 10 },
+            sugar: food.per100g.sugar.map { ($0 * factor * 10).rounded() / 10 },
+            sodiumMg: food.per100g.sodiumMg.map { ($0 * factor).rounded() }
+        )
+    }
+}
