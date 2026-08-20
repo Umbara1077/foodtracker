@@ -59,7 +59,7 @@ final class ProgressViewModel {
     }
 
     func displayWeight(_ kg: Double) -> String {
-        if unitSystem == .imperial {
+        if unitSystem == .us {
             let lbs = kg * 2.2046226218
             return String(format: "%.1f lb", lbs)
         }
@@ -68,7 +68,7 @@ final class ProgressViewModel {
 
     func displayChange(_ deltaKg: Double) -> String {
         let sign = deltaKg > 0 ? "+" : ""
-        if unitSystem == .imperial {
+        if unitSystem == .us {
             return String(format: "%@%.1f lb", sign, deltaKg * 2.2046226218)
         }
         return String(format: "%@%.1f kg", sign, deltaKg)
