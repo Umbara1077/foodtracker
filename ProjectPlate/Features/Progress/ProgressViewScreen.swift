@@ -15,10 +15,13 @@ final class ProgressViewModel {
     var consistency: ConsistencyStats = .zero
     var weeklyDigest: WeeklyDigest = .empty
     var streak: TrackingStreak = .zero
+    var adaptiveSuggestion: AdaptiveGoalSuggestion?
     var unitSystem: UnitSystem = .metric
     var isLoading = true
     var errorMessage: String?
+    var adaptiveMessage: String?
     var showAddWeight = false
+    var isApplyingAdaptive = false
 
     init(
         weightRepository: any WeightRepository,
@@ -44,6 +47,7 @@ final class ProgressViewModel {
         let weekEnd = calendar.startOfDay(for: end)
         let weekStart = calendar.date(byAdding: .day, value: -6, to: weekEnd) ?? weekEnd
         let streakStart = calendar.date(byAdding: .day, value: -120, to: weekEnd) ?? weekEnd
+        let adaptiveStart = calendar.date(byAdding: .day, value: -45, to: weekEnd) ?? weekEnd
         do {
             async let weightTask = weightRepository.entries(from: start, to: end)
             async let latestTask = weightRepository.latest()
@@ -53,10 +57,13 @@ final class ProgressViewModel {
             async let weekMealsTask = mealRepository.dailyTotals(from: weekStart, to: weekEnd, calendar: calendar)
             async let weekWeightsTask = weightRepository.entries(from: weekStart, to: end)
             async let streakMealsTask = mealRepository.dailyTotals(from: streakStart, to: weekEnd, calendar: calendar)
+            async let adaptiveWeightsTask = weightRepository.entries(from: adaptiveStart, to: end)
+            async let adaptiveMealsTask = mealRepository.dailyTotals(from: adaptiveStart, to: weekEnd, calendar: calendar)
 
             entries = try await weightTask
             latest = try await latestTask
-            unitSystem = try await profileTask?.unitSystem ?? .metric
+            let profile = try await profileTask
+            unitSystem = profile?.unitSystem ?? .metric
             let target = try await targetTask
             let daily = try await dailyTask
             consistency = ProgressMath.consistency(dailyTotals: daily, target: target)
@@ -72,10 +79,58 @@ final class ProgressViewModel {
                 now: end,
                 calendar: calendar
             )
+            adaptiveSuggestion = makeAdaptiveSuggestion(
+                profile: profile,
+                target: target,
+                weights: try await adaptiveWeightsTask,
+                meals: try await adaptiveMealsTask
+            )
         } catch {
             errorMessage = "Could not load progress."
         }
         isLoading = false
+    }
+
+    func applyAdaptiveSuggestion() async {
+        guard let suggestion = adaptiveSuggestion else { return }
+        isApplyingAdaptive = true
+        adaptiveMessage = nil
+        defer { isApplyingAdaptive = false }
+        do {
+            let snapshot = AdaptiveGoalEngine.makeTarget(from: suggestion)
+            try await targetRepository.saveTarget(snapshot)
+            AdaptiveGoalPreference.clearDismissal()
+            adaptiveSuggestion = nil
+            adaptiveMessage = "Updated today’s calorie target to \(snapshot.calories)."
+            await load()
+        } catch {
+            adaptiveMessage = "Could not save the new target."
+        }
+    }
+
+    func dismissAdaptiveSuggestion() {
+        AdaptiveGoalPreference.dismiss(forDays: 14)
+        adaptiveSuggestion = nil
+        adaptiveMessage = "Suggestion hidden for two weeks."
+    }
+
+    private func makeAdaptiveSuggestion(
+        profile: UserProfile?,
+        target: NutritionTargetSnapshot?,
+        weights: [WeightEntry],
+        meals: [(date: Date, totals: DayNutritionTotals)]
+    ) -> AdaptiveGoalSuggestion? {
+        guard AdaptiveGoalPreference.isEnabled() else { return nil }
+        guard !AdaptiveGoalPreference.isDismissed() else { return nil }
+        guard let profile, let target else { return nil }
+        let daysLogged = meals.filter { $0.totals.mealCount > 0 }.count
+        return AdaptiveGoalEngine.suggestion(
+            goalType: profile.goalType,
+            macroPreference: profile.macroPreference,
+            currentTarget: target,
+            weightEntries: weights,
+            daysLoggedRecently: daysLogged
+        )
     }
 
     func displayWeight(_ kg: Double) -> String {
@@ -149,8 +204,14 @@ private struct ProgressContent: View {
                 } else {
                     weeklyDigestCard
                     streakCard
+                    adaptiveGoalCard
                     weightCard
                     consistencyCard
+                }
+                if let adaptiveMessage = viewModel.adaptiveMessage {
+                    Text(adaptiveMessage)
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
                 }
                 if let error = viewModel.errorMessage {
                     Text(error)
@@ -271,6 +332,45 @@ private struct ProgressContent: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(streak.title). \(streak.subtitle)")
+    }
+
+    @ViewBuilder
+    private var adaptiveGoalCard: some View {
+        if let suggestion = viewModel.adaptiveSuggestion {
+            VStack(alignment: .leading, spacing: Spacing.space12) {
+                Text("Adaptive goal")
+                    .font(Typography.sectionHeading)
+                    .foregroundStyle(Color.textPrimary)
+                Text(suggestion.title)
+                    .font(Typography.supporting.weight(.semibold))
+                    .foregroundStyle(Color.textPrimary)
+                Text(suggestion.detail)
+                    .font(Typography.supporting)
+                    .foregroundStyle(Color.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("\(suggestion.currentCalories) → \(suggestion.suggestedCalories) cal")
+                    .font(Typography.caption.weight(.semibold))
+                    .foregroundStyle(Color.brandPrimary)
+                HStack(spacing: Spacing.space12) {
+                    Button("Use \(suggestion.suggestedCalories) cal") {
+                        Task { await viewModel.applyAdaptiveSuggestion() }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color.brandPrimary)
+                    .disabled(viewModel.isApplyingAdaptive)
+                    Button("Not now") {
+                        viewModel.dismissAdaptiveSuggestion()
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(viewModel.isApplyingAdaptive)
+                }
+            }
+            .padding(Spacing.cardPaddingCompact)
+            .background(Color.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("\(suggestion.title). \(suggestion.detail)")
+        }
     }
 
     private var weightCard: some View {

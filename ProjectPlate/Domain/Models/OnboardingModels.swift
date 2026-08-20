@@ -133,6 +133,7 @@ enum TargetSource: String, Codable, Sendable {
     case onboardingEstimate
     case manual
     case defaultPlaceholder
+    case adaptiveSuggestion
 }
 
 struct NutritionTargetSnapshot: Codable, Sendable, Equatable, Identifiable {
