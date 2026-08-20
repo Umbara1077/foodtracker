@@ -44,6 +44,8 @@ struct NutritionSearchQuery: Sendable {
 protocol NutritionRepository: Sendable {
     func search(_ query: NutritionSearchQuery) async throws -> [NutritionCandidate]
     func details(id: NutritionFoodID) async throws -> NutritionFood
+    /// Lookup by UPC/EAN. Returns nil when unknown — never invent nutrition from digits alone.
+    func lookupBarcode(_ code: String) async throws -> NutritionFood?
 }
 
 enum NutritionResolver {

@@ -31,8 +31,9 @@ Or:
 - **Phase 2** — Local diary / Quick Add / History (CI verified)
 - **Phase 3** — Camera scan + mock analysis → review → save (CI verified)
 - **Phase 4** — Nutrition catalog search + food editor; scan resolves via catalog (CI verified)
-- **Phase 5** — Managed cloud AI gateway (`backend/`) + iOS HTTP client / quota / validation
-- **Next: Phase 6** — Barcode scan + product lookup
+- **Phase 5** — Managed cloud AI gateway (`backend/`) + iOS HTTP client / quota / validation (CI verified)
+- **Phase 6** — Barcode scan + product lookup (bundled cache → Open Food Facts) + portion add
+- **Next: Phase 7** — Progress + weight tracking
 
 ## Cloud AI backend
 

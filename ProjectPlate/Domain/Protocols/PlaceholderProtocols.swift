@@ -18,6 +18,7 @@ enum AnalyticsEvent: Sendable {
     case onboardingStarted
     case onboardingCompleted
     case scannerOpened
+    case barcodeOpened
     case mealSaved
     case mealDeleted
 }

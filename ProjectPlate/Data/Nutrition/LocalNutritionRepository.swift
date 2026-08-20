@@ -70,10 +70,16 @@ enum BundledNutritionCatalog {
 
 actor LocalNutritionRepository: NutritionRepository {
     private let foods: [NutritionFood]
+    private let openFoodFacts: OpenFoodFactsClient?
     private var cache: [String: [NutritionCandidate]] = [:]
+    private var barcodeCache: [String: NutritionFood] = [:]
 
-    init(foods: [NutritionFood] = BundledNutritionCatalog.foods) {
+    init(
+        foods: [NutritionFood] = BundledNutritionCatalog.foods,
+        openFoodFacts: OpenFoodFactsClient? = OpenFoodFactsClient()
+    ) {
         self.foods = foods
+        self.openFoodFacts = openFoodFacts
     }
 
     func search(_ query: NutritionSearchQuery) async throws -> [NutritionCandidate] {
@@ -95,19 +101,50 @@ actor LocalNutritionRepository: NutritionRepository {
     }
 
     func details(id: NutritionFoodID) async throws -> NutritionFood {
-        guard let food = foods.first(where: { $0.id == id.rawValue }) else {
-            throw NutritionRepositoryError.notFound
+        if let food = foods.first(where: { $0.id == id.rawValue }) {
+            return food
         }
-        return food
+        if let food = barcodeCache.values.first(where: { $0.id == id.rawValue }) {
+            return food
+        }
+        if let food = BundledBarcodeCatalog.entries.first(where: { $0.food.id == id.rawValue })?.food {
+            return food
+        }
+        throw NutritionRepositoryError.notFound
+    }
+
+    func lookupBarcode(_ code: String) async throws -> NutritionFood? {
+        let normalized = BarcodeNormalizer.normalize(code)
+        guard BarcodeNormalizer.isPlausible(normalized) else { return nil }
+
+        if let cached = barcodeCache[normalized] {
+            return cached
+        }
+        if let local = BundledBarcodeCatalog.food(forBarcode: normalized) {
+            barcodeCache[normalized] = local
+            return local
+        }
+        guard let openFoodFacts else { return nil }
+        do {
+            if let remote = try await openFoodFacts.lookup(barcode: normalized) {
+                barcodeCache[normalized] = remote
+                return remote
+            }
+        } catch NutritionRepositoryError.networkUnavailable {
+            return nil
+        }
+        return nil
     }
 }
 
 enum NutritionRepositoryError: Error, LocalizedError, Sendable {
     case notFound
+    case networkUnavailable
 
     var errorDescription: String? {
         switch self {
         case .notFound: "Food not found in the nutrition catalog."
+        case .networkUnavailable: "You’re offline. Try a known barcode or search foods."
         }
     }
 }

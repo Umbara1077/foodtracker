@@ -5,6 +5,7 @@ struct FoodEditorSheet: View {
     @Environment(\.appEnvironment) private var environment
 
     let food: NutritionFood
+    var inputMethod: MealInputMethod
     var onSaved: (() -> Void)?
 
     @State private var grams: Double
@@ -13,8 +14,13 @@ struct FoodEditorSheet: View {
     @State private var errorMessage: String?
     @State private var isSaving = false
 
-    init(food: NutritionFood, onSaved: (() -> Void)? = nil) {
+    init(
+        food: NutritionFood,
+        inputMethod: MealInputMethod = .manualSearch,
+        onSaved: (() -> Void)? = nil
+    ) {
         self.food = food
+        self.inputMethod = inputMethod
         self.onSaved = onSaved
         _grams = State(initialValue: food.serving?.grams ?? 100)
     }
@@ -29,6 +35,11 @@ struct FoodEditorSheet: View {
                 Section("Food") {
                     Text(food.name)
                         .font(Typography.body.weight(.semibold))
+                    if let brand = food.brand, !brand.isEmpty {
+                        Text(brand)
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    }
                     Text(sourceLabel)
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
@@ -71,7 +82,7 @@ struct FoodEditorSheet: View {
                     }
                 }
             }
-            .navigationTitle("Add food")
+            .navigationTitle(inputMethod == .barcode ? "Add barcode item" : "Add food")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -105,7 +116,7 @@ struct FoodEditorSheet: View {
             title: food.name,
             notes: note.isEmpty ? nil : note,
             nutrients: nutrients,
-            inputMethod: .manualSearch
+            inputMethod: inputMethod
         )
         do {
             try await environment.mealRepository.save(meal)
