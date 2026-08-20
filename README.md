@@ -39,6 +39,7 @@ Or:
 - **Phase 10** — Privacy consent, policy/terms, export/delete, analytics hygiene, crash breadcrumbs (CI verified)
 - **Phase 11** — TestFlight support: correction capture, fixture AI benchmark, readiness checklist; paywall A/B off by default (CI verified). Cohort ops (25–50 testers) are outside the repo.
 - **V1.1 / Phase 12** — Frequent meals on Today (auto-ranked from use count + recency); log again without AI cost (CI verified)
+- **Phase 13** — Scan retry: one auto-retry for transient failures, failed-scan recovery (retry / retake / manual), slow-analysis hints (CI verified)
 
 App Store screenshot packs and UI snapshot suites remain manual Mac follow-ups before submission. See [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md).
 

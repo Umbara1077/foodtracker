@@ -10,7 +10,7 @@ final class ScannerViewModel {
         case retake(UIImage)
         case analyzing(UIImage, MealAnalysisStage)
         case result(ReviewableMealDraft)
-        case failed(String)
+        case failed(message: String, image: UIImage?, canRetryAnalysis: Bool)
     }
 
     private let analysisService: any MealAnalysisServing
@@ -26,6 +26,9 @@ final class ScannerViewModel {
     var isFlashOn = false
     var pickerItem: PhotosPickerItem?
     var analyzeImmediately = false
+    var slowAnalysisHint: String?
+    var showManualAdd = false
+    private var analysisStartedAt: Date?
 
     init(
         analysisService: any MealAnalysisServing,
@@ -82,7 +85,11 @@ final class ScannerViewModel {
         do {
             let data = try await cameraController.capturePhoto()
             guard let image = UIImage(data: data) else {
-                phase = .failed(MealScanError.invalidImage.localizedDescription)
+                presentFailure(
+                    message: ScanRetryPolicy.userMessage(for: MealScanError.invalidImage),
+                    image: nil,
+                    error: MealScanError.invalidImage
+                )
                 return
             }
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -92,7 +99,11 @@ final class ScannerViewModel {
                 phase = .retake(image)
             }
         } catch {
-            phase = .failed(error.localizedDescription)
+            presentFailure(
+                message: ScanRetryPolicy.userMessage(for: error),
+                image: nil,
+                error: error
+            )
         }
     }
 
@@ -102,12 +113,20 @@ final class ScannerViewModel {
             guard let data = try await pickerItem.loadTransferable(type: Data.self),
                   let image = UIImage(data: data)
             else {
-                phase = .failed(MealScanError.invalidImage.localizedDescription)
+                presentFailure(
+                    message: ScanRetryPolicy.userMessage(for: MealScanError.invalidImage),
+                    image: nil,
+                    error: MealScanError.invalidImage
+                )
                 return
             }
             phase = .retake(image)
         } catch {
-            phase = .failed(error.localizedDescription)
+            presentFailure(
+                message: ScanRetryPolicy.userMessage(for: error),
+                image: nil,
+                error: error
+            )
         }
         self.pickerItem = nil
     }
@@ -121,9 +140,13 @@ final class ScannerViewModel {
         await analyze(image: image)
     }
 
-    func analyze(image: UIImage) async {
+    func analyze(image: UIImage, isAutomaticRetry: Bool = false) async {
         guard let jpeg = MealImageEncoder.jpegData(from: image) else {
-            phase = .failed(MealScanError.invalidImage.localizedDescription)
+            presentFailure(
+                message: ScanRetryPolicy.userMessage(for: MealScanError.invalidImage),
+                image: image,
+                error: MealScanError.invalidImage
+            )
             return
         }
 
@@ -131,13 +154,37 @@ final class ScannerViewModel {
         if let aiScanQuota {
             let allowed = await aiScanQuota.canConsume(isPro: isPro)
             if !allowed {
-                phase = .failed(MealScanError.quotaExceeded.localizedDescription ?? "Quota exceeded")
+                presentFailure(
+                    message: ScanRetryPolicy.userMessage(for: MealScanError.quotaExceeded),
+                    image: image,
+                    error: MealScanError.quotaExceeded
+                )
                 onQuotaExhausted?()
                 return
             }
         }
 
+        if isAutomaticRetry {
+            analytics.track(.scanRetried)
+        }
+
         phase = .analyzing(image, .preparingImage)
+        analysisStartedAt = .now
+        slowAnalysisHint = nil
+        let hintTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 8_000_000_000)
+            guard !Task.isCancelled else { return }
+            if case .analyzing = phase {
+                slowAnalysisHint = "Still working — mixed meals can take a little longer."
+            }
+            try? await Task.sleep(nanoseconds: 12_000_000_000)
+            guard !Task.isCancelled else { return }
+            if case .analyzing = phase {
+                slowAnalysisHint = "This is taking longer than usual. You can cancel and retry."
+            }
+        }
+        defer { hintTask.cancel() }
+
         do {
             let draft = try await analysisService.analyze(
                 imageData: jpeg,
@@ -156,28 +203,66 @@ final class ScannerViewModel {
                 }
             )
             if draft.items.isEmpty {
-                phase = .failed(draft.title.isEmpty
-                    ? "I couldn’t confidently find food in this photo."
-                    : "I couldn’t confidently find food in this photo. \(draft.confidence.userLabel).")
+                presentFailure(
+                    message: ScanRetryPolicy.userMessage(for: MealScanError.invalidStructuredResponse, emptyPlate: true),
+                    image: image,
+                    error: MealScanError.invalidStructuredResponse
+                )
                 return
             }
             // Consume only after a valid structured result.
             _ = await aiScanQuota?.consume(isPro: isPro)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
+            slowAnalysisHint = nil
             phase = .result(draft)
         } catch is CancellationError {
             phase = .camera
         } catch let error as MealScanError where error == .quotaExceeded {
-            phase = .failed(error.localizedDescription)
+            presentFailure(
+                message: ScanRetryPolicy.userMessage(for: error),
+                image: image,
+                error: error
+            )
             onQuotaExhausted?()
         } catch {
-            phase = .failed(error.localizedDescription)
+            if !isAutomaticRetry, ScanRetryPolicy.shouldAutoRetry(error) {
+                let delay = ScanRetryPolicy.jitterNanoseconds()
+                try? await Task.sleep(nanoseconds: delay)
+                await analyze(image: image, isAutomaticRetry: true)
+                return
+            }
+            presentFailure(
+                message: ScanRetryPolicy.userMessage(for: error),
+                image: image,
+                error: error
+            )
         }
     }
 
+    func retryFailedAnalysis() async {
+        guard case .failed(_, let image?, true) = phase else {
+            resetToCamera()
+            return
+        }
+        analytics.track(.scanRetried)
+        await analyze(image: image)
+    }
+
     func resetToCamera() {
+        slowAnalysisHint = nil
+        analysisStartedAt = nil
         phase = .camera
         Task { await startCameraIfPossible() }
+    }
+
+    private func presentFailure(message: String, image: UIImage?, error: Error) {
+        analytics.track(.scanFailed)
+        slowAnalysisHint = nil
+        phase = .failed(
+            message: message,
+            image: image,
+            canRetryAnalysis: image != nil && ScanRetryPolicy.canRetryAnalysis(after: error)
+        )
     }
 }
 
@@ -244,8 +329,8 @@ struct ScannerFlowView: View {
             } onCancel: {
                 viewModel.resetToCamera()
             }
-        case .failed(let message):
-            failedPhase(message)
+        case .failed(let message, let image, let canRetry):
+            failedPhase(message: message, image: image, canRetryAnalysis: canRetry)
         }
     }
 
@@ -393,7 +478,7 @@ struct ScannerFlowView: View {
                 Text(stageTitle(stage))
                     .font(Typography.sectionHeading)
                     .foregroundStyle(Color.textPrimary)
-                Text("Hang tight — mixed meals can take a moment.")
+                Text(viewModel.slowAnalysisHint ?? "Hang tight — mixed meals can take a moment.")
                     .font(Typography.supporting)
                     .foregroundStyle(Color.textSecondary)
                 Button("Cancel") {
@@ -409,16 +494,38 @@ struct ScannerFlowView: View {
         }
     }
 
-    private func failedPhase(_ message: String) -> some View {
+    private func failedPhase(message: String, image: UIImage?, canRetryAnalysis: Bool) -> some View {
         VStack(spacing: Spacing.space16) {
-            Spacer()
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(height: 180)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+                    .padding(.horizontal, Spacing.space24)
+                    .accessibilityHidden(true)
+            }
+            Spacer(minLength: Spacing.space16)
             Text(message)
                 .font(Typography.body)
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
-                .padding()
-            PrimaryButton(title: "Try again") { viewModel.resetToCamera() }
+                .padding(.horizontal, Spacing.space24)
+            if canRetryAnalysis {
+                PrimaryButton(title: "Retry analysis") {
+                    Task { await viewModel.retryFailedAnalysis() }
+                }
                 .padding(.horizontal, Spacing.space32)
+            }
+            SecondaryButton(title: "Retake photo") {
+                viewModel.resetToCamera()
+            }
+            .padding(.horizontal, Spacing.space32)
+            Button("Log manually") {
+                viewModel.showManualAdd = true
+            }
+            .font(Typography.supporting.weight(.semibold))
+            .foregroundStyle(Color.brandPrimary)
             PhotosPicker(selection: $viewModel.pickerItem, matching: .images) {
                 Text("Choose from Photos")
                     .foregroundStyle(Color.brandPrimary)
@@ -426,6 +533,12 @@ struct ScannerFlowView: View {
             Button("Close") { dismiss() }
                 .foregroundStyle(.white.opacity(0.8))
             Spacer()
+        }
+        .sheet(isPresented: $viewModel.showManualAdd) {
+            QuickAddSheet {
+                onSaved?()
+                dismiss()
+            }
         }
     }
 

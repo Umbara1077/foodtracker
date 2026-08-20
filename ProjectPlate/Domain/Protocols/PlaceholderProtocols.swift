@@ -23,6 +23,8 @@ enum AnalyticsEvent: Sendable {
     case barcodeOpened
     case mealSaved
     case mealDeleted
+    case scanFailed
+    case scanRetried
     case paywallViewed
     case cloudAIConsentAccepted
     case cloudAIConsentDeclined
