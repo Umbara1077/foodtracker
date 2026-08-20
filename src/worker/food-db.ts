@@ -100,27 +100,58 @@ function parseQuantity(text: string): number {
 
 export function estimateFromText(raw: string): MacroEstimate {
 	const text = raw.trim().toLowerCase();
-	const qty = parseQuantity(text);
+	if (!text) {
+		return { name: "Meal", calories: 250, protein: 12, carbs: 30, fat: 8 };
+	}
 
+	const hits: MacroEstimate[] = [];
 	for (const entry of FOODS) {
 		if (entry.keys.some((k) => text.includes(k))) {
-			return {
+			const qty = parseQuantity(text);
+			hits.push({
 				name: qty === 1 ? entry.item.name : `${qty}× ${entry.item.name}`,
 				calories: Math.round(entry.item.calories * qty),
 				protein: Math.round(entry.item.protein * qty * 10) / 10,
 				carbs: Math.round(entry.item.carbs * qty * 10) / 10,
 				fat: Math.round(entry.item.fat * qty * 10) / 10,
-			};
+			});
+			// Only apply the leading quantity to the first matched food.
+			break;
 		}
 	}
 
-	// Generic fallback when nothing matches
+	// Second pass: additional foods mentioned after the first match (qty=1 each)
+	if (hits.length) {
+		const firstKey = FOODS.find((f) =>
+			f.keys.some((k) => text.includes(k)),
+		)?.keys[0];
+		for (const entry of FOODS) {
+			if (entry.keys[0] === firstKey) continue;
+			if (entry.keys.some((k) => text.includes(k))) {
+				hits.push({ ...entry.item });
+			}
+		}
+	}
+
+	if (!hits.length) {
+		const qty = parseQuantity(text);
+		return {
+			name: raw.trim(),
+			calories: Math.round(250 * qty),
+			protein: Math.round(12 * qty),
+			carbs: Math.round(30 * qty),
+			fat: Math.round(8 * qty),
+		};
+	}
+
+	if (hits.length === 1) return hits[0];
+
 	return {
-		name: raw.trim() || "Meal",
-		calories: Math.round(250 * qty),
-		protein: Math.round(12 * qty),
-		carbs: Math.round(30 * qty),
-		fat: Math.round(8 * qty),
+		name: hits.map((h) => h.name).join(" + "),
+		calories: hits.reduce((s, h) => s + h.calories, 0),
+		protein: Math.round(hits.reduce((s, h) => s + h.protein, 0) * 10) / 10,
+		carbs: Math.round(hits.reduce((s, h) => s + h.carbs, 0) * 10) / 10,
+		fat: Math.round(hits.reduce((s, h) => s + h.fat, 0) * 10) / 10,
 	};
 }
 
