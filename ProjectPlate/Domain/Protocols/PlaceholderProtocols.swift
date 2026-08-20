@@ -10,6 +10,7 @@ protocol AnalyticsClient: Sendable {
 
 enum AnalyticsEvent: Sendable {
     case onboardingStarted
+    case onboardingCompleted
     case scannerOpened
     case mealSaved
 }
@@ -22,7 +23,6 @@ struct MealSummary: Identifiable, Sendable, Equatable {
     let calories: Double
 }
 
-/// Placeholder repositories for Phase 0 — real SwiftData queries arrive in Phase 2.
 struct InMemoryMealRepository: MealRepository {
     func meals(on day: Date, calendar: Calendar) async throws -> [MealSummary] {
         []
@@ -31,8 +31,6 @@ struct InMemoryMealRepository: MealRepository {
 
 struct SettingsStore: Sendable {
     var saveMealPhotos = true
-    var onboardingComplete = false
-    var cloudAIConsentVersion: String?
 }
 
 struct NoOpAnalyticsClient: AnalyticsClient {

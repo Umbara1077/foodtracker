@@ -1,12 +1,14 @@
 import Foundation
 import Observation
 
-/// Lightweight navigation coordinator for root-level presentations (scanner, future sheets).
+/// Lightweight navigation coordinator for root-level presentations (scanner, onboarding).
 @Observable
 @MainActor
 final class AppRouter {
     var selectedTab: RootTab = .today
     var isScannerPresented = false
+    var needsOnboarding = true
+    var isBootstrapping = true
 
     func openScanner() {
         isScannerPresented = true
@@ -14,6 +16,10 @@ final class AppRouter {
 
     func dismissScanner() {
         isScannerPresented = false
+    }
+
+    func completeOnboarding() {
+        needsOnboarding = false
     }
 }
 

@@ -1,45 +1,75 @@
 import SwiftUI
 
 struct RootTabView: View {
+    @Environment(\.appEnvironment) private var environment
     @State private var router = AppRouter()
 
     var body: some View {
         @Bindable var router = router
 
-        ZStack(alignment: .bottom) {
-            TabView(selection: $router.selectedTab) {
-                TodayView()
-                    .tabItem { Label(RootTab.today.title, systemImage: RootTab.today.systemImage) }
-                    .tag(RootTab.today)
+        Group {
+            if router.isBootstrapping {
+                ProgressView("Loading…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.backgroundPrimary.ignoresSafeArea())
+            } else if router.needsOnboarding {
+                OnboardingFlowView(
+                    viewModel: OnboardingViewModel(
+                        profileRepository: environment.profileRepository,
+                        targetRepository: environment.targetRepository,
+                        analytics: environment.analytics,
+                        onFinished: { router.completeOnboarding() }
+                    )
+                )
+            } else {
+                ZStack(alignment: .bottom) {
+                    TabView(selection: $router.selectedTab) {
+                        TodayView()
+                            .tabItem { Label(RootTab.today.title, systemImage: RootTab.today.systemImage) }
+                            .tag(RootTab.today)
 
-                HistoryView()
-                    .tabItem { Label(RootTab.history.title, systemImage: RootTab.history.systemImage) }
-                    .tag(RootTab.history)
+                        HistoryView()
+                            .tabItem { Label(RootTab.history.title, systemImage: RootTab.history.systemImage) }
+                            .tag(RootTab.history)
 
-                ProgressViewScreen()
-                    .tabItem { Label(RootTab.progress.title, systemImage: RootTab.progress.systemImage) }
-                    .tag(RootTab.progress)
+                        ProgressViewScreen()
+                            .tabItem { Label(RootTab.progress.title, systemImage: RootTab.progress.systemImage) }
+                            .tag(RootTab.progress)
 
-                SettingsView()
-                    .tabItem { Label(RootTab.settings.title, systemImage: RootTab.settings.systemImage) }
-                    .tag(RootTab.settings)
+                        SettingsView()
+                            .tabItem { Label(RootTab.settings.title, systemImage: RootTab.settings.systemImage) }
+                            .tag(RootTab.settings)
+                    }
+
+                    ScanFAB { router.openScanner() }
+                        .padding(.bottom, 8)
+                        .offset(y: -28)
+                        .accessibilitySortPriority(1)
+                }
+                .fullScreenCover(isPresented: $router.isScannerPresented) {
+                    ScannerPlaceholderView(onClose: router.dismissScanner)
+                }
             }
+        }
+        .task {
+            await bootstrap()
+        }
+    }
 
-            ScanFAB {
-                router.openScanner()
+    private func bootstrap() async {
+        do {
+            if let profile = try await environment.profileRepository.loadProfile() {
+                router.needsOnboarding = !profile.onboardingComplete
+            } else {
+                router.needsOnboarding = true
             }
-            .padding(.bottom, 8)
-            // Sit just above the tab bar.
-            .offset(y: -28)
-            .accessibilitySortPriority(1)
+        } catch {
+            router.needsOnboarding = true
         }
-        .fullScreenCover(isPresented: $router.isScannerPresented) {
-            ScannerPlaceholderView(onClose: router.dismissScanner)
-        }
+        router.isBootstrapping = false
     }
 }
 
-/// Elevated central Scan action visually attached to the tab bar (spec §9).
 private struct ScanFAB: View {
     let action: () -> Void
 

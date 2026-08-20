@@ -31,18 +31,13 @@ Or build + test from the CLI (same path CI uses):
 GitHub Actions (macOS-15) runs `xcodegen generate` then `xcodebuild build test` on every push/PR.
 ## Phase 0 status
 
-Implemented:
-- SwiftUI app shell + tab navigation (Today / History / Progress / Settings)
-- Elevated central **Scan** action → full-screen placeholder
-- Design-system tokens (colors light/dark, spacing, radius, typography)
-- Components: PrimaryButton, SecondaryButton, MetricCard, MacroProgressView, ConfidencePill
-- Debug DesignSystemPreviewView (Settings → Design system gallery)
-- SwiftData container placeholder (`UserProfile`, `NutritionTarget`)
-- `AppEnvironment` dependency container
-- Unit smoke tests (Swift Testing)
+Done and CI-verified.
 
-Not in Phase 0 (by design): camera, AI, HealthKit, StoreKit, Firebase.
+## Phase 1 status
 
-## Next (Phase 1)
+Onboarding + Mifflin–St Jeor target calculator + SwiftData persistence.
+After onboarding, Today shows remaining calories against the saved target.
 
-Onboarding flow + Mifflin–St Jeor target calculator with unit tests — see PRODUCT_SPEC §10 and §82.
+## Next (Phase 2)
+
+Local diary: meal models, quick add, history, totals.

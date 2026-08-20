@@ -27,14 +27,19 @@ struct ProgressViewScreen: View {
 }
 
 struct SettingsView: View {
+    @Environment(\.appEnvironment) private var environment
     @State private var showDesignSystem = false
+    @State private var targetSummary: String = "Loading…"
 
     var body: some View {
         NavigationStack {
             List {
                 Section("Profile") {
-                    Text("Goal & targets — Phase 1")
+                    Text("Goal & targets are set during onboarding.")
                         .foregroundStyle(Color.textSecondary)
+                    Text(targetSummary)
+                        .font(Typography.supporting)
+                        .foregroundStyle(Color.textPrimary)
                 }
                 Section("Privacy") {
                     Text("Cloud AI disclosure, export, and delete — Phase 10")
@@ -60,10 +65,17 @@ struct SettingsView: View {
                 DesignSystemPreviewView()
             }
             #endif
+            .task {
+                if let target = try? await environment.targetRepository.currentTarget(on: .now) {
+                    targetSummary = "\(target.calories) cal · P \(target.proteinGrams)g · C \(target.carbGrams)g · F \(target.fatGrams)g"
+                } else {
+                    targetSummary = "No target saved yet."
+                }
+            }
         }
     }
 }
 
 #Preview("History") { HistoryView() }
 #Preview("Progress") { ProgressViewScreen() }
-#Preview("Settings") { SettingsView() }
+#Preview("Settings") { SettingsView().environment(\.appEnvironment, .preview) }
