@@ -1,0 +1,11 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Today" : {},
+    "History" : {},
+    "Progress" : {},
+    "Settings" : {},
+    "Scan meal" : {}
+  },
+  "version" : "1.0"
+}
