@@ -1,0 +1,35 @@
+# Xcode / macOS
+DerivedData/
+build/
+*.xcuserstate
+*.xcuserdata/
+ProjectPlate.xcodeproj/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/
+
+# OS
+.DS_Store
+**/.DS_Store
+
+# Agent / IDE / web leftovers
+.cursor/
+.vite/
+*.log
+node_modules/
+dist/
+.wrangler/
+
+# Secrets (never commit)
+*.p8
+*.p12
+AuthKey_*.p8
+.env
+.env.*

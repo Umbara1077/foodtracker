@@ -1,0 +1,56 @@
+import SwiftUI
+
+struct RootTabView: View {
+    @State private var router = AppRouter()
+
+    var body: some View {
+        TabView(selection: $router.selectedTab) {
+            TodayView()
+                .tabItem { Label(RootTab.today.title, systemImage: RootTab.today.systemImage) }
+                .tag(RootTab.today)
+
+            HistoryView()
+                .tabItem { Label(RootTab.history.title, systemImage: RootTab.history.systemImage) }
+                .tag(RootTab.history)
+
+            ProgressViewScreen()
+                .tabItem { Label(RootTab.progress.title, systemImage: RootTab.progress.systemImage) }
+                .tag(RootTab.progress)
+
+            SettingsView()
+                .tabItem { Label(RootTab.settings.title, systemImage: RootTab.settings.systemImage) }
+                .tag(RootTab.settings)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            ScanFAB(action: router.openScanner)
+                .padding(.bottom, Spacing.space8)
+        }
+        .fullScreenCover(isPresented: $router.isScannerPresented) {
+            ScannerPlaceholderView(onClose: router.dismissScanner)
+        }
+    }
+}
+
+/// Elevated central Scan action visually attached to the tab bar (spec §9).
+private struct ScanFAB: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "camera.fill")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundStyle(Color.brandInk)
+                .frame(width: 60, height: 60)
+                .background(Color.brandPrimary, in: Circle())
+                .shadow(color: .black.opacity(0.1), radius: 12, y: 4)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Scan meal")
+        .accessibilityHint("Opens the meal scanner")
+    }
+}
+
+#Preview("Root tabs") {
+    RootTabView()
+        .environment(\.appEnvironment, .preview)
+}
