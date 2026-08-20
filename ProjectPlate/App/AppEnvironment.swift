@@ -12,6 +12,8 @@ struct AppEnvironment: Sendable {
     var mealAnalysisService: any MealAnalysisServing
     var healthSync: any HealthSyncClient
     var diary: DiaryService
+    var subscriptions: any SubscriptionServicing
+    var aiScanQuota: LocalAIScanQuotaStore
     var backendConfiguration: BackendConfiguration
     var scanQuota: ScanQuotaStore
     var settings: SettingsStore
@@ -44,6 +46,8 @@ struct AppEnvironment: Sendable {
             ),
             healthSync: health,
             diary: diary,
+            subscriptions: StoreKitPurchaseManager(),
+            aiScanQuota: LocalAIScanQuotaStore(dailyLimit: 3),
             backendConfiguration: backend,
             scanQuota: quota,
             settings: SettingsStore(),
@@ -105,6 +109,8 @@ struct AppEnvironment: Sendable {
             ),
             healthSync: health,
             diary: diary,
+            subscriptions: MockPurchaseManager(),
+            aiScanQuota: LocalAIScanQuotaStore(dailyLimit: 3),
             backendConfiguration: backend,
             scanQuota: quota,
             settings: SettingsStore(),

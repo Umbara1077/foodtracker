@@ -7,6 +7,7 @@ import Observation
 final class AppRouter {
     var selectedTab: RootTab = .today
     var isScannerPresented = false
+    var isPaywallPresented = false
     var needsOnboarding = true
     var isBootstrapping = true
 
@@ -16,6 +17,14 @@ final class AppRouter {
 
     func dismissScanner() {
         isScannerPresented = false
+    }
+
+    func openPaywall() {
+        isPaywallPresented = true
+    }
+
+    func dismissPaywall() {
+        isPaywallPresented = false
     }
 
     func completeOnboarding() {

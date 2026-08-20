@@ -16,6 +16,9 @@ final class ScannerViewModel {
     private let analysisService: any MealAnalysisServing
     private let cameraAuth: any CameraAuthorizing
     private let analytics: any AnalyticsClient
+    private let subscriptions: (any SubscriptionServicing)?
+    private let aiScanQuota: LocalAIScanQuotaStore?
+    var onQuotaExhausted: (() -> Void)?
 
     var phase: Phase = .camera
     var authorization: CameraAuthorizationStatus = .notDetermined
@@ -27,11 +30,17 @@ final class ScannerViewModel {
     init(
         analysisService: any MealAnalysisServing,
         cameraAuth: any CameraAuthorizing = SystemCameraAuthorization(),
-        analytics: any AnalyticsClient
+        analytics: any AnalyticsClient,
+        subscriptions: (any SubscriptionServicing)? = nil,
+        aiScanQuota: LocalAIScanQuotaStore? = nil,
+        onQuotaExhausted: (() -> Void)? = nil
     ) {
         self.analysisService = analysisService
         self.cameraAuth = cameraAuth
         self.analytics = analytics
+        self.subscriptions = subscriptions
+        self.aiScanQuota = aiScanQuota
+        self.onQuotaExhausted = onQuotaExhausted
         self.authorization = cameraAuth.status()
     }
 
@@ -117,6 +126,17 @@ final class ScannerViewModel {
             phase = .failed(MealScanError.invalidImage.localizedDescription)
             return
         }
+
+        let isPro = await subscriptions?.currentEntitlement().isPro ?? true
+        if let aiScanQuota {
+            let allowed = await aiScanQuota.canConsume(isPro: isPro)
+            if !allowed {
+                phase = .failed(MealScanError.quotaExceeded.localizedDescription ?? "Quota exceeded")
+                onQuotaExhausted?()
+                return
+            }
+        }
+
         phase = .analyzing(image, .preparingImage)
         do {
             let draft = try await analysisService.analyze(
@@ -141,10 +161,15 @@ final class ScannerViewModel {
                     : "I couldn’t confidently find food in this photo. \(draft.confidence.userLabel).")
                 return
             }
+            // Consume only after a valid structured result.
+            _ = await aiScanQuota?.consume(isPro: isPro)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             phase = .result(draft)
         } catch is CancellationError {
             phase = .camera
+        } catch let error as MealScanError where error == .quotaExceeded {
+            phase = .failed(error.localizedDescription)
+            onQuotaExhausted?()
         } catch {
             phase = .failed(error.localizedDescription)
         }
@@ -165,6 +190,9 @@ struct ScannerFlowView: View {
     init(
         analysisService: (any MealAnalysisServing)? = nil,
         analytics: (any AnalyticsClient)? = nil,
+        subscriptions: (any SubscriptionServicing)? = nil,
+        aiScanQuota: LocalAIScanQuotaStore? = nil,
+        onQuotaExhausted: (() -> Void)? = nil,
         onSaved: (() -> Void)? = nil
     ) {
         // Environment isn’t available in init; RootTabView passes live services.
@@ -176,7 +204,10 @@ struct ScannerFlowView: View {
         _viewModel = State(
             initialValue: ScannerViewModel(
                 analysisService: service,
-                analytics: analyticsClient
+                analytics: analyticsClient,
+                subscriptions: subscriptions,
+                aiScanQuota: aiScanQuota,
+                onQuotaExhausted: onQuotaExhausted
             )
         )
         self.onSaved = onSaved

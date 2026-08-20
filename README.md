@@ -34,8 +34,9 @@ Or:
 - **Phase 5** — Managed cloud AI gateway (`backend/`) + iOS HTTP client / quota / validation (CI verified)
 - **Phase 6** — Barcode scan + product lookup (bundled cache → Open Food Facts) + portion add (CI verified)
 - **Phase 7** — Progress: weight logging, Swift Charts trend, calorie/protein consistency (CI verified)
-- **Phase 8** — Apple Health meal/weight sync with dedupe + Settings toggle
-- **Next: Phase 9** — StoreKit paywall / entitlements
+- **Phase 8** — Apple Health meal/weight sync with dedupe + Settings toggle (CI verified)
+- **Phase 9** — StoreKit 2 Pro paywall, restore, free AI-scan quota gating
+- **Next: Phase 10** — Privacy / release hardening
 
 ## Cloud AI backend
 

@@ -3,11 +3,16 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.appEnvironment) private var environment
     @State private var showDesignSystem = false
+    @State private var showPaywall = false
     @State private var targetSummary: String = "Loading…"
     @State private var healthEnabled = false
     @State private var healthStatusText = "Checking…"
     @State private var healthMessage: String?
     @State private var isWorkingHealth = false
+    @State private var subscriptionLabel = "Loading…"
+    @State private var entitlementIsPro = false
+    @State private var freeScansRemaining: Int?
+    @State private var subscriptionMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -18,6 +23,29 @@ struct SettingsView: View {
                     Text(targetSummary)
                         .font(Typography.supporting)
                         .foregroundStyle(Color.textPrimary)
+                }
+                Section("Subscription") {
+                    LabeledContent("Plan", value: subscriptionLabel)
+                    if let freeScansRemaining {
+                        LabeledContent(
+                            "Free scans left today",
+                            value: entitlementIsPro ? "Unlimited" : "\(freeScansRemaining) / 3"
+                        )
+                    }
+                    Button("See Project Plate Pro") {
+                        showPaywall = true
+                    }
+                    Button("Restore purchases") {
+                        Task { await restorePurchases() }
+                    }
+                    if let subscriptionMessage {
+                        Text(subscriptionMessage)
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                    Text("History and manual logging stay available on Free.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
                 }
                 Section("Apple Health") {
                     Toggle("Sync meals & weight", isOn: $healthEnabled)
@@ -51,9 +79,9 @@ struct SettingsView: View {
                     )
                     if let remaining = environment.scanQuota.remaining,
                        let limit = environment.scanQuota.dailyLimit {
-                        LabeledContent("Scans left today", value: "\(remaining) / \(limit)")
+                        LabeledContent("Cloud quota", value: "\(remaining) / \(limit)")
                     } else if environment.backendConfiguration.isCloudEnabled {
-                        Text("Quota updates after the first cloud scan.")
+                        Text("Cloud quota updates after the first cloud scan.")
                             .font(Typography.caption)
                             .foregroundStyle(Color.textSecondary)
                     } else {
@@ -67,7 +95,7 @@ struct SettingsView: View {
                         .foregroundStyle(Color.textSecondary)
                 }
                 Section("About") {
-                    LabeledContent("Version", value: "0.8.0")
+                    LabeledContent("Version", value: "0.9.0")
                     Text("Nutrition estimates are for informational tracking and may be inaccurate. This app does not provide medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
@@ -81,6 +109,11 @@ struct SettingsView: View {
                 #endif
             }
             .navigationTitle("Settings")
+            .sheet(isPresented: $showPaywall) {
+                PaywallView {
+                    Task { await refreshSubscription() }
+                }
+            }
             #if DEBUG
             .sheet(isPresented: $showDesignSystem) {
                 DesignSystemPreviewView()
@@ -102,6 +135,34 @@ struct SettingsView: View {
             healthEnabled = profile.healthKitEnabled
         }
         healthStatusText = statusLabel(environment.healthSync.authorizationStatus())
+        await refreshSubscription()
+    }
+
+    private func refreshSubscription() async {
+        let entitlement = await environment.subscriptions.currentEntitlement()
+        entitlementIsPro = entitlement.isPro
+        switch entitlement {
+        case .free:
+            subscriptionLabel = "Free"
+        case .pro(let expiration):
+            if let expiration {
+                subscriptionLabel = "Pro · renews \(expiration.formatted(date: .abbreviated, time: .omitted))"
+            } else {
+                subscriptionLabel = "Pro"
+            }
+        }
+        freeScansRemaining = await environment.aiScanQuota.remaining(isPro: entitlement.isPro)
+    }
+
+    private func restorePurchases() async {
+        subscriptionMessage = nil
+        do {
+            let entitlement = try await environment.subscriptions.restore()
+            await refreshSubscription()
+            subscriptionMessage = entitlement.isPro ? "Pro restored." : "No Pro subscription found."
+        } catch {
+            subscriptionMessage = "Restore failed."
+        }
     }
 
     private func setHealthEnabled(_ enabled: Bool) async {

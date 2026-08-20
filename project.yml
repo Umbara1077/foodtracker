@@ -11,7 +11,7 @@ settings:
     SWIFT_VERSION: "5.10"
     TARGETED_DEVICE_FAMILY: "1"
     IPHONEOS_DEPLOYMENT_TARGET: "18.0"
-    MARKETING_VERSION: "0.8.0"
+    MARKETING_VERSION: "0.9.0"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_STRICT_CONCURRENCY: complete
 targets:
@@ -64,8 +64,10 @@ schemes:
         ProjectPlateTests: [test]
     run:
       config: Debug
+      storeKitConfiguration: ProjectPlate/Resources/Products.storekit
     test:
       config: Debug
+      storeKitConfiguration: ProjectPlate/Resources/Products.storekit
       targets:
         - ProjectPlateTests
       gatherCoverageData: false

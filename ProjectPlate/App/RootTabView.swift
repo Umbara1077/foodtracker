@@ -41,21 +41,44 @@ struct RootTabView: View {
                             .tag(RootTab.settings)
                     }
 
-                    ScanFAB { router.openScanner() }
-                        .padding(.bottom, 8)
-                        .offset(y: -28)
-                        .accessibilitySortPriority(1)
+                    ScanFAB {
+                        Task { await openScannerOrPaywall() }
+                    }
+                    .padding(.bottom, 8)
+                    .offset(y: -28)
+                    .accessibilitySortPriority(1)
                 }
                 .fullScreenCover(isPresented: $router.isScannerPresented) {
                     ScannerFlowView(
                         analysisService: environment.mealAnalysisService,
-                        analytics: environment.analytics
+                        analytics: environment.analytics,
+                        subscriptions: environment.subscriptions,
+                        aiScanQuota: environment.aiScanQuota,
+                        onQuotaExhausted: {
+                            router.dismissScanner()
+                            router.openPaywall()
+                        }
                     )
+                }
+                .sheet(isPresented: $router.isPaywallPresented) {
+                    PaywallView {
+                        // After unlock, user can tap Scan again.
+                    }
                 }
             }
         }
         .task {
             await bootstrap()
+        }
+    }
+
+    private func openScannerOrPaywall() async {
+        let entitlement = await environment.subscriptions.currentEntitlement()
+        let remaining = await environment.aiScanQuota.remaining(isPro: entitlement.isPro)
+        if remaining <= 0 {
+            router.openPaywall()
+        } else {
+            router.openScanner()
         }
     }
 
