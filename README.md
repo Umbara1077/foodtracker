@@ -29,15 +29,10 @@ Or build + test from the CLI (same path CI uses):
 ## CI
 
 GitHub Actions (macOS-15) runs `xcodegen generate` then `xcodebuild build test` on every push/PR.
-## Phase 0 status
 
-Done and CI-verified.
+## Phase status
 
-## Phase 1 status
-
-Onboarding + Mifflin–St Jeor target calculator + SwiftData persistence.
-After onboarding, Today shows remaining calories against the saved target.
-
-## Next (Phase 2)
-
-Local diary: meal models, quick add, history, totals.
+- **Phase 0** — App shell, design system, Scan placeholder (CI verified)
+- **Phase 1** — Onboarding + Mifflin–St Jeor targets (CI verified)
+- **Phase 2** — Local diary: Quick Add, Today meals, History day strip
+- **Next: Phase 3** — Camera capture + mocked analysis → result screen
