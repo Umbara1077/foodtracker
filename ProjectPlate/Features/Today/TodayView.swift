@@ -6,11 +6,13 @@ final class TodayViewModel {
     private let mealRepository: any MealRepository
     private let targetRepository: any TargetRepository
     private let diary: DiaryService
+    private let savedMeals: any SavedMealRepository
     private let analytics: any AnalyticsClient
 
     var day: Date = .now
     var target: NutritionTargetSnapshot?
     var meals: [MealRecord] = []
+    var frequentMeals: [SavedMealTemplate] = []
     var totals: DayNutritionTotals = .zero
     var isLoading = true
     var errorMessage: String?
@@ -22,11 +24,13 @@ final class TodayViewModel {
         mealRepository: any MealRepository,
         targetRepository: any TargetRepository,
         diary: DiaryService,
+        savedMeals: any SavedMealRepository,
         analytics: any AnalyticsClient
     ) {
         self.mealRepository = mealRepository
         self.targetRepository = targetRepository
         self.diary = diary
+        self.savedMeals = savedMeals
         self.analytics = analytics
     }
 
@@ -46,9 +50,11 @@ final class TodayViewModel {
             async let targetTask = targetRepository.currentTarget(on: day)
             async let mealsTask = mealRepository.meals(on: day, calendar: calendar)
             async let totalsTask = mealRepository.totals(on: day, calendar: calendar)
+            async let frequentTask = savedMeals.frequent(limit: 5)
             target = try await targetTask
             meals = try await mealsTask
             totals = try await totalsTask
+            frequentMeals = try await frequentTask
         } catch {
             errorMessage = "Could not load today’s diary."
         }
@@ -81,6 +87,16 @@ final class TodayViewModel {
             errorMessage = "Could not duplicate meal."
         }
     }
+
+    func logFrequent(_ template: SavedMealTemplate) async {
+        do {
+            try await diary.saveMeal(template.makeMeal())
+            analytics.track(.mealSaved)
+            await load()
+        } catch {
+            errorMessage = "Could not log meal."
+        }
+    }
 }
 
 struct TodayView: View {
@@ -110,6 +126,7 @@ struct TodayView: View {
                     mealRepository: environment.mealRepository,
                     targetRepository: environment.targetRepository,
                     diary: environment.diary,
+                    savedMeals: environment.savedMeals,
                     analytics: environment.analytics
                 )
                 viewModel = vm
@@ -132,6 +149,7 @@ private struct TodayContent: View {
                 } else {
                     hero
                     quickActions
+                    frequentSection
                     mealsSection
                 }
 
@@ -254,6 +272,53 @@ private struct TodayContent: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Scan barcode")
+        }
+    }
+
+    @ViewBuilder
+    private var frequentSection: some View {
+        if !viewModel.frequentMeals.isEmpty {
+            VStack(alignment: .leading, spacing: Spacing.space12) {
+                Text("Frequent")
+                    .font(Typography.sectionHeading)
+                    .foregroundStyle(Color.textPrimary)
+                Text("Tap to log again — no scan needed.")
+                    .font(Typography.caption)
+                    .foregroundStyle(Color.textSecondary)
+
+                ForEach(viewModel.frequentMeals) { template in
+                    Button {
+                        Task { await viewModel.logFrequent(template) }
+                    } label: {
+                        HStack(spacing: Spacing.space12) {
+                            Image(systemName: "arrow.clockwise.circle.fill")
+                                .foregroundStyle(Color.brandPrimary)
+                                .accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: Spacing.space4) {
+                                Text(template.title)
+                                    .font(Typography.body.weight(.semibold))
+                                    .foregroundStyle(Color.textPrimary)
+                                Text("Logged \(template.useCount)× · \(Int(template.nutrients.calories.rounded())) cal")
+                                    .font(Typography.caption)
+                                    .foregroundStyle(Color.textSecondary)
+                            }
+                            Spacer(minLength: 0)
+                            Text("Log")
+                                .font(Typography.supporting.weight(.semibold))
+                                .foregroundStyle(Color.brandInk)
+                                .padding(.horizontal, Spacing.space12)
+                                .padding(.vertical, Spacing.space8)
+                                .background(Color.brandPrimary)
+                                .clipShape(RoundedRectangle(cornerRadius: Radius.chip, style: .continuous))
+                        }
+                        .padding(Spacing.cardPaddingCompact)
+                        .background(Color.surfacePrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Log \(template.title), \(Int(template.nutrients.calories.rounded())) calories")
+                }
+            }
         }
     }
 

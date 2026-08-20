@@ -78,6 +78,7 @@ struct DataMaintenanceService: Sendable {
     var weightRepository: any WeightRepository
     var profileRepository: any ProfileRepository
     var targetRepository: any TargetRepository
+    var savedMealRepository: any SavedMealRepository
 
     func exportJSON(calendar: Calendar = .current) async throws -> Data {
         let profile = try await profileRepository.loadProfile()
@@ -131,6 +132,7 @@ struct DataMaintenanceService: Sendable {
         for weight in weights {
             try await weightRepository.delete(id: weight.id)
         }
+        try await savedMealRepository.clear()
         // Reset profile consent / flags but keep a blank local profile shell.
         var blank = UserProfile.blank
         blank.onboardingComplete = false

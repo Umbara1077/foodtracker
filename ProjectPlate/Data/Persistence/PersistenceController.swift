@@ -8,6 +8,7 @@ enum PersistenceController {
             NutritionTargetEntity.self,
             MealEntity.self,
             WeightEntryEntity.self,
+            SavedMealEntity.self,
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: inMemory)
         do {

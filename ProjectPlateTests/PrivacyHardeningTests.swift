@@ -30,7 +30,8 @@ struct PrivacyHardeningTests {
                     fatGrams: 60,
                     source: .manual
                 ),
-            ])
+            ]),
+            savedMealRepository: InMemorySavedMealRepository()
         )
         let data = try await service.exportJSON()
         #expect(!data.isEmpty)
@@ -58,7 +59,8 @@ struct PrivacyHardeningTests {
             mealRepository: meals,
             weightRepository: InMemoryWeightRepository(),
             profileRepository: profiles,
-            targetRepository: InMemoryTargetRepository()
+            targetRepository: InMemoryTargetRepository(),
+            savedMealRepository: InMemorySavedMealRepository()
         )
         try await service.deleteAllLocalData()
         let remaining = try await meals.meals(on: .now, calendar: .current)

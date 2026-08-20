@@ -14,6 +14,7 @@ struct AppEnvironment: Sendable {
     var diary: DiaryService
     var dataMaintenance: DataMaintenanceService
     var correctionStore: any CorrectionFeedbackStore
+    var savedMeals: any SavedMealRepository
     var subscriptions: any SubscriptionServicing
     var aiScanQuota: LocalAIScanQuotaStore
     var backendConfiguration: BackendConfiguration
@@ -32,11 +33,13 @@ struct AppEnvironment: Sendable {
         let weights = SwiftDataWeightRepository(modelContainer: modelContainer)
         let targets = SwiftDataTargetRepository(modelContainer: modelContainer)
         let health: any HealthSyncClient = HealthKitSyncClient()
+        let savedMeals = SwiftDataSavedMealRepository(modelContainer: modelContainer)
         let diary = DiaryService(
             mealRepository: meals,
             weightRepository: weights,
             profileRepository: profiles,
-            health: health
+            health: health,
+            savedMeals: savedMeals
         )
         let crashReporter = LoggingCrashReporter()
         return AppEnvironment(
@@ -55,9 +58,11 @@ struct AppEnvironment: Sendable {
                 mealRepository: meals,
                 weightRepository: weights,
                 profileRepository: profiles,
-                targetRepository: targets
+                targetRepository: targets,
+                savedMealRepository: savedMeals
             ),
             correctionStore: LocalCorrectionFeedbackStore(),
+            savedMeals: savedMeals,
             subscriptions: StoreKitPurchaseManager(),
             aiScanQuota: LocalAIScanQuotaStore(dailyLimit: 3),
             backendConfiguration: backend,
@@ -104,11 +109,13 @@ struct AppEnvironment: Sendable {
         let profiles = InMemoryProfileRepository(profile: profile)
         let weightRepo = InMemoryWeightRepository(entries: weights)
         let health = NoOpHealthSyncClient()
+        let savedMeals = InMemorySavedMealRepository()
         let diary = DiaryService(
             mealRepository: meals,
             weightRepository: weightRepo,
             profileRepository: profiles,
-            health: health
+            health: health,
+            savedMeals: savedMeals
         )
         let targets = InMemoryTargetRepository(targets: [target])
         let crashReporter = LoggingCrashReporter()
@@ -128,11 +135,13 @@ struct AppEnvironment: Sendable {
                 mealRepository: meals,
                 weightRepository: weightRepo,
                 profileRepository: profiles,
-                targetRepository: targets
+                targetRepository: targets,
+                savedMealRepository: savedMeals
             ),
             correctionStore: LocalCorrectionFeedbackStore(
                 defaults: UserDefaults(suiteName: "plate.preview.corrections") ?? .standard
             ),
+            savedMeals: savedMeals,
             subscriptions: MockPurchaseManager(),
             aiScanQuota: LocalAIScanQuotaStore(dailyLimit: 3),
             backendConfiguration: backend,

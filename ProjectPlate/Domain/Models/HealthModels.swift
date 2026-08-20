@@ -56,6 +56,7 @@ struct DiaryService: Sendable {
     var weightRepository: any WeightRepository
     var profileRepository: any ProfileRepository
     var health: any HealthSyncClient
+    var savedMeals: any SavedMealRepository
 
     func saveMeal(_ meal: MealRecord) async throws {
         var saved = meal
@@ -70,6 +71,7 @@ struct DiaryService: Sendable {
         }
         saved.updatedAt = .now
         try await mealRepository.save(saved)
+        try? await savedMeals.recordUsage(of: saved)
     }
 
     func deleteMeal(_ meal: MealRecord) async throws {

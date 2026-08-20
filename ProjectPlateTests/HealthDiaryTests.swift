@@ -60,7 +60,8 @@ struct HealthDiaryTests {
             mealRepository: meals,
             weightRepository: InMemoryWeightRepository(),
             profileRepository: InMemoryProfileRepository(profile: profile),
-            health: health
+            health: health,
+            savedMeals: InMemorySavedMealRepository()
         )
         let meal = MealRecord(
             mealType: .lunch,
@@ -84,7 +85,8 @@ struct HealthDiaryTests {
             mealRepository: InMemoryMealRepository(),
             weightRepository: InMemoryWeightRepository(),
             profileRepository: InMemoryProfileRepository(profile: profile),
-            health: health
+            health: health,
+            savedMeals: InMemorySavedMealRepository()
         )
         try await diary.saveMeal(
             MealRecord(
@@ -114,7 +116,8 @@ struct HealthDiaryTests {
             mealRepository: InMemoryMealRepository(),
             weightRepository: weights,
             profileRepository: InMemoryProfileRepository(profile: profile),
-            health: health
+            health: health,
+            savedMeals: InMemorySavedMealRepository()
         )
         let imported = try await diary.importWeightsFromHealth(
             from: Date().addingTimeInterval(-86_400),
@@ -141,7 +144,8 @@ struct HealthDiaryTests {
             mealRepository: meals,
             weightRepository: InMemoryWeightRepository(),
             profileRepository: InMemoryProfileRepository(profile: profile),
-            health: health
+            health: health,
+            savedMeals: InMemorySavedMealRepository()
         )
         try await diary.deleteMeal(meal)
         let remaining = try await meals.meals(on: .now, calendar: .current)
