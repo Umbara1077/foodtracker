@@ -10,6 +10,8 @@ struct AppEnvironment: Sendable {
     var weightRepository: any WeightRepository
     var nutritionRepository: any NutritionRepository
     var mealAnalysisService: any MealAnalysisServing
+    var healthSync: any HealthSyncClient
+    var diary: DiaryService
     var backendConfiguration: BackendConfiguration
     var scanQuota: ScanQuotaStore
     var settings: SettingsStore
@@ -20,16 +22,28 @@ struct AppEnvironment: Sendable {
         let backend = BackendConfiguration.load()
         let quota = ScanQuotaStore()
         let vision = makeVisionProvider(backend: backend, quota: quota)
+        let meals = SwiftDataMealRepository(modelContainer: modelContainer)
+        let profiles = SwiftDataProfileRepository(modelContainer: modelContainer)
+        let weights = SwiftDataWeightRepository(modelContainer: modelContainer)
+        let health: any HealthSyncClient = HealthKitSyncClient()
+        let diary = DiaryService(
+            mealRepository: meals,
+            weightRepository: weights,
+            profileRepository: profiles,
+            health: health
+        )
         return AppEnvironment(
-            mealRepository: SwiftDataMealRepository(modelContainer: modelContainer),
-            profileRepository: SwiftDataProfileRepository(modelContainer: modelContainer),
+            mealRepository: meals,
+            profileRepository: profiles,
             targetRepository: SwiftDataTargetRepository(modelContainer: modelContainer),
-            weightRepository: SwiftDataWeightRepository(modelContainer: modelContainer),
+            weightRepository: weights,
             nutritionRepository: nutrition,
             mealAnalysisService: MealAnalysisService(
                 visionProvider: vision,
                 nutritionRepository: nutrition
             ),
+            healthSync: health,
+            diary: diary,
             backendConfiguration: backend,
             scanQuota: quota,
             settings: SettingsStore(),
@@ -69,16 +83,28 @@ struct AppEnvironment: Sendable {
         let nutrition = LocalNutritionRepository()
         let backend = BackendConfiguration(baseURL: nil, appToken: nil, installID: "preview")
         let quota = ScanQuotaStore()
+        let meals = InMemoryMealRepository(meals: [sampleMeal])
+        let profiles = InMemoryProfileRepository(profile: profile)
+        let weightRepo = InMemoryWeightRepository(entries: weights)
+        let health = NoOpHealthSyncClient()
+        let diary = DiaryService(
+            mealRepository: meals,
+            weightRepository: weightRepo,
+            profileRepository: profiles,
+            health: health
+        )
         return AppEnvironment(
-            mealRepository: InMemoryMealRepository(meals: [sampleMeal]),
-            profileRepository: InMemoryProfileRepository(profile: profile),
+            mealRepository: meals,
+            profileRepository: profiles,
             targetRepository: InMemoryTargetRepository(targets: [target]),
-            weightRepository: InMemoryWeightRepository(entries: weights),
+            weightRepository: weightRepo,
             nutritionRepository: nutrition,
             mealAnalysisService: MealAnalysisService(
                 visionProvider: MockMealVisionProvider(fixture: .chickenRiceBowl, delayNanoseconds: 0),
                 nutritionRepository: nutrition
             ),
+            healthSync: health,
+            diary: diary,
             backendConfiguration: backend,
             scanQuota: quota,
             settings: SettingsStore(),

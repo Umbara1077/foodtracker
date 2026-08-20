@@ -319,11 +319,7 @@ struct AddWeightSheet: View {
             source: .local
         )
         do {
-            try await environment.weightRepository.save(entry)
-            if var profile = try await environment.profileRepository.loadProfile() {
-                profile.currentWeightKg = kg
-                try await environment.profileRepository.saveProfile(profile)
-            }
+            try await environment.diary.saveWeight(entry)
             onSaved?()
             dismiss()
         } catch {

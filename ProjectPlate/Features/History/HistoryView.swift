@@ -5,6 +5,7 @@ import SwiftUI
 final class HistoryViewModel {
     private let mealRepository: any MealRepository
     private let targetRepository: any TargetRepository
+    private let diary: DiaryService
     private let analytics: any AnalyticsClient
 
     var selectedDay: Date = .now
@@ -20,10 +21,12 @@ final class HistoryViewModel {
     init(
         mealRepository: any MealRepository,
         targetRepository: any TargetRepository,
+        diary: DiaryService,
         analytics: any AnalyticsClient
     ) {
         self.mealRepository = mealRepository
         self.targetRepository = targetRepository
+        self.diary = diary
         self.analytics = analytics
     }
 
@@ -65,7 +68,7 @@ final class HistoryViewModel {
 
     func deleteMeal(_ meal: MealRecord) async {
         do {
-            try await mealRepository.delete(id: meal.id)
+            try await diary.deleteMeal(meal)
             analytics.track(.mealDeleted)
             await load()
         } catch {
@@ -78,10 +81,11 @@ final class HistoryViewModel {
         copy.id = UUID()
         copy.eatenAt = .now
         copy.inputMethod = .duplicated
+        copy.healthKitAnchors = nil
         copy.createdAt = .now
         copy.updatedAt = .now
         do {
-            try await mealRepository.save(copy)
+            try await diary.saveMeal(copy)
             analytics.track(.mealSaved)
             selectedDay = .now
             weekStart = Calendar.current.date(byAdding: .day, value: -6, to: Calendar.current.startOfDay(for: .now)) ?? .now
@@ -118,6 +122,7 @@ struct HistoryView: View {
                 let vm = HistoryViewModel(
                     mealRepository: environment.mealRepository,
                     targetRepository: environment.targetRepository,
+                    diary: environment.diary,
                     analytics: environment.analytics
                 )
                 viewModel = vm

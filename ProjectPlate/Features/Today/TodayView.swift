@@ -5,6 +5,7 @@ import SwiftUI
 final class TodayViewModel {
     private let mealRepository: any MealRepository
     private let targetRepository: any TargetRepository
+    private let diary: DiaryService
     private let analytics: any AnalyticsClient
 
     var day: Date = .now
@@ -20,10 +21,12 @@ final class TodayViewModel {
     init(
         mealRepository: any MealRepository,
         targetRepository: any TargetRepository,
+        diary: DiaryService,
         analytics: any AnalyticsClient
     ) {
         self.mealRepository = mealRepository
         self.targetRepository = targetRepository
+        self.diary = diary
         self.analytics = analytics
     }
 
@@ -54,7 +57,7 @@ final class TodayViewModel {
 
     func deleteMeal(_ meal: MealRecord) async {
         do {
-            try await mealRepository.delete(id: meal.id)
+            try await diary.deleteMeal(meal)
             analytics.track(.mealDeleted)
             await load()
         } catch {
@@ -67,10 +70,11 @@ final class TodayViewModel {
         copy.id = UUID()
         copy.eatenAt = .now
         copy.inputMethod = .duplicated
+        copy.healthKitAnchors = nil
         copy.createdAt = .now
         copy.updatedAt = .now
         do {
-            try await mealRepository.save(copy)
+            try await diary.saveMeal(copy)
             analytics.track(.mealSaved)
             await load()
         } catch {
@@ -105,6 +109,7 @@ struct TodayView: View {
                 let vm = TodayViewModel(
                     mealRepository: environment.mealRepository,
                     targetRepository: environment.targetRepository,
+                    diary: environment.diary,
                     analytics: environment.analytics
                 )
                 viewModel = vm

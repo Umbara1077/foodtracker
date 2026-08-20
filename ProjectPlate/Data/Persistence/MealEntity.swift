@@ -13,6 +13,7 @@ final class MealEntity {
     var carbs: Double
     var fat: Double
     var inputMethodRaw: String
+    var healthKitAnchorsJSON: Data?
     var createdAt: Date
     var updatedAt: Date
 
@@ -27,6 +28,7 @@ final class MealEntity {
         self.carbs = meal.nutrients.carbs
         self.fat = meal.nutrients.fat
         self.inputMethodRaw = meal.inputMethod.rawValue
+        self.healthKitAnchorsJSON = try? JSONEncoder().encode(meal.healthKitAnchors)
         self.createdAt = meal.createdAt
         self.updatedAt = meal.updatedAt
     }
@@ -42,12 +44,16 @@ final class MealEntity {
         carbs = meal.nutrients.carbs
         fat = meal.nutrients.fat
         inputMethodRaw = meal.inputMethod.rawValue
+        healthKitAnchorsJSON = try? JSONEncoder().encode(meal.healthKitAnchors)
         createdAt = meal.createdAt
         updatedAt = meal.updatedAt
     }
 
     func asDomain() -> MealRecord {
-        MealRecord(
+        let anchors: MealHealthKitAnchors? = healthKitAnchorsJSON.flatMap {
+            try? JSONDecoder().decode(MealHealthKitAnchors.self, from: $0)
+        }
+        return MealRecord(
             id: id,
             eatenAt: eatenAt,
             mealType: MealType(rawValue: mealTypeRaw) ?? .snack,
@@ -55,6 +61,7 @@ final class MealEntity {
             notes: notes,
             nutrients: NutrientSet(calories: calories, protein: protein, carbs: carbs, fat: fat),
             inputMethod: MealInputMethod(rawValue: inputMethodRaw) ?? .quickAdd,
+            healthKitAnchors: anchors,
             createdAt: createdAt,
             updatedAt: updatedAt
         )

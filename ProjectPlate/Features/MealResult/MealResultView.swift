@@ -158,7 +158,7 @@ struct MealResultView: View {
             inputMethod: .photoScan
         )
         do {
-            try await environment.mealRepository.save(meal)
+            try await environment.diary.saveMeal(meal)
             environment.analytics.track(.mealSaved)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             onSaved()

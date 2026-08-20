@@ -16,6 +16,7 @@ struct MealRecord: Identifiable, Sendable, Equatable {
     var notes: String?
     var nutrients: NutrientSet
     var inputMethod: MealInputMethod
+    var healthKitAnchors: MealHealthKitAnchors?
     var createdAt: Date
     var updatedAt: Date
 
@@ -27,6 +28,7 @@ struct MealRecord: Identifiable, Sendable, Equatable {
         notes: String? = nil,
         nutrients: NutrientSet,
         inputMethod: MealInputMethod,
+        healthKitAnchors: MealHealthKitAnchors? = nil,
         createdAt: Date = .now,
         updatedAt: Date = .now
     ) {
@@ -37,6 +39,7 @@ struct MealRecord: Identifiable, Sendable, Equatable {
         self.notes = notes
         self.nutrients = nutrients
         self.inputMethod = inputMethod
+        self.healthKitAnchors = healthKitAnchors
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
