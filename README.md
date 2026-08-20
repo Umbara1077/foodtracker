@@ -12,22 +12,23 @@ Source of truth: [`docs/PRODUCT_SPEC.md`](docs/PRODUCT_SPEC.md) · Phase notes: 
 
 This repository was scaffolded on a Linux Cloud Agent, which **cannot** compile SwiftUI. Generate and build on a Mac.
 
-## Generate & run
+## Generate & run (macOS)
 
 ```bash
-brew install xcodegen   # once
-xcodegen generate
+brew install xcodegen
+./scripts/bootstrap-ios.sh
 open ProjectPlate.xcodeproj
 ```
 
-Or CLI:
+Or build + test from the CLI (same path CI uses):
 
 ```bash
-xcodegen generate
-xcodebuild -scheme ProjectPlate -destination 'platform=iOS Simulator,name=iPhone 16' build
-xcodebuild -scheme ProjectPlate -destination 'platform=iOS Simulator,name=iPhone 16' test
+./scripts/ci-ios.sh
 ```
 
+## CI
+
+GitHub Actions (macOS-15) runs `xcodegen generate` then `xcodebuild build test` on every push/PR.
 ## Phase 0 status
 
 Implemented:

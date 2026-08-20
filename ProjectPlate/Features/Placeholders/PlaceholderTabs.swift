@@ -27,9 +27,7 @@ struct ProgressViewScreen: View {
 }
 
 struct SettingsView: View {
-    #if DEBUG
     @State private var showDesignSystem = false
-    #endif
 
     var body: some View {
         NavigationStack {

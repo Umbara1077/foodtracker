@@ -1,0 +1,57 @@
+name: iOS
+
+on:
+  push:
+    branches: [main, "cursor/**"]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ios-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build & Test (Phase 0)
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
+          xcrun simctl list devices available | head -40
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build & test
+        run: |
+          set -euo pipefail
+          if xcrun simctl list devices available | grep -q "iPhone 16"; then
+            DEST='platform=iOS Simulator,name=iPhone 16'
+          elif xcrun simctl list devices available | grep -q "iPhone 15"; then
+            DEST='platform=iOS Simulator,name=iPhone 15'
+          else
+            UDID=$(xcrun simctl list devices available | sed -n 's/.*iPhone.*(\([A-F0-9-]*\)).*/\1/p' | head -1)
+            if [[ -z "$UDID" ]]; then
+              echo "No iPhone simulator available" >&2
+              exit 1
+            fi
+            DEST="platform=iOS Simulator,id=$UDID"
+          fi
+          echo "DEST=$DEST"
+          set -o pipefail
+          xcodebuild \
+            -scheme ProjectPlate \
+            -destination "$DEST" \
+            -configuration Debug \
+            clean build test \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO

@@ -21,11 +21,9 @@ enum MealConfidence: String, Codable, Sendable, Equatable {
     }
 
     static func from(score: Double) -> MealConfidence {
-        switch score {
-        case 0.85...: .high
-        case 0.65..<0.85: .medium
-        default: .low
-        }
+        if score >= 0.85 { return .high }
+        if score >= 0.65 { return .medium }
+        return .low
     }
 }
 
