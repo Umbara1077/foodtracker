@@ -40,7 +40,8 @@ struct TestFlightPhaseTests {
         let results = await AIBenchmarkRunner.run()
         #expect(results.count == 3)
         #expect(AIBenchmarkRunner.passRate(results) == 1.0)
-        #expect(results.allSatisfy(\.passed))
+        let failed = results.filter { !$0.passed }.map(\.caseID)
+        #expect(failed.isEmpty)
     }
 
     @Test("Paywall A/B experiment stays off by default")
