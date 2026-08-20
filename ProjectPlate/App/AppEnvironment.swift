@@ -109,7 +109,19 @@ struct AppEnvironment: Sendable {
         let profiles = InMemoryProfileRepository(profile: profile)
         let weightRepo = InMemoryWeightRepository(entries: weights)
         let health = NoOpHealthSyncClient()
-        let savedMeals = InMemorySavedMealRepository()
+        let savedMeals = InMemorySavedMealRepository(templates: [
+            SavedMealTemplate(
+                fingerprint: SavedMealTemplate.fingerprint(
+                    title: sampleMeal.title,
+                    nutrients: sampleMeal.nutrients
+                ),
+                title: sampleMeal.title,
+                mealType: sampleMeal.mealType,
+                nutrients: sampleMeal.nutrients,
+                useCount: 4,
+                lastUsedAt: .now
+            ),
+        ])
         let diary = DiaryService(
             mealRepository: meals,
             weightRepository: weightRepo,
