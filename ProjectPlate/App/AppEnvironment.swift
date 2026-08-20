@@ -183,6 +183,15 @@ struct AppEnvironment: Sendable {
         )
     }
 
+    /// XCTest host apps are unsigned and lack the CloudKit entitlement; constructing
+    /// `CKContainer` traps. Use in-memory sync under tests; CloudKit only in real installs.
+    private static func makeSyncService() -> any SyncService {
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+            return InMemorySyncService()
+        }
+        return CloudKitSyncService()
+    }
+
     private static func makeVisionProvider(
         backend: BackendConfiguration,
         quota: ScanQuotaStore
