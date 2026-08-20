@@ -7,6 +7,7 @@ struct MockMealVisionProvider: MealVisionProvider {
     enum Fixture: String, Sendable {
         case chickenRiceBowl
         case yogurtBowl
+        case chipotleBowl
         case emptyPlate
     }
 
@@ -98,6 +99,51 @@ struct MockMealVisionProvider: MealVisionProvider {
                     ),
                 ],
                 overallConfidence: 0.8
+            )
+        case .chipotleBowl:
+            return VisionMealDraft(
+                mealName: "Chipotle burrito bowl",
+                items: [
+                    VisionFoodItem(
+                        displayName: "Chicken",
+                        canonicalQuery: "chicken",
+                        estimatedGrams: 113,
+                        gramRangeLow: 90,
+                        gramRangeHigh: 130,
+                        preparation: "grilled",
+                        brandOrRestaurant: "Chipotle",
+                        confidence: 0.88
+                    ),
+                    VisionFoodItem(
+                        displayName: "Cilantro-lime rice",
+                        canonicalQuery: "cilantro lime rice",
+                        estimatedGrams: 113,
+                        gramRangeLow: 90,
+                        gramRangeHigh: 140,
+                        brandOrRestaurant: "Chipotle",
+                        confidence: 0.84
+                    ),
+                    VisionFoodItem(
+                        displayName: "Black beans",
+                        canonicalQuery: "black beans",
+                        estimatedGrams: 113,
+                        gramRangeLow: 90,
+                        gramRangeHigh: 130,
+                        brandOrRestaurant: "Chipotle",
+                        confidence: 0.86
+                    ),
+                    VisionFoodItem(
+                        displayName: "Guacamole",
+                        canonicalQuery: "guacamole",
+                        estimatedGrams: 80,
+                        gramRangeLow: 50,
+                        gramRangeHigh: 110,
+                        brandOrRestaurant: "Chipotle",
+                        confidence: 0.8
+                    ),
+                ],
+                overallConfidence: 0.85,
+                uncertaintyNotes: ["Restaurant portions vary — review recommended."]
             )
         case .emptyPlate:
             return VisionMealDraft(
@@ -220,14 +266,12 @@ struct MealAnalysisService: MealAnalysisServing {
     }
 
     private func resolveFood(for item: VisionFoodItem, locale: Locale) async throws -> NutritionFood {
-        let query = NutritionSearchQuery(
-            text: item.canonicalQuery,
-            brand: item.brandOrRestaurant,
-            preparation: item.preparation,
-            locale: locale
-        )
+        let query = RestaurantMealMatcher.searchQuery(for: item, locale: locale)
         let candidates = try await nutritionRepository.search(query)
-        if let best = candidates.first, best.score >= 0.12 {
+        if let best = RestaurantMealMatcher.preferredCandidate(
+            from: candidates,
+            brandOrRestaurant: item.brandOrRestaurant
+        ), best.score >= 0.12 {
             return best.food
         }
 
@@ -250,6 +294,7 @@ struct MealAnalysisService: MealAnalysisServing {
         case .userCustom: "Custom"
         case .aiEstimate: "AI estimate — review recommended"
         case .nutritionLabelOCR: "Nutrition label OCR — review recommended"
+        case .restaurantCatalog: "Restaurant catalog — review recommended"
         }
     }
 }

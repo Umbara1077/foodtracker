@@ -145,6 +145,7 @@ struct FoodSearchView: View {
         case .userCustom: "Custom"
         case .aiEstimate: "Estimate"
         case .nutritionLabelOCR: "Label"
+        case .restaurantCatalog: "Restaurant"
         }
     }
 }

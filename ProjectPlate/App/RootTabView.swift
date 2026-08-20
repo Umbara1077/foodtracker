@@ -147,6 +147,10 @@ struct RootTabView: View {
         } catch {
             router.needsOnboarding = true
         }
+        if let corrections = try? await environment.correctionStore.all() {
+            let brands = RestaurantBrandHistory.brands(from: corrections)
+            await environment.nutritionRepository.setPreferredBrandHistory(brands)
+        }
         router.isBootstrapping = false
     }
 }

@@ -110,6 +110,7 @@ struct FoodEditorSheet: View {
         case .userCustom: "Custom"
         case .aiEstimate: "AI estimate — review recommended"
         case .nutritionLabelOCR: "Nutrition label OCR — review recommended"
+        case .restaurantCatalog: "Restaurant catalog — review recommended"
         }
     }
 

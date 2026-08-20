@@ -73,13 +73,22 @@ actor LocalNutritionRepository: NutritionRepository {
     private let openFoodFacts: OpenFoodFactsClient?
     private var cache: [String: [NutritionCandidate]] = [:]
     private var barcodeCache: [String: NutritionFood] = [:]
+    /// Brands the user has corrected toward (PRODUCT_SPEC §34.5 user-history preference).
+    private var preferredBrandHistory: [String]
 
     init(
-        foods: [NutritionFood] = BundledNutritionCatalog.foods,
-        openFoodFacts: OpenFoodFactsClient? = OpenFoodFactsClient()
+        foods: [NutritionFood] = BundledNutritionCatalog.foods + BundledRestaurantCatalog.foods,
+        openFoodFacts: OpenFoodFactsClient? = OpenFoodFactsClient(),
+        preferredBrandHistory: [String] = []
     ) {
         self.foods = foods
         self.openFoodFacts = openFoodFacts
+        self.preferredBrandHistory = preferredBrandHistory
+    }
+
+    func setPreferredBrandHistory(_ brands: [String]) async {
+        preferredBrandHistory = brands
+        cache.removeAll()
     }
 
     func search(_ query: NutritionSearchQuery) async throws -> [NutritionCandidate] {
@@ -87,6 +96,7 @@ actor LocalNutritionRepository: NutritionRepository {
             query.text.lowercased(),
             query.brand?.lowercased() ?? "",
             query.preparation?.lowercased() ?? "",
+            preferredBrandHistory.joined(separator: ","),
         ].joined(separator: "|")
 
         if let cached = cache[key] {
@@ -95,7 +105,11 @@ actor LocalNutritionRepository: NutritionRepository {
 
         // Light debounce-friendly yield for UI responsiveness.
         try await Task.sleep(nanoseconds: 50_000_000)
-        let ranked = NutritionResolver.rank(candidates: foods, query: query)
+        let ranked = NutritionResolver.rank(
+            candidates: foods,
+            query: query,
+            preferredBrandHistory: preferredBrandHistory
+        )
         cache[key] = ranked
         return ranked
     }

@@ -68,6 +68,8 @@ struct CorrectionFeedbackView: View {
         )
         do {
             try await environment.correctionStore.save(feedback)
+            let brands = RestaurantBrandHistory.brands(from: try await environment.correctionStore.all())
+            await environment.nutritionRepository.setPreferredBrandHistory(brands)
             dismiss()
         } catch {
             errorMessage = "Could not save feedback."
