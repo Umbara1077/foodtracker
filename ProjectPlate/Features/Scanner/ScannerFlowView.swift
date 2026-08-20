@@ -167,8 +167,11 @@ struct ScannerFlowView: View {
         analytics: (any AnalyticsClient)? = nil,
         onSaved: (() -> Void)? = nil
     ) {
-        // Environment isn’t available in init; placeholders replaced in task if needed.
-        let service = analysisService ?? MealAnalysisService(visionProvider: MockMealVisionProvider())
+        // Environment isn’t available in init; RootTabView passes live services.
+        let service = analysisService ?? MealAnalysisService(
+            visionProvider: MockMealVisionProvider(),
+            nutritionRepository: LocalNutritionRepository()
+        )
         let analyticsClient = analytics ?? NoOpAnalyticsClient()
         _viewModel = State(
             initialValue: ScannerViewModel(
