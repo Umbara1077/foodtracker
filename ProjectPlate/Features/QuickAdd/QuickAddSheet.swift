@@ -14,6 +14,10 @@ struct QuickAddSheet: View {
     @State private var warning: String?
     @State private var errorMessage: String?
     @State private var isSaving = false
+    @State private var voiceCapturer = SpeechVoiceMealCapturer()
+    @State private var isListening = false
+    @State private var usedVoice = false
+    @State private var liveTranscript = ""
 
     var onSaved: (() -> Void)?
 
@@ -43,6 +47,26 @@ struct QuickAddSheet: View {
                             .foregroundStyle(.orange)
                     }
                 }
+                Section("Voice") {
+                    if isListening {
+                        Text(liveTranscript.isEmpty ? "Listening…" : liveTranscript)
+                            .font(Typography.supporting)
+                            .foregroundStyle(Color.textSecondary)
+                        Button("Stop & fill fields", role: .destructive) {
+                            stopVoice()
+                        }
+                    } else {
+                        Button {
+                            Task { await startVoice() }
+                        } label: {
+                            Label("Speak meal", systemImage: "mic.fill")
+                        }
+                        .disabled(!voiceCapturer.isAvailable)
+                        Text("Try “Greek yogurt 180 calories 20 protein”.")
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                }
                 Section("Notes") {
                     TextField("Optional note", text: $notes, axis: .vertical)
                         .lineLimit(2...4)
@@ -59,20 +83,71 @@ struct QuickAddSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        _ = voiceCapturer.stop()
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task { await save() }
                     }
-                    .disabled(isSaving)
+                    .disabled(isSaving || isListening)
                 }
             }
             .onChange(of: calories) { _, _ in refreshWarning() }
             .onChange(of: protein) { _, _ in refreshWarning() }
             .onChange(of: carbs) { _, _ in refreshWarning() }
             .onChange(of: fat) { _, _ in refreshWarning() }
+            .onDisappear {
+                _ = voiceCapturer.stop()
+            }
         }
+    }
+
+    private func startVoice() async {
+        errorMessage = nil
+        let authorized = await voiceCapturer.requestAuthorization()
+        guard authorized else {
+            errorMessage = VoiceCaptureError.notAuthorized.localizedDescription
+            return
+        }
+        do {
+            try voiceCapturer.start { partial in
+                liveTranscript = partial
+            }
+            isListening = true
+            liveTranscript = ""
+        } catch {
+            errorMessage = error.localizedDescription
+            isListening = false
+        }
+    }
+
+    private func stopVoice() {
+        let transcript = voiceCapturer.stop()
+        isListening = false
+        applyVoiceTranscript(transcript.isEmpty ? liveTranscript : transcript)
+    }
+
+    private func applyVoiceTranscript(_ transcript: String) {
+        let draft = VoiceMealParser.parse(transcript)
+        if let spokenTitle = draft.title, title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            title = spokenTitle
+        }
+        if let value = draft.calories { calories = formatNumber(value) }
+        if let value = draft.protein { protein = formatNumber(value) }
+        if let value = draft.carbs { carbs = formatNumber(value) }
+        if let value = draft.fat { fat = formatNumber(value) }
+        if notes.isEmpty {
+            notes = transcript
+        }
+        usedVoice = true
+        refreshWarning()
+    }
+
+    private func formatNumber(_ value: Double) -> String {
+        value.rounded() == value ? String(Int(value)) : String(value)
     }
 
     private func refreshWarning() {
@@ -112,7 +187,7 @@ struct QuickAddSheet: View {
                 carbs: Double(carbs) ?? 0,
                 fat: Double(fat) ?? 0
             ),
-            inputMethod: .quickAdd
+            inputMethod: usedVoice ? .voice : .quickAdd
         )
 
         do {
