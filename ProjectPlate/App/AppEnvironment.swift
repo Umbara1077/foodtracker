@@ -12,7 +12,7 @@ struct AppEnvironment: Sendable {
 
     static func live(modelContainer: ModelContainer) -> AppEnvironment {
         AppEnvironment(
-            mealRepository: InMemoryMealRepository(),
+            mealRepository: SwiftDataMealRepository(modelContainer: modelContainer),
             profileRepository: SwiftDataProfileRepository(modelContainer: modelContainer),
             targetRepository: SwiftDataTargetRepository(modelContainer: modelContainer),
             settings: SettingsStore(),
@@ -31,8 +31,16 @@ struct AppEnvironment: Sendable {
         var profile = UserProfile.blank
         profile.onboardingComplete = true
         profile.goalType = .maintainWeight
+
+        let sampleMeal = MealRecord(
+            mealType: .lunch,
+            title: "Chicken rice bowl",
+            nutrients: NutrientSet(calories: 620, protein: 48, carbs: 55, fat: 18),
+            inputMethod: .quickAdd
+        )
+
         return AppEnvironment(
-            mealRepository: InMemoryMealRepository(),
+            mealRepository: InMemoryMealRepository(meals: [sampleMeal]),
             profileRepository: InMemoryProfileRepository(profile: profile),
             targetRepository: InMemoryTargetRepository(targets: [target]),
             settings: SettingsStore(),

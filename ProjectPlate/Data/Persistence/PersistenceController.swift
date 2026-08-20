@@ -6,6 +6,7 @@ enum PersistenceController {
         let schema = Schema([
             UserProfileEntity.self,
             NutritionTargetEntity.self,
+            MealEntity.self,
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: inMemory)
         do {

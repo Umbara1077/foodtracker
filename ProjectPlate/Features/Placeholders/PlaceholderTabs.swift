@@ -1,18 +1,5 @@
 import SwiftUI
 
-struct HistoryView: View {
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                "History",
-                systemImage: "calendar",
-                description: Text("Past days and meal duplication land in Phase 2.")
-            )
-            .navigationTitle("History")
-        }
-    }
-}
-
 struct ProgressViewScreen: View {
     var body: some View {
         NavigationStack {
@@ -46,7 +33,7 @@ struct SettingsView: View {
                         .foregroundStyle(Color.textSecondary)
                 }
                 Section("About") {
-                    LabeledContent("Version", value: "0.1.0")
+                    LabeledContent("Version", value: "0.2.0")
                     Text("Nutrition estimates are for informational tracking and may be inaccurate. This app does not provide medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
@@ -76,6 +63,5 @@ struct SettingsView: View {
     }
 }
 
-#Preview("History") { HistoryView() }
 #Preview("Progress") { ProgressViewScreen() }
 #Preview("Settings") { SettingsView().environment(\.appEnvironment, .preview) }

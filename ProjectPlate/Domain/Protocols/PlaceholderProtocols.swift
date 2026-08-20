@@ -1,7 +1,13 @@
 import Foundation
 
 protocol MealRepository: Sendable {
-    func meals(on day: Date, calendar: Calendar) async throws -> [MealSummary]
+    func meals(on day: Date, calendar: Calendar) async throws -> [MealRecord]
+    func totals(on day: Date, calendar: Calendar) async throws -> DayNutritionTotals
+    func save(_ meal: MealRecord) async throws
+    func delete(id: UUID) async throws
+    func meal(id: UUID) async throws -> MealRecord?
+    /// Days in range that have at least one meal (for history dots).
+    func daysWithMeals(from start: Date, to end: Date, calendar: Calendar) async throws -> Set<DateComponents>
 }
 
 protocol AnalyticsClient: Sendable {
@@ -13,20 +19,7 @@ enum AnalyticsEvent: Sendable {
     case onboardingCompleted
     case scannerOpened
     case mealSaved
-}
-
-struct MealSummary: Identifiable, Sendable, Equatable {
-    let id: UUID
-    let title: String
-    let eatenAt: Date
-    let mealType: MealType
-    let calories: Double
-}
-
-struct InMemoryMealRepository: MealRepository {
-    func meals(on day: Date, calendar: Calendar) async throws -> [MealSummary] {
-        []
-    }
+    case mealDeleted
 }
 
 struct SettingsStore: Sendable {

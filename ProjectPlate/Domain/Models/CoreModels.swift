@@ -1,6 +1,6 @@
 import Foundation
 
-enum MealType: String, Codable, CaseIterable, Sendable {
+enum MealType: String, Codable, CaseIterable, Sendable, Hashable {
     case breakfast
     case lunch
     case dinner
