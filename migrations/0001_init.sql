@@ -1,0 +1,24 @@
+CREATE TABLE IF NOT EXISTS meals (
+	id TEXT PRIMARY KEY,
+	eaten_at TEXT NOT NULL,
+	meal_type TEXT NOT NULL DEFAULT 'snack',
+	name TEXT NOT NULL,
+	calories REAL NOT NULL DEFAULT 0,
+	protein REAL NOT NULL DEFAULT 0,
+	carbs REAL NOT NULL DEFAULT 0,
+	fat REAL NOT NULL DEFAULT 0,
+	notes TEXT,
+	created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_meals_eaten_at ON meals (eaten_at);
+
+CREATE TABLE IF NOT EXISTS goals (
+	id INTEGER PRIMARY KEY CHECK (id = 1),
+	calories REAL NOT NULL DEFAULT 2000,
+	protein REAL NOT NULL DEFAULT 150,
+	carbs REAL NOT NULL DEFAULT 200,
+	fat REAL NOT NULL DEFAULT 65
+);
+
+INSERT OR IGNORE INTO goals (id) VALUES (1);
