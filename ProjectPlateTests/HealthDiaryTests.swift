@@ -2,20 +2,31 @@ import Testing
 @testable import ProjectPlate
 import Foundation
 
-actor RecordingHealthSyncClient: HealthSyncClient {
+final class RecordingHealthSyncClient: HealthSyncClient, @unchecked Sendable {
     var isDataAvailable: Bool = true
     var status: HealthAuthStatus = .sharingAuthorized
-    var mealWrites: [MealRecord] = []
-    var mealDeletes: [MealHealthKitAnchors] = []
-    var weightWrites: [WeightEntry] = []
+    private let lock = NSLock()
+    private var _mealWrites: [MealRecord] = []
+    private var _mealDeletes: [MealHealthKitAnchors] = []
+    private var _weightWrites: [WeightEntry] = []
     var remoteWeights: [WeightEntry] = []
+
+    var mealWrites: [MealRecord] {
+        lock.lock(); defer { lock.unlock() }
+        return _mealWrites
+    }
+
+    var mealDeletes: [MealHealthKitAnchors] {
+        lock.lock(); defer { lock.unlock() }
+        return _mealDeletes
+    }
 
     func authorizationStatus() -> HealthAuthStatus { status }
 
     func requestAuthorization() async throws -> Bool { true }
 
     func writeMealNutrition(_ meal: MealRecord) async throws -> MealHealthKitAnchors {
-        mealWrites.append(meal)
+        lock.lock(); _mealWrites.append(meal); lock.unlock()
         return MealHealthKitAnchors(
             energyUUID: UUID().uuidString,
             proteinUUID: UUID().uuidString,
@@ -25,11 +36,11 @@ actor RecordingHealthSyncClient: HealthSyncClient {
     }
 
     func deleteMealNutrition(_ anchors: MealHealthKitAnchors) async throws {
-        mealDeletes.append(anchors)
+        lock.lock(); _mealDeletes.append(anchors); lock.unlock()
     }
 
     func writeBodyMass(_ entry: WeightEntry) async throws -> String? {
-        weightWrites.append(entry)
+        lock.lock(); _weightWrites.append(entry); lock.unlock()
         return UUID().uuidString
     }
 
@@ -61,8 +72,7 @@ struct HealthDiaryTests {
         let stored = try await meals.meals(on: .now, calendar: .current)
         #expect(stored.count == 1)
         #expect(stored.first?.healthKitAnchors?.energyUUID != nil)
-        let writes = await health.mealWrites
-        #expect(writes.count == 1)
+        #expect(health.mealWrites.count == 1)
     }
 
     @Test("Diary skips Health when sync disabled")
@@ -84,8 +94,7 @@ struct HealthDiaryTests {
                 inputMethod: .quickAdd
             )
         )
-        let writes = await health.mealWrites
-        #expect(writes.isEmpty)
+        #expect(health.mealWrites.isEmpty)
     }
 
     @Test("Import dedupes by healthKitUUID")
@@ -97,10 +106,10 @@ struct HealthDiaryTests {
             WeightEntry(kilograms: 70, source: .healthKit, healthKitUUID: existingUUID),
         ])
         let health = RecordingHealthSyncClient()
-        await health.setRemote([
+        health.remoteWeights = [
             WeightEntry(kilograms: 70, source: .healthKit, healthKitUUID: existingUUID),
             WeightEntry(kilograms: 71, source: .healthKit, healthKitUUID: "CCCC-DDDD"),
-        ])
+        ]
         let diary = DiaryService(
             mealRepository: InMemoryMealRepository(),
             weightRepository: weights,
@@ -137,13 +146,6 @@ struct HealthDiaryTests {
         try await diary.deleteMeal(meal)
         let remaining = try await meals.meals(on: .now, calendar: .current)
         #expect(remaining.isEmpty)
-        let deletes = await health.mealDeletes
-        #expect(deletes.count == 1)
-    }
-}
-
-private extension RecordingHealthSyncClient {
-    func setRemote(_ entries: [WeightEntry]) {
-        remoteWeights = entries
+        #expect(health.mealDeletes.count == 1)
     }
 }
