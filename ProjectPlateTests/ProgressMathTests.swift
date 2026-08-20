@@ -71,7 +71,7 @@ struct ProgressMathTests {
         #expect(digest.mealsLogged == 5)
         #expect(digest.averageCalories == 2000)
         #expect(digest.averageProtein == 150)
-        #expect(digest.weightChangeKg == -0.6)
+        #expect(abs((digest.weightChangeKg ?? 0) - (-0.6)) < 0.0001)
         #expect(digest.highlight.contains("Protein") || digest.highlight.contains("tracked"))
     }
 
