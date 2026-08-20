@@ -30,5 +30,12 @@ Or:
 - **Phase 1** — Onboarding + targets (CI verified)
 - **Phase 2** — Local diary / Quick Add / History (CI verified)
 - **Phase 3** — Camera scan + mock analysis → review → save (CI verified)
-- **Phase 4** — Nutrition catalog search + food editor; scan resolves via catalog
-- **Next: Phase 5** — Cloud AI meal analysis backend
+- **Phase 4** — Nutrition catalog search + food editor; scan resolves via catalog (CI verified)
+- **Phase 5** — Managed cloud AI gateway (`backend/`) + iOS HTTP client / quota / validation
+- **Next: Phase 6** — Barcode scan + product lookup
+
+## Cloud AI backend
+
+See [`backend/README.md`](backend/README.md). The iPhone app never embeds OpenAI keys.
+Set `PLATE_API_BASE_URL` (and optional `PLATE_API_TOKEN`) in the Xcode target Info to point at a deployed Worker; leave blank to keep the on-device mock provider (default for Simulator / CI).
+

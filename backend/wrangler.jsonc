@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "project-plate-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // OPENAI_API_KEY and APP_API_TOKEN are optional secrets:
+  // - without OPENAI_API_KEY the Worker returns deterministic mock drafts (dev/CI)
+  // - APP_API_TOKEN, when set, requires Authorization: Bearer <token>
+  "vars": {
+    "PRIMARY_MODEL": "gpt-5.6-luna",
+    "ESCALATION_MODEL": "gpt-5.6-terra",
+    "FREE_DAILY_SCANS": "5",
+    "PROVIDER_MODE": "auto"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "SCAN_QUOTA",
+      "id": "00000000000000000000000000000000",
+      "preview_id": "00000000000000000000000000000000"
+    }
+  ]
+}

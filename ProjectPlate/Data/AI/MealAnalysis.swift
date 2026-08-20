@@ -177,8 +177,8 @@ struct MealAnalysisService: MealAnalysisServing {
         guard !normalized.isEmpty else { throw MealScanError.invalidImage }
 
         onStage(.identifyingFood)
-        let draft = try await visionProvider.analyze(imageData: normalized, context: context)
-        guard draft.schemaVersion == 1 else { throw MealScanError.invalidStructuredResponse }
+        let rawDraft = try await visionProvider.analyze(imageData: normalized, context: context)
+        let draft = try VisionDraftValidator.validate(rawDraft)
 
         onStage(.resolvingNutrition)
         var items: [ResolvedMealItem] = []

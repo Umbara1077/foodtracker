@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   build-test:
-    name: Build & Test (Phase 0)
+    name: Build & Test (iOS)
     runs-on: macos-15
     timeout-minutes: 45
     steps:

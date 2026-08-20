@@ -9,20 +9,27 @@ struct AppEnvironment: Sendable {
     var targetRepository: any TargetRepository
     var nutritionRepository: any NutritionRepository
     var mealAnalysisService: any MealAnalysisServing
+    var backendConfiguration: BackendConfiguration
+    var scanQuota: ScanQuotaStore
     var settings: SettingsStore
     var analytics: any AnalyticsClient
 
     static func live(modelContainer: ModelContainer) -> AppEnvironment {
         let nutrition = LocalNutritionRepository()
+        let backend = BackendConfiguration.load()
+        let quota = ScanQuotaStore()
+        let vision = makeVisionProvider(backend: backend, quota: quota)
         return AppEnvironment(
             mealRepository: SwiftDataMealRepository(modelContainer: modelContainer),
             profileRepository: SwiftDataProfileRepository(modelContainer: modelContainer),
             targetRepository: SwiftDataTargetRepository(modelContainer: modelContainer),
             nutritionRepository: nutrition,
             mealAnalysisService: MealAnalysisService(
-                visionProvider: MockMealVisionProvider(fixture: .chickenRiceBowl),
+                visionProvider: vision,
                 nutritionRepository: nutrition
             ),
+            backendConfiguration: backend,
+            scanQuota: quota,
             settings: SettingsStore(),
             analytics: NoOpAnalyticsClient()
         )
@@ -48,6 +55,8 @@ struct AppEnvironment: Sendable {
         )
 
         let nutrition = LocalNutritionRepository()
+        let backend = BackendConfiguration(baseURL: nil, appToken: nil, installID: "preview")
+        let quota = ScanQuotaStore()
         return AppEnvironment(
             mealRepository: InMemoryMealRepository(meals: [sampleMeal]),
             profileRepository: InMemoryProfileRepository(profile: profile),
@@ -57,8 +66,30 @@ struct AppEnvironment: Sendable {
                 visionProvider: MockMealVisionProvider(fixture: .chickenRiceBowl, delayNanoseconds: 0),
                 nutritionRepository: nutrition
             ),
+            backendConfiguration: backend,
+            scanQuota: quota,
             settings: SettingsStore(),
             analytics: NoOpAnalyticsClient()
+        )
+    }
+
+    private static func makeVisionProvider(
+        backend: BackendConfiguration,
+        quota: ScanQuotaStore
+    ) -> any MealVisionProvider {
+        let mock = MockMealVisionProvider(fixture: .chickenRiceBowl)
+        guard backend.isCloudEnabled else { return mock }
+
+        let managed = ManagedCloudVisionProvider(
+            configuration: backend,
+            onQuotaUpdate: { remaining, dailyLimit in
+                quota.update(remaining: remaining, dailyLimit: dailyLimit)
+            }
+        )
+        return MealVisionRouter(
+            mockProvider: mock,
+            managedProvider: managed,
+            preferManaged: true
         )
     }
 }

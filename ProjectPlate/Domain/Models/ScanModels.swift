@@ -161,6 +161,9 @@ enum MealScanError: Error, LocalizedError, Sendable, Equatable {
     case providerUnavailable
     case invalidStructuredResponse
     case cancelled
+    case network
+    case unauthorized
+    case quotaExceeded
 
     var errorDescription: String? {
         switch self {
@@ -169,6 +172,9 @@ enum MealScanError: Error, LocalizedError, Sendable, Equatable {
         case .providerUnavailable: "Meal analysis isn’t available right now."
         case .invalidStructuredResponse: "The scan result was incomplete."
         case .cancelled: "Scan cancelled."
+        case .network: "Check your connection and try again."
+        case .unauthorized: "Cloud scan isn’t authorized for this build."
+        case .quotaExceeded: "You’ve used today’s free cloud scans. Try again tomorrow, or log with Search / Quick add."
         }
     }
 }
