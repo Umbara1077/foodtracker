@@ -332,6 +332,9 @@ struct SettingsView: View {
             try await environment.dataMaintenance.deleteAllLocalData()
             environment.analytics.track(.dataDeleted)
             await TodayLiveActivityController.endAll()
+            CloudSyncPreference.setChangeToken(nil)
+            CloudSyncPreference.setLastSyncDate(nil)
+            refreshLastSyncLabel()
             privacyMessage = "Local data deleted. Restart onboarding from a fresh install state."
             await refresh()
         } catch {
