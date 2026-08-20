@@ -10,8 +10,6 @@ Source of truth: [`docs/PRODUCT_SPEC.md`](docs/PRODUCT_SPEC.md) · Phase notes: 
 - macOS with **Xcode 16+** (iOS 18 SDK)
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`)
 
-This repository was scaffolded on a Linux Cloud Agent, which **cannot** compile SwiftUI. Generate and build on a Mac.
-
 ## Generate & run (macOS)
 
 ```bash
@@ -20,19 +18,16 @@ brew install xcodegen
 open ProjectPlate.xcodeproj
 ```
 
-Or build + test from the CLI (same path CI uses):
+Or:
 
 ```bash
 ./scripts/ci-ios.sh
 ```
 
-## CI
-
-GitHub Actions (macOS-15) runs `xcodegen generate` then `xcodebuild build test` on every push/PR.
-
 ## Phase status
 
-- **Phase 0** — App shell, design system, Scan placeholder (CI verified)
-- **Phase 1** — Onboarding + Mifflin–St Jeor targets (CI verified)
-- **Phase 2** — Local diary: Quick Add, Today meals, History day strip
-- **Next: Phase 3** — Camera capture + mocked analysis → result screen
+- **Phase 0** — App shell, design system (CI verified)
+- **Phase 1** — Onboarding + targets (CI verified)
+- **Phase 2** — Local diary / Quick Add / History (CI verified)
+- **Phase 3** — Camera scan + mock analysis → review → save
+- **Next: Phase 4** — Real nutrition repository (USDA search)

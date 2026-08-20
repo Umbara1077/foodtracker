@@ -92,6 +92,11 @@ struct TodayView: View {
             }
             .background(Color.backgroundPrimary.ignoresSafeArea())
             .navigationTitle("Today")
+            .onAppear {
+                if let viewModel {
+                    Task { await viewModel.load() }
+                }
+            }
         }
         .task {
             if viewModel == nil {

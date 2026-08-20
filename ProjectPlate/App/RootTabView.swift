@@ -47,7 +47,10 @@ struct RootTabView: View {
                         .accessibilitySortPriority(1)
                 }
                 .fullScreenCover(isPresented: $router.isScannerPresented) {
-                    ScannerPlaceholderView(onClose: router.dismissScanner)
+                    ScannerFlowView(
+                        analysisService: environment.mealAnalysisService,
+                        analytics: environment.analytics
+                    )
                 }
             }
         }

@@ -7,6 +7,7 @@ struct AppEnvironment: Sendable {
     var mealRepository: any MealRepository
     var profileRepository: any ProfileRepository
     var targetRepository: any TargetRepository
+    var mealAnalysisService: any MealAnalysisServing
     var settings: SettingsStore
     var analytics: any AnalyticsClient
 
@@ -15,6 +16,9 @@ struct AppEnvironment: Sendable {
             mealRepository: SwiftDataMealRepository(modelContainer: modelContainer),
             profileRepository: SwiftDataProfileRepository(modelContainer: modelContainer),
             targetRepository: SwiftDataTargetRepository(modelContainer: modelContainer),
+            mealAnalysisService: MealAnalysisService(
+                visionProvider: MockMealVisionProvider(fixture: .chickenRiceBowl)
+            ),
             settings: SettingsStore(),
             analytics: NoOpAnalyticsClient()
         )
@@ -43,6 +47,9 @@ struct AppEnvironment: Sendable {
             mealRepository: InMemoryMealRepository(meals: [sampleMeal]),
             profileRepository: InMemoryProfileRepository(profile: profile),
             targetRepository: InMemoryTargetRepository(targets: [target]),
+            mealAnalysisService: MealAnalysisService(
+                visionProvider: MockMealVisionProvider(fixture: .chickenRiceBowl, delayNanoseconds: 0)
+            ),
             settings: SettingsStore(),
             analytics: NoOpAnalyticsClient()
         )
