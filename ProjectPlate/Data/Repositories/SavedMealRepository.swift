@@ -42,6 +42,38 @@ actor SwiftDataSavedMealRepository: SavedMealRepository {
         return try modelContext.fetch(descriptor).map { $0.asDomain() }
     }
 
+    func upsert(_ template: SavedMealTemplate) async throws {
+        let templateID = template.id
+        let fingerprint = template.fingerprint
+        let byID = FetchDescriptor<SavedMealEntity>(
+            predicate: #Predicate { $0.id == templateID }
+        )
+        if let existing = try modelContext.fetch(byID).first {
+            existing.apply(template)
+        } else {
+            let byFingerprint = FetchDescriptor<SavedMealEntity>(
+                predicate: #Predicate { $0.fingerprint == fingerprint }
+            )
+            if let existing = try modelContext.fetch(byFingerprint).first {
+                existing.apply(template)
+            } else {
+                modelContext.insert(SavedMealEntity(from: template))
+            }
+        }
+        try modelContext.save()
+    }
+
+    func delete(id: UUID) async throws {
+        let targetID = id
+        let descriptor = FetchDescriptor<SavedMealEntity>(
+            predicate: #Predicate { $0.id == targetID }
+        )
+        for entity in try modelContext.fetch(descriptor) {
+            modelContext.delete(entity)
+        }
+        try modelContext.save()
+    }
+
     func clear() async throws {
         let descriptor = FetchDescriptor<SavedMealEntity>()
         for entity in try modelContext.fetch(descriptor) {
@@ -86,6 +118,18 @@ actor InMemorySavedMealRepository: SavedMealRepository {
 
     func all() async throws -> [SavedMealTemplate] {
         templates
+    }
+
+    func upsert(_ template: SavedMealTemplate) async throws {
+        if let index = templates.firstIndex(where: { $0.id == template.id || $0.fingerprint == template.fingerprint }) {
+            templates[index] = template
+        } else {
+            templates.append(template)
+        }
+    }
+
+    func delete(id: UUID) async throws {
+        templates.removeAll { $0.id == id }
     }
 
     func clear() async throws {

@@ -98,6 +98,16 @@ final class NutritionTargetEntity {
         self.createdAt = .now
     }
 
+    func apply(_ snapshot: NutritionTargetSnapshot) {
+        id = snapshot.id
+        effectiveFrom = snapshot.effectiveDate
+        calories = snapshot.calories
+        proteinGrams = snapshot.proteinGrams
+        carbsGrams = snapshot.carbGrams
+        fatGrams = snapshot.fatGrams
+        sourceRaw = snapshot.source.rawValue
+    }
+
     func asDomain() -> NutritionTargetSnapshot {
         NutritionTargetSnapshot(
             id: id,

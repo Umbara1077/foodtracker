@@ -18,9 +18,13 @@ struct SettingsView: View {
     @State private var subscriptionMessage: String?
     @AppStorage("plate.save_meal_photos") private var saveMealPhotos = true
     @AppStorage(TodayLiveActivityPolicy.preferenceKey) private var liveActivityEnabled = true
+    @AppStorage(CloudSyncPreference.enabledKey) private var iCloudSyncEnabled = false
     @State private var consentVersionLabel = "Not accepted"
     @State private var privacyMessage: String?
     @State private var isPrivacyWorking = false
+    @State private var iCloudSyncMessage: String?
+    @State private var isSyncing = false
+    @State private var lastSyncLabel = "Never"
 
     var body: some View {
         NavigationStack {
@@ -77,6 +81,28 @@ struct SettingsView: View {
                     }
                     if let healthMessage {
                         Text(healthMessage)
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                }
+                Section("iCloud") {
+                    Toggle("Sync diary across devices", isOn: $iCloudSyncEnabled)
+                        .onChange(of: iCloudSyncEnabled) { _, enabled in
+                            CloudSyncPreference.setEnabled(enabled)
+                            if enabled {
+                                Task { await runCloudSync(triggeredByToggle: true) }
+                            }
+                        }
+                    LabeledContent("Last sync", value: lastSyncLabel)
+                    Button("Sync now") {
+                        Task { await runCloudSync(triggeredByToggle: false) }
+                    }
+                    .disabled(!iCloudSyncEnabled || isSyncing)
+                    Text("Meals, weight, targets, and saved meals use your private iCloud database. Photos stay on this iPhone.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
+                    if let iCloudSyncMessage {
+                        Text(iCloudSyncMessage)
                             .font(Typography.caption)
                             .foregroundStyle(Color.textSecondary)
                     }
@@ -149,7 +175,7 @@ struct SettingsView: View {
                     }
                 }
                 Section("About") {
-                    LabeledContent("Version", value: "1.2.4")
+                    LabeledContent("Version", value: "1.2.5")
                     Text("Nutrition estimates are for informational tracking and may be inaccurate. This app does not provide medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
@@ -228,7 +254,33 @@ struct SettingsView: View {
             }
         }
         healthStatusText = statusLabel(environment.healthSync.authorizationStatus())
+        refreshLastSyncLabel()
         await refreshSubscription()
+    }
+
+    private func refreshLastSyncLabel() {
+        if let date = CloudSyncPreference.lastSyncDate() {
+            lastSyncLabel = date.formatted(date: .abbreviated, time: .shortened)
+        } else {
+            lastSyncLabel = "Never"
+        }
+    }
+
+    private func runCloudSync(triggeredByToggle: Bool) async {
+        isSyncing = true
+        iCloudSyncMessage = triggeredByToggle ? "Starting iCloud sync…" : "Syncing…"
+        defer { isSyncing = false }
+        do {
+            try await environment.diarySync.syncIfEnabled()
+            environment.analytics.track(.iCloudSyncCompleted)
+            refreshLastSyncLabel()
+            iCloudSyncMessage = "Sync finished."
+        } catch let error as SyncServiceError {
+            iCloudSyncMessage = error.errorDescription
+        } catch {
+            iCloudSyncMessage = error.localizedDescription
+            environment.crashReporter.record(error: error, context: "icloud.sync")
+        }
     }
 
     private func refreshSubscription() async {
@@ -279,6 +331,7 @@ struct SettingsView: View {
         do {
             try await environment.dataMaintenance.deleteAllLocalData()
             environment.analytics.track(.dataDeleted)
+            await TodayLiveActivityController.endAll()
             privacyMessage = "Local data deleted. Restart onboarding from a fresh install state."
             await refresh()
         } catch {

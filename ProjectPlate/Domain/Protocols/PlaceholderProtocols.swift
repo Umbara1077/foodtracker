@@ -30,6 +30,7 @@ enum AnalyticsEvent: Sendable {
     case cloudAIConsentDeclined
     case dataExported
     case dataDeleted
+    case iCloudSyncCompleted
 }
 
 struct SettingsStore: Sendable {

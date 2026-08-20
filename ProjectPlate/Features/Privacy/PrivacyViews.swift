@@ -65,11 +65,15 @@ struct PrivacyPolicyView: View {
 
                     policySection(
                         "What we store on your iPhone",
-                        "Meals, weight entries, targets, preferences, and optional meal photo thumbnails stay on device in SwiftData unless you enable Apple Health sync or cloud AI scans."
+                        "Meals, weight entries, targets, preferences, and optional meal photo thumbnails stay on device in SwiftData unless you enable Apple Health sync, iCloud diary sync, or cloud AI scans."
                     )
                     policySection(
                         "Cloud AI scans",
                         "When you consent, a compressed meal photo (location metadata stripped) is sent to our managed gateway for food recognition. We do not permanently store standard scan photos. Structured food/portion drafts may be returned to your device."
+                    )
+                    policySection(
+                        "iCloud sync",
+                        "If you enable iCloud diary sync, meal and weight records (not meal photos) sync through your private iCloud database so other iPhones signed into the same Apple Account can restore them. You can turn this off anytime in Settings."
                     )
                     policySection(
                         "Apple Health",

@@ -87,5 +87,7 @@ protocol SavedMealRepository: Sendable {
     func recordUsage(of meal: MealRecord) async throws
     func frequent(limit: Int) async throws -> [SavedMealTemplate]
     func all() async throws -> [SavedMealTemplate]
+    func upsert(_ template: SavedMealTemplate) async throws
+    func delete(id: UUID) async throws
     func clear() async throws
 }

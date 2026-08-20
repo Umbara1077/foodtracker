@@ -15,6 +15,7 @@ struct AppEnvironment: Sendable {
     var dataMaintenance: DataMaintenanceService
     var correctionStore: any CorrectionFeedbackStore
     var savedMeals: any SavedMealRepository
+    var diarySync: DiarySyncCoordinator
     var subscriptions: any SubscriptionServicing
     var aiScanQuota: LocalAIScanQuotaStore
     var backendConfiguration: BackendConfiguration
@@ -42,6 +43,14 @@ struct AppEnvironment: Sendable {
             savedMeals: savedMeals
         )
         let crashReporter = LoggingCrashReporter()
+        let diarySync = DiarySyncCoordinator(
+            mealRepository: meals,
+            weightRepository: weights,
+            profileRepository: profiles,
+            targetRepository: targets,
+            savedMealRepository: savedMeals,
+            syncService: CloudKitSyncService()
+        )
         return AppEnvironment(
             mealRepository: meals,
             profileRepository: profiles,
@@ -63,6 +72,7 @@ struct AppEnvironment: Sendable {
             ),
             correctionStore: LocalCorrectionFeedbackStore(),
             savedMeals: savedMeals,
+            diarySync: diarySync,
             subscriptions: StoreKitPurchaseManager(),
             aiScanQuota: LocalAIScanQuotaStore(dailyLimit: 3),
             backendConfiguration: backend,
@@ -131,6 +141,14 @@ struct AppEnvironment: Sendable {
         )
         let targets = InMemoryTargetRepository(targets: [target])
         let crashReporter = LoggingCrashReporter()
+        let diarySync = DiarySyncCoordinator(
+            mealRepository: meals,
+            weightRepository: weightRepo,
+            profileRepository: profiles,
+            targetRepository: targets,
+            savedMealRepository: savedMeals,
+            syncService: InMemorySyncService()
+        )
         return AppEnvironment(
             mealRepository: meals,
             profileRepository: profiles,
@@ -154,6 +172,7 @@ struct AppEnvironment: Sendable {
                 defaults: UserDefaults(suiteName: "plate.preview.corrections") ?? .standard
             ),
             savedMeals: savedMeals,
+            diarySync: diarySync,
             subscriptions: MockPurchaseManager(),
             aiScanQuota: LocalAIScanQuotaStore(dailyLimit: 3),
             backendConfiguration: backend,

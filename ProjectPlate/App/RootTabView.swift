@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootTabView: View {
     @Environment(\.appEnvironment) private var environment
+    @Environment(\.scenePhase) private var scenePhase
     @State private var router = AppRouter()
 
     var body: some View {
@@ -79,6 +80,22 @@ struct RootTabView: View {
         }
         .task {
             await bootstrap()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active, !router.needsOnboarding, !router.isBootstrapping else { return }
+            Task { await syncDiaryInBackground() }
+        }
+    }
+
+    private func syncDiaryInBackground() async {
+        guard CloudSyncPreference.isEnabled() else { return }
+        do {
+            try await environment.diarySync.syncIfEnabled()
+            environment.analytics.track(.iCloudSyncCompleted)
+        } catch is SyncServiceError {
+            // Disabled / no iCloud account — silent on foreground.
+        } catch {
+            environment.crashReporter.record(error: error, context: "icloud.foreground")
         }
     }
 

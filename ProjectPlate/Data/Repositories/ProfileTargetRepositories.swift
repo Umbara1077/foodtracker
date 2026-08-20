@@ -49,7 +49,15 @@ actor SwiftDataTargetRepository: TargetRepository {
     }
 
     func saveTarget(_ snapshot: NutritionTargetSnapshot) async throws {
-        modelContext.insert(NutritionTargetEntity(from: snapshot))
+        let snapshotID = snapshot.id
+        let descriptor = FetchDescriptor<NutritionTargetEntity>(
+            predicate: #Predicate { $0.id == snapshotID }
+        )
+        if let existing = try modelContext.fetch(descriptor).first {
+            existing.apply(snapshot)
+        } else {
+            modelContext.insert(NutritionTargetEntity(from: snapshot))
+        }
         try modelContext.save()
     }
 
@@ -90,7 +98,11 @@ actor InMemoryTargetRepository: TargetRepository {
     }
 
     func saveTarget(_ snapshot: NutritionTargetSnapshot) async throws {
-        targets.append(snapshot)
+        if let index = targets.firstIndex(where: { $0.id == snapshot.id }) {
+            targets[index] = snapshot
+        } else {
+            targets.append(snapshot)
+        }
     }
 
     func allTargets() async throws -> [NutritionTargetSnapshot] {
