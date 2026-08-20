@@ -11,8 +11,8 @@ settings:
     SWIFT_VERSION: "5.10"
     TARGETED_DEVICE_FAMILY: "1"
     IPHONEOS_DEPLOYMENT_TARGET: "18.0"
-    MARKETING_VERSION: "1.1.2"
-    CURRENT_PROJECT_VERSION: "14"
+    MARKETING_VERSION: "1.2.0"
+    CURRENT_PROJECT_VERSION: "15"
     SWIFT_STRICT_CONCURRENCY: complete
 targets:
   ProjectPlate:
@@ -22,6 +22,7 @@ targets:
       - path: ProjectPlate
         excludes:
           - "**/*.md"
+      - path: Shared
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.projectplate.app
@@ -42,6 +43,25 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_PREVIEWS: YES
         DEVELOPMENT_TEAM: ""
+    dependencies:
+      - target: ProjectPlateWidget
+        embed: true
+        codeSign: false
+  ProjectPlateWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ProjectPlateWidget
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.projectplate.app.widget
+        PRODUCT_NAME: ProjectPlateWidget
+        INFOPLIST_FILE: ProjectPlateWidget/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ProjectPlateWidget/ProjectPlateWidget.entitlements
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+        SKIP_INSTALL: YES
+        DEVELOPMENT_TEAM: ""
   ProjectPlateTests:
     type: bundle.unit-test
     platform: iOS
@@ -61,6 +81,7 @@ schemes:
     build:
       targets:
         ProjectPlate: all
+        ProjectPlateWidget: all
         ProjectPlateTests: [test]
     run:
       config: Debug

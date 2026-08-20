@@ -41,6 +41,7 @@ Or:
 - **V1.1 / Phase 12** — Frequent meals on Today (auto-ranked from use count + recency); log again without AI cost (CI verified)
 - **Phase 13** — Scan retry: one auto-retry for transient failures, failed-scan recovery (retry / retake / manual), slow-analysis hints (CI verified)
 - **Phase 14** — Weekly digest on Progress (7-day tracking summary, supportive copy) (CI verified)
+- **Phase 15** — Home Screen widget (Today calories remaining via App Group snapshot) (CI verified)
 
 App Store screenshot packs and UI snapshot suites remain manual Mac follow-ups before submission. See [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md).
 

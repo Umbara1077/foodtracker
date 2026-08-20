@@ -55,6 +55,7 @@ final class TodayViewModel {
             meals = try await mealsTask
             totals = try await totalsTask
             frequentMeals = try await frequentTask
+            WidgetSnapshotStore.save(WidgetSnapshotStore.make(target: target, totals: totals))
         } catch {
             errorMessage = "Could not load today’s diary."
         }
