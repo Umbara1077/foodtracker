@@ -66,12 +66,14 @@ final class PaywallViewModel {
             entitlement = try await subscriptions.purchase(productID: selectedProductID)
             if entitlement.isPro {
                 analytics.track(.purchaseCompleted)
+                PlateHaptics.play(.purchaseSuccess)
             }
             return entitlement.isPro
         } catch let error as PurchaseError where error == .userCancelled {
             return false
         } catch {
             errorMessage = error.localizedDescription
+            PlateHaptics.play(.warning)
             return false
         }
     }
@@ -83,6 +85,8 @@ final class PaywallViewModel {
         do {
             entitlement = try await subscriptions.restore()
             if entitlement.isPro {
+                PlateHaptics.play(.purchaseSuccess)
+            }            if entitlement.isPro {
                 analytics.track(.purchaseRestored)
             }
             statusMessage = entitlement.isPro ? "Pro restored." : "No Pro subscription found."

@@ -109,7 +109,7 @@ final class BarcodeFlowViewModel {
             do {
                 if let food = try await nutritionRepository.lookupBarcode(code) {
                     guard !Task.isCancelled else { return }
-                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    PlateHaptics.play(.scanSuccess)
                     selectedFood = food
                     phase = .scanning
                 } else {
@@ -118,6 +118,7 @@ final class BarcodeFlowViewModel {
                 }
             } catch {
                 guard !Task.isCancelled else { return }
+                PlateHaptics.play(.warning)
                 phase = .failed(error.localizedDescription)
             }
         }

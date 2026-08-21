@@ -172,10 +172,11 @@ struct MealResultView: View {
         do {
             try await environment.diary.saveMeal(meal)
             environment.analytics.track(.mealSaved)
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            PlateHaptics.play(.mealSaved)
             onSaved()
         } catch {
             errorMessage = "Could not save meal."
+            PlateHaptics.play(.warning)
             isSaving = false
         }
     }

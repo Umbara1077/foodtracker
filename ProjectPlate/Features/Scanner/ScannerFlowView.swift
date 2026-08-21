@@ -92,7 +92,7 @@ final class ScannerViewModel {
                 )
                 return
             }
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            PlateHaptics.play(.shutter)
             analytics.track(.photoCaptured)
             if analyzeImmediately {
                 await analyze(image: image)
@@ -216,7 +216,7 @@ final class ScannerViewModel {
             }
             // Consume only after a valid structured result.
             _ = await aiScanQuota?.consume(isPro: isPro)
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            PlateHaptics.play(.scanSuccess)
             slowAnalysisHint = nil
             analytics.track(.scanSucceeded)
             phase = .result(draft)

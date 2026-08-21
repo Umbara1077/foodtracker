@@ -2,7 +2,7 @@
 
 Engineering feature work through **V1.2+ (Phases 0–31)** is on branch tips with green CI. This document is the handoff into **human / App Store ops**.
 
-Current tip marketing version: **1.5.9** (build 44) — History meal search on `cursor/project-plate-phase-44-history-search-fc9b`.
+Current tip marketing version: **1.5.10** (build 45) — Haptics on `cursor/project-plate-phase-45-haptics-fc9b`.
 
 ## 1. Merge order (draft PRs → `main`)
 
@@ -48,6 +48,7 @@ Merge **oldest → newest** so each PR’s tip includes prior phases:
 | 36 | Phase 42 Undo meal delete | `phase-42-undo-delete` |
 | 37 | Phase 43 Scan primary CTA | `phase-43-scan-cta` |
 | 38 | Phase 44 History meal search | `phase-44-history-search` |
+| 39 | Phase 45 Haptics | `phase-45-haptics` |
 
 After merges, cut the Archive from `main`. Full human checklist: [`docs/APP_STORE_SUBMISSION.md`](APP_STORE_SUBMISSION.md).
 

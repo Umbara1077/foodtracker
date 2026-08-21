@@ -80,9 +80,11 @@ final class HistoryViewModel {
             undoMeal = meal
             undoBannerMessage = MealDeleteUndo.bannerMessage(for: meal)
             analytics.track(.mealDeleted)
+            PlateHaptics.play(.mealDeleted)
             await load()
         } catch {
             errorMessage = "Could not delete meal."
+            PlateHaptics.play(.warning)
         }
     }
 
@@ -93,9 +95,11 @@ final class HistoryViewModel {
             undoMeal = nil
             undoBannerMessage = nil
             analytics.track(.mealSaved)
+            PlateHaptics.play(.mealSaved)
             await load()
         } catch {
             errorMessage = "Could not undo delete."
+            PlateHaptics.play(.warning)
         }
     }
 
