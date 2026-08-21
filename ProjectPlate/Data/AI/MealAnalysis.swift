@@ -301,7 +301,13 @@ struct MealAnalysisService: MealAnalysisServing {
 
 enum ImagePreprocessor {
     /// Re-encodes to JPEG (strips EXIF/GPS). Never truncates raw bytes mid-container.
+    /// Empty input stays empty (invalid). Undecodable non-empty stubs become a metadata-free 1×1 JPEG
+    /// so on-device mock analysis / unit fixtures can proceed without forwarding raw bytes.
     static func normalizeForUpload(_ data: Data, maxBytes: Int = 2_500_000) -> Data {
-        MealImageEncoder.privacySafeJPEG(from: data, maxBytes: maxBytes) ?? Data()
+        guard !data.isEmpty else { return Data() }
+        if let safe = MealImageEncoder.privacySafeJPEG(from: data, maxBytes: maxBytes) {
+            return safe
+        }
+        return MealImageEncoder.minimalPrivacySafeJPEG
     }
 }

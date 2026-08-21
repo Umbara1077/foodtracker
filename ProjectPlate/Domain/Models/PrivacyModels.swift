@@ -184,7 +184,8 @@ struct DataMaintenanceService: Sendable {
     }
 
     func deleteAllLocalData(purgeCloudCopies: Bool = true) async throws {
-        if purgeCloudCopies, let diarySync, CloudSyncPreference.isEnabled() {
+        // Coordinator owns the UserDefaults suite for sync preference — do not check `.standard` here.
+        if purgeCloudCopies, let diarySync {
             try await diarySync.uploadTombstonesForAllLocalRecords()
         }
 

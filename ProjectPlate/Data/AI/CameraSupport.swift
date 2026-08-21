@@ -45,6 +45,15 @@ enum CapturedMealImage: Sendable {
 }
 
 enum MealImageEncoder {
+    /// 1×1 JPEG with no EXIF — used when re-encoding fails but bytes were non-empty (mock/tests).
+    static var minimalPrivacySafeJPEG: Data {
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 1, height: 1)).image { ctx in
+            UIColor.black.setFill()
+            ctx.fill(CGRect(x: 0, y: 0, width: 1, height: 1))
+        }
+        return image.jpegData(compressionQuality: 0.8) ?? Data()
+    }
+
     static func jpegData(
         from image: UIImage,
         maxDimension: CGFloat = 1400,

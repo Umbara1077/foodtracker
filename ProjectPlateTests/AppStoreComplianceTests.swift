@@ -63,7 +63,11 @@ struct AppStoreComplianceTests {
         let normalized = ImagePreprocessor.normalizeForUpload(jpeg, maxBytes: 2_500_000)
         #expect(!normalized.isEmpty)
         #expect(UIImage(data: normalized) != nil)
-        #expect(ImagePreprocessor.normalizeForUpload(Data([0x00, 0x01, 0x02])).isEmpty)
+        // Undecodable stubs become a privacy-safe placeholder JPEG (not empty, not raw passthrough).
+        let stub = ImagePreprocessor.normalizeForUpload(Data([0x00, 0x01, 0x02]))
+        #expect(!stub.isEmpty)
+        #expect(UIImage(data: stub) != nil)
+        #expect(ImagePreprocessor.normalizeForUpload(Data()).isEmpty)
     }
 
     @Test("Delete uploads tombstones when iCloud sync is enabled")
