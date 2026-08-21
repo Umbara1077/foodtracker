@@ -12,8 +12,8 @@ settings:
     SWIFT_VERSION: "5.10"
     TARGETED_DEVICE_FAMILY: "1,2"
     IPHONEOS_DEPLOYMENT_TARGET: "18.0"
-    MARKETING_VERSION: "1.4.1"
-    CURRENT_PROJECT_VERSION: "33"
+    MARKETING_VERSION: "1.4.2"
+    CURRENT_PROJECT_VERSION: "34"
     SWIFT_STRICT_CONCURRENCY: complete
 targets:
   ProjectPlate:
@@ -33,18 +33,20 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
-        INFOPLIST_KEY_NSCameraUsageDescription: Use your camera to scan a meal.
+        INFOPLIST_KEY_NSCameraUsageDescription: Project Plate uses the camera to photograph meals, scan barcodes, and read nutrition labels.
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Project Plate listens so you can quick-add a meal by voice.
         INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: Project Plate turns your spoken meal into calories and macros for quick add.
         INFOPLIST_KEY_NSHealthShareUsageDescription: Project Plate reads weight from Apple Health when you enable sync, so Progress can stay up to date.
         INFOPLIST_KEY_NSHealthUpdateUsageDescription: Project Plate writes meals and weight you log to Apple Health when sync is on.
         INFOPLIST_KEY_NSSupportsLiveActivities: YES
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: false
         # Optional managed backend. Leave empty for on-device mock analysis (Simulator / CI).
         INFOPLIST_KEY_PLATE_API_BASE_URL: ""
         INFOPLIST_KEY_PLATE_API_TOKEN: ""
-        # Override before TestFlight / App Store — empty falls back to example.com placeholders.
+        # Override before TestFlight / App Store — empty falls back to placeholders (in-app legal screens still work).
         INFOPLIST_KEY_PLATE_PRIVACY_POLICY_URL: ""
         INFOPLIST_KEY_PLATE_TERMS_URL: ""
+        INFOPLIST_KEY_PLATE_SUPPORT_URL: ""
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: ProjectPlate/Resources/ProjectPlate.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

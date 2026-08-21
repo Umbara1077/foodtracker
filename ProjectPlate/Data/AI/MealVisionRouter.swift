@@ -1,25 +1,28 @@
 import Foundation
 
-/// Routes meal vision to mock (offline/dev) or managed cloud when configured.
+/// Routes meal vision to mock (offline/dev) or managed cloud when configured **and** cloud AI consent is accepted.
 actor MealVisionRouter: MealVisionProvider {
     let id = "vision-router"
 
     private let mockProvider: any MealVisionProvider
     private let managedProvider: (any MealVisionProvider)?
     private let preferManaged: Bool
+    private let cloudUploadAllowed: @Sendable () -> Bool
 
     init(
         mockProvider: any MealVisionProvider,
         managedProvider: (any MealVisionProvider)?,
-        preferManaged: Bool
+        preferManaged: Bool,
+        cloudUploadAllowed: @escaping @Sendable () -> Bool = { CloudAIConsentStore.allowsCloudUpload() }
     ) {
         self.mockProvider = mockProvider
         self.managedProvider = managedProvider
         self.preferManaged = preferManaged
+        self.cloudUploadAllowed = cloudUploadAllowed
     }
 
     func analyze(imageData: Data, context: MealAnalysisContext) async throws -> VisionMealDraft {
-        if preferManaged, let managedProvider {
+        if preferManaged, cloudUploadAllowed(), let managedProvider {
             do {
                 return try await managedProvider.analyze(imageData: imageData, context: context)
             } catch MealScanError.quotaExceeded {

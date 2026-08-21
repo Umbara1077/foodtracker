@@ -18,7 +18,6 @@ struct SettingsView: View {
     @State private var entitlementIsPro = false
     @State private var freeScansRemaining: Int?
     @State private var subscriptionMessage: String?
-    @AppStorage("plate.save_meal_photos") private var saveMealPhotos = true
     @AppStorage(TodayLiveActivityPolicy.preferenceKey) private var liveActivityEnabled = true
     @AppStorage(CloudSyncPreference.enabledKey) private var iCloudSyncEnabled = false
     @AppStorage(AdaptiveGoalPreference.enabledKey) private var adaptiveGoalsEnabled = true
@@ -27,7 +26,7 @@ struct SettingsView: View {
     @AppStorage(MealPlanPreference.enabledKey) private var mealPlanEnabled = true
     @AppStorage(HouseholdPreference.enabledKey) private var householdEnabled = true
     @AppStorage(MicronutrientPreference.enabledKey) private var micronutrientsEnabled = true
-    @State private var consentVersionLabel = "Not accepted"
+    @State private var consentVersionLabel = "Not answered"
     @State private var privacyMessage: String?
     @State private var isPrivacyWorking = false
     @State private var iCloudSyncMessage: String?
@@ -212,10 +211,18 @@ struct SettingsView: View {
                         .foregroundStyle(Color.textSecondary)
                 }
                 Section("Privacy") {
-                    Toggle("Save meal photos on device", isOn: $saveMealPhotos)
-                        .accessibilityHint("Photos stay on this iPhone when enabled")
-
                     LabeledContent("AI consent", value: consentVersionLabel)
+
+                    if CloudAIConsentStore.decision() != .accepted {
+                        Button("Allow cloud meal analysis") {
+                            Task { await setCloudAIConsent(.accepted) }
+                        }
+                    }
+                    if CloudAIConsentStore.decision() != .declined {
+                        Button("Use on-device analysis only") {
+                            Task { await setCloudAIConsent(.declined) }
+                        }
+                    }
 
                     NavigationLink("Privacy policy") {
                         PrivacyPolicyView()
@@ -234,32 +241,46 @@ struct SettingsView: View {
                     }
                     .disabled(isPrivacyWorking)
 
+                    Text("Delete removes diary data on this iPhone and, when iCloud sync is on, marks synced copies deleted in your private iCloud database.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
+
                     if let privacyMessage {
                         Text(privacyMessage)
                             .font(Typography.caption)
                             .foregroundStyle(Color.textSecondary)
                     }
                 }
-                Section("TestFlight") {
-                    NavigationLink {
-                        TestFlightToolsView()
-                    } label: {
-                        Label("Beta tools", systemImage: "airplane")
+                if BuildChannel.showsBetaTools {
+                    Section("TestFlight") {
+                        NavigationLink {
+                            TestFlightToolsView()
+                        } label: {
+                            Label("Beta tools", systemImage: "airplane")
+                        }
                     }
                 }
                 Section("About") {
                     LabeledContent("Version", value: AppVersion.display())
+                    Link("Support", destination: PrivacyConstants.supportURL)
                     if PrivacyConstants.usesPlaceholderLegalURLs {
-                        Text("Legal web links still use placeholder hosts. Set PLATE_PRIVACY_POLICY_URL and PLATE_TERMS_URL before App Store submission.")
+                        Text("Set PLATE_PRIVACY_POLICY_URL and PLATE_TERMS_URL to your live https pages before App Store submission.")
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                    if PrivacyConstants.usesPlaceholderSupportURL {
+                        Text("Set PLATE_SUPPORT_URL to your real support page or mailto: address before submission.")
                             .font(Typography.caption)
                             .foregroundStyle(Color.textSecondary)
                     }
                     Text("Nutrition estimates are for informational tracking and may be inaccurate. This app does not provide medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
-                    Text("Working title — brand clearance required before public launch.")
+                    #if DEBUG
+                    Text("DEBUG: working title — confirm trademark clearance before public naming.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
+                    #endif
                 }
                 #if DEBUG
                 Section("Debug") {
@@ -294,7 +315,7 @@ struct SettingsView: View {
                 }
             }
             .confirmationDialog(
-                "Delete all local data?",
+                "Delete all data on this iPhone? If iCloud sync is on, synced copies are marked deleted too. This cannot be undone.",
                 isPresented: $showDeleteConfirm,
                 titleVisibility: .visible
             ) {
@@ -303,7 +324,7 @@ struct SettingsView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This removes meals, weight entries, and resets onboarding on this iPhone. It cannot be undone.")
+                Text("Removes meals, weight, saved meals, and resets onboarding. With iCloud sync on, matching private-database copies are marked deleted.")
             }
             #if DEBUG
             .sheet(isPresented: $showDesignSystem) {
@@ -324,14 +345,8 @@ struct SettingsView: View {
         }
         if let profile = try? await environment.profileRepository.loadProfile() {
             healthEnabled = profile.healthKitEnabled
-            if let version = profile.cloudAIConsentVersion {
-                consentVersionLabel = version == PrivacyConstants.cloudAIConsentVersion
-                    ? "Accepted (\(version))"
-                    : "Out of date (\(version))"
-            } else {
-                consentVersionLabel = "Not accepted"
-            }
         }
+        consentVersionLabel = CloudAIConsentStore.statusLabel()
         healthStatusText = statusLabel(environment.healthSync.authorizationStatus())
         refreshLastSyncLabel()
         await refreshSubscription()
@@ -404,6 +419,34 @@ struct SettingsView: View {
         }
     }
 
+    private func setCloudAIConsent(_ decision: CloudAIConsentStore.Decision) async {
+        CloudAIConsentStore.set(decision)
+        do {
+            var profile = try await environment.profileRepository.loadProfile() ?? {
+                var blank = UserProfile.blank
+                blank.onboardingComplete = true
+                return blank
+            }()
+            switch decision {
+            case .accepted:
+                profile.cloudAIConsentVersion = PrivacyConstants.cloudAIConsentVersion
+                profile.cloudAIConsentDate = .now
+                environment.analytics.track(.cloudAIConsentAccepted)
+            case .declined:
+                profile.cloudAIConsentVersion = nil
+                profile.cloudAIConsentDate = nil
+                environment.analytics.track(.cloudAIConsentDeclined)
+            }
+            try await environment.profileRepository.saveProfile(profile)
+        } catch {
+            environment.crashReporter.record(error: error, context: "consent.settings")
+        }
+        consentVersionLabel = CloudAIConsentStore.statusLabel()
+        privacyMessage = decision == .accepted
+            ? "Cloud meal analysis enabled."
+            : "Cloud upload off. Photo scans stay on-device."
+    }
+
     private func exportData() async {
         isPrivacyWorking = true
         privacyMessage = nil
@@ -422,13 +465,13 @@ struct SettingsView: View {
         privacyMessage = nil
         defer { isPrivacyWorking = false }
         do {
-            try await environment.dataMaintenance.deleteAllLocalData()
+            try await environment.dataMaintenance.deleteAllLocalData(purgeCloudCopies: true)
             environment.analytics.track(.dataDeleted)
             await TodayLiveActivityController.endAll()
-            CloudSyncPreference.setChangeToken(nil)
-            CloudSyncPreference.setLastSyncDate(nil)
             refreshLastSyncLabel()
-            privacyMessage = "Local data deleted. Restart onboarding from a fresh install state."
+            privacyMessage = iCloudSyncEnabled
+                ? "Data deleted on this iPhone and marked deleted in iCloud when sync was on."
+                : "Local data deleted. Onboarding will restart on next cold start if profile was reset."
             await refresh()
         } catch {
             privacyMessage = error.localizedDescription

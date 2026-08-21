@@ -41,6 +41,27 @@ else
   echo "OK: Paywall includes auto-renew disclosures, legal links, manage subscription"
 fi
 
+if [[ ! -f ProjectPlate/PrivacyInfo.xcprivacy ]]; then
+  echo "FAIL: PrivacyInfo.xcprivacy missing"
+  fail=1
+else
+  echo "OK: PrivacyInfo.xcprivacy present"
+fi
+
+if ! rg -n "CloudAIConsentStore|allowsCloudUpload" ProjectPlate >/dev/null; then
+  echo "FAIL: Cloud AI consent gate missing"
+  fail=1
+else
+  echo "OK: Cloud AI consent gate present"
+fi
+
+if ! rg -n "ITSAppUsesNonExemptEncryption" project.yml >/dev/null; then
+  echo "FAIL: export compliance Info key missing"
+  fail=1
+else
+  echo "OK: ITSAppUsesNonExemptEncryption declared"
+fi
+
 if [[ ! -f docs/TESTFLIGHT.md ]]; then
   echo "FAIL: docs/TESTFLIGHT.md missing"
   fail=1
@@ -50,10 +71,11 @@ fi
 
 echo
 echo "Human blockers (cannot be completed in this repo alone):"
+echo "  See docs/APP_STORE_SUBMISSION.md for the full App Store checklist."
 echo "  [ ] Merge phase PR stack into main (see docs/TESTFLIGHT.md)"
 echo "  [ ] Development Team + signing + HealthKit/CloudKit/App Groups capabilities"
-echo "  [ ] Real privacy + terms hosts in Archive Info.plist"
-echo "  [ ] App Store Connect IAP products + screenshots"
+echo "  [ ] Real privacy + terms + support hosts in Archive Info.plist"
+echo "  [ ] App Store Connect IAP products + screenshots + App Privacy labels"
 echo "  [ ] Enable iCloud.com.projectplate.app container for device sync"
 echo "  [ ] Working-title / trademark clearance before public naming"
 echo "  [ ] Recruit TestFlight cohort (25–50)"

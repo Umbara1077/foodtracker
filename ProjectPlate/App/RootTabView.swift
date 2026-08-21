@@ -74,7 +74,7 @@ struct RootTabView: View {
                             Task { await acceptConsentAndScan() }
                         },
                         onDecline: {
-                            environment.analytics.track(.cloudAIConsentDeclined)
+                            Task { await declineConsent() }
                         }
                     )
                 }
@@ -102,7 +102,7 @@ struct RootTabView: View {
     }
 
     private func openScannerOrPaywall() async {
-        if await needsCloudAIConsent() {
+        if CloudAIConsentStore.needsPrompt() {
             router.openConsent()
             return
         }
@@ -116,13 +116,9 @@ struct RootTabView: View {
         }
     }
 
-    private func needsCloudAIConsent() async -> Bool {
-        let profile = try? await environment.profileRepository.loadProfile()
-        return profile?.cloudAIConsentVersion != PrivacyConstants.cloudAIConsentVersion
-    }
-
     private func acceptConsentAndScan() async {
         environment.analytics.track(.cloudAIConsentAccepted)
+        CloudAIConsentStore.set(.accepted)
         do {
             var profile = try await environment.profileRepository.loadProfile() ?? {
                 var blank = UserProfile.blank
@@ -136,6 +132,23 @@ struct RootTabView: View {
             environment.crashReporter.record(error: error, context: "consent.save")
         }
         router.dismissConsent()
+        await openScannerOrPaywall()
+    }
+
+    private func declineConsent() async {
+        environment.analytics.track(.cloudAIConsentDeclined)
+        CloudAIConsentStore.set(.declined)
+        do {
+            if var profile = try await environment.profileRepository.loadProfile() {
+                profile.cloudAIConsentVersion = nil
+                profile.cloudAIConsentDate = nil
+                try await environment.profileRepository.saveProfile(profile)
+            }
+        } catch {
+            environment.crashReporter.record(error: error, context: "consent.decline")
+        }
+        router.dismissConsent()
+        // Declined users can still scan with on-device analysis.
         await openScannerOrPaywall()
     }
 

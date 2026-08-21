@@ -2,7 +2,7 @@
 
 Engineering feature work through **V1.2+ (Phases 0–31)** is on branch tips with green CI. This document is the handoff into **human / App Store ops**.
 
-Current tip marketing version: **1.4.1** (build 33) — App Review billing / style polish on `cursor/project-plate-phase-33-app-review-billing-fc9b`.
+Current tip marketing version: **1.4.2** (build 34) — App Store compliance on `cursor/project-plate-phase-34-app-store-compliance-fc9b`.
 
 ## 1. Merge order (draft PRs → `main`)
 
@@ -37,8 +37,9 @@ Merge **oldest → newest** so each PR’s tip includes prior phases:
 | 25 | Phase 31 Family plan | `phase-31-family-plan` |
 | 26 | Phase 32 TestFlight ready | `phase-32-testflight-ready` |
 | 27 | Phase 33 App Review billing | `phase-33-app-review-billing` |
+| 28 | Phase 34 App Store compliance | `phase-34-app-store-compliance` |
 
-After merges, cut the Archive from `main`.
+After merges, cut the Archive from `main`. Full human checklist: [`docs/APP_STORE_SUBMISSION.md`](APP_STORE_SUBMISSION.md).
 
 ## 2. Build (engineering)
 

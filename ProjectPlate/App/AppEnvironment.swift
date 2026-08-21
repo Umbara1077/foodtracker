@@ -71,7 +71,8 @@ struct AppEnvironment: Sendable {
                 weightRepository: weights,
                 profileRepository: profiles,
                 targetRepository: targets,
-                savedMealRepository: savedMeals
+                savedMealRepository: savedMeals,
+                diarySync: diarySync
             ),
             correctionStore: LocalCorrectionFeedbackStore(),
             savedMeals: savedMeals,
@@ -171,7 +172,8 @@ struct AppEnvironment: Sendable {
                 weightRepository: weightRepo,
                 profileRepository: profiles,
                 targetRepository: targets,
-                savedMealRepository: savedMeals
+                savedMealRepository: savedMeals,
+                diarySync: diarySync
             ),
             correctionStore: LocalCorrectionFeedbackStore(
                 defaults: UserDefaults(suiteName: "plate.preview.corrections") ?? .standard

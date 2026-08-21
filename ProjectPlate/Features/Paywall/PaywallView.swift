@@ -243,13 +243,23 @@ struct PaywallView: View {
                 .font(Typography.caption)
                 .foregroundStyle(Color.textSecondary)
 
-            HStack(spacing: Spacing.space16) {
-                Link("Privacy Policy", destination: PrivacyConstants.privacyPolicyURL)
-                Link("Terms of Use", destination: PrivacyConstants.termsURL)
+            if PrivacyConstants.usesPlaceholderLegalURLs {
+                HStack(spacing: Spacing.space16) {
+                    NavigationLink("Privacy Policy") { PrivacyPolicyView() }
+                    NavigationLink("Terms of Use") { TermsOfUseView() }
+                }
+                .font(Typography.caption.weight(.semibold))
+                .foregroundStyle(Color.brandInk)
+                .frame(maxWidth: .infinity, alignment: .center)
+            } else {
+                HStack(spacing: Spacing.space16) {
+                    Link("Privacy Policy", destination: PrivacyConstants.privacyPolicyURL)
+                    Link("Terms of Use", destination: PrivacyConstants.termsURL)
+                }
+                .font(Typography.caption.weight(.semibold))
+                .foregroundStyle(Color.brandInk)
+                .frame(maxWidth: .infinity, alignment: .center)
             }
-            .font(Typography.caption.weight(.semibold))
-            .foregroundStyle(Color.brandInk)
-            .frame(maxWidth: .infinity, alignment: .center)
         }
         .multilineTextAlignment(.leading)
         .frame(maxWidth: .infinity, alignment: .leading)

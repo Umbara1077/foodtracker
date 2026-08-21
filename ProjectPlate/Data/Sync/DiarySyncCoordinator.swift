@@ -50,6 +50,18 @@ actor DiarySyncCoordinator {
         try await syncService.sync()
     }
 
+    /// Marks every local syncable record as deleted in iCloud so a later fetch does not resurrect data.
+    func uploadTombstonesForAllLocalRecords(calendar: Calendar = .current) async throws {
+        guard CloudSyncPreference.isEnabled(defaults: defaults) else { return }
+        let local = try await collectLocalRecords(calendar: calendar)
+        let now = Date()
+        let tombstones = local.map {
+            SyncRecord(id: $0.id, kind: $0.kind, updatedAt: now, deleted: true, payloadJSON: Data())
+        }
+        guard !tombstones.isEmpty else { return }
+        try await syncService.upload(localChanges: tombstones)
+    }
+
     func collectLocalRecords(calendar: Calendar = .current) async throws -> [SyncRecord] {
         var records: [SyncRecord] = []
 

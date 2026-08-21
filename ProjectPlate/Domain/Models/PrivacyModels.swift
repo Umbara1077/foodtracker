@@ -2,10 +2,11 @@ import Foundation
 
 enum PrivacyConstants {
     /// Bump when the cloud-scan disclosure text changes materially.
-    static let cloudAIConsentVersion = "2026-08-20"
+    static let cloudAIConsentVersion = "2026-08-21"
 
     private static let fallbackPrivacy = URL(string: "https://example.com/project-plate/privacy")!
     private static let fallbackTerms = URL(string: "https://example.com/project-plate/terms")!
+    private static let fallbackSupport = URL(string: "mailto:support@projectplate.app")!
 
     /// Prefer Info.plist `PLATE_PRIVACY_POLICY_URL` so TestFlight / Release can point at a real host without a code change.
     static var privacyPolicyURL: URL {
@@ -17,9 +18,19 @@ enum PrivacyConstants {
         url(infoKey: "PLATE_TERMS_URL", fallback: fallbackTerms)
     }
 
+    /// Prefer Info.plist `PLATE_SUPPORT_URL` (https page or mailto:).
+    static var supportURL: URL {
+        url(infoKey: "PLATE_SUPPORT_URL", fallback: fallbackSupport)
+    }
+
     /// True when either legal URL still points at the example.com placeholder.
     static var usesPlaceholderLegalURLs: Bool {
         isPlaceholder(privacyPolicyURL) || isPlaceholder(termsURL)
+    }
+
+    /// True when Support still uses the shipping placeholder mailbox.
+    static var usesPlaceholderSupportURL: Bool {
+        supportURL.absoluteString.localizedCaseInsensitiveContains("support@projectplate.app")
     }
 
     static func isPlaceholder(_ url: URL) -> Bool {
@@ -65,9 +76,11 @@ enum AppVersion {
 struct CloudAIConsentCopy {
     static let title = "Cloud meal analysis"
     static let body = """
-    Meal photos can be sent to our AI provider to identify food. We send only what is needed for the scan — a compressed image without location metadata, plus a request ID and schema version. We do not permanently store meal photos on our servers for standard scans.
+    With your permission, Project Plate can send a meal photo to our managed analysis gateway (which may use a third-party model provider such as OpenAI) to identify foods and estimate portions.
 
-    Manual search, barcode, quick add, and your diary keep working if you decline.
+    We re-encode the photo as a compressed JPEG so camera EXIF/GPS metadata is not included, and we send a request ID and schema version. We do not permanently store standard scan photos on our servers. The model provider’s retention rules may still apply to the request in transit — see the Privacy Policy.
+
+    If you choose Not now, photo scan still works with on-device analysis. Manual search, barcode, quick add, and your diary keep working either way. You can change this later in Settings → Privacy.
     """
 }
 
@@ -134,6 +147,8 @@ struct DataMaintenanceService: Sendable {
     var profileRepository: any ProfileRepository
     var targetRepository: any TargetRepository
     var savedMealRepository: any SavedMealRepository
+    /// When set, Delete uploads iCloud tombstones before wiping local rows.
+    var diarySync: DiarySyncCoordinator? = nil
 
     func exportJSON(calendar: Calendar = .current) async throws -> Data {
         let profile = try await profileRepository.loadProfile()
@@ -168,7 +183,11 @@ struct DataMaintenanceService: Sendable {
         }
     }
 
-    func deleteAllLocalData() async throws {
+    func deleteAllLocalData(purgeCloudCopies: Bool = true) async throws {
+        if purgeCloudCopies, let diarySync, CloudSyncPreference.isEnabled() {
+            try await diarySync.uploadTombstonesForAllLocalRecords()
+        }
+
         // Best-effort wipe across repositories.
         let calendar = Calendar.current
         let end = Date()
@@ -192,6 +211,9 @@ struct DataMaintenanceService: Sendable {
         var blank = UserProfile.blank
         blank.onboardingComplete = false
         try await profileRepository.saveProfile(blank)
+        CloudAIConsentStore.clear()
+        CloudSyncPreference.setChangeToken(nil)
+        CloudSyncPreference.setLastSyncDate(nil)
     }
 
     private func sanitizedProfile(_ profile: UserProfile) -> UserProfile {

@@ -59,25 +59,22 @@ struct PrivacyPolicyView: View {
                 VStack(alignment: .leading, spacing: Spacing.space16) {
                     Text("Privacy Policy")
                         .font(Typography.screenTitle)
-                    Text(
-                        PrivacyConstants.usesPlaceholderLegalURLs
-                            ? "Working draft for Project Plate (working title). Set PLATE_PRIVACY_POLICY_URL before App Store submission."
-                            : "Working draft for Project Plate (working title). The web policy link below is the canonical public version."
-                    )
+
+                    Text("This summary matches how Project Plate handles data on your device. When a web policy URL is configured, that page is the canonical public version.")
                         .font(Typography.supporting)
                         .foregroundStyle(Color.textSecondary)
 
                     policySection(
                         "What we store on your iPhone",
-                        "Meals, weight entries, targets, preferences, and optional meal photo thumbnails stay on device in SwiftData unless you enable Apple Health sync, iCloud diary sync, or cloud AI scans."
+                        "Meals, weight entries, targets, and preferences stay on device in SwiftData unless you enable Apple Health sync, iCloud diary sync, or cloud AI scans. Meal photos used for a scan are processed in memory for analysis and are not saved into your diary."
                     )
                     policySection(
                         "Cloud AI scans",
-                        "When you consent, a compressed meal photo (location metadata stripped) is sent to our managed gateway for food recognition. We do not permanently store standard scan photos. Structured food/portion drafts may be returned to your device."
+                        "When you accept cloud analysis, a re-encoded JPEG meal photo (without camera EXIF/GPS metadata) is sent to our managed gateway, which may use a third-party model provider to recognize food. We do not permanently store standard scan photos on our servers. Structured food and portion drafts may be returned to your device. Declining keeps photo scan on-device and never uploads the image."
                     )
                     policySection(
                         "iCloud sync",
-                        "If you enable iCloud diary sync, meal and weight records (not meal photos) sync through your private iCloud database so other iPhones signed into the same Apple Account can restore them. You can turn this off anytime in Settings."
+                        "If you enable iCloud diary sync, meal and weight records (not meal photos) sync through your private iCloud database so other devices signed into the same Apple Account can restore them. Deleting your data in Settings also marks synced copies deleted when iCloud sync is on. You can turn sync off anytime in Settings."
                     )
                     policySection(
                         "Recipe URL import",
@@ -89,15 +86,21 @@ struct PrivacyPolicyView: View {
                     )
                     policySection(
                         "Subscriptions",
-                        "Purchases are processed by Apple. We receive entitlement status, not your full payment card details."
+                        "Purchases are processed by Apple. We receive entitlement status, not your full payment card details. See Terms of Use for auto-renewal details."
                     )
                     policySection(
                         "Your controls",
-                        "Export or delete local data from Settings → Privacy. Declining cloud AI leaves manual, barcode, and quick-add logging available."
+                        "Export or delete data from Settings → Privacy. Manage cloud AI consent, Health, and iCloud sync in Settings. Declining cloud AI leaves manual, barcode, quick-add, and on-device scan available."
                     )
 
-                    Link("Open web privacy policy", destination: PrivacyConstants.privacyPolicyURL)
-                        .font(Typography.supporting.weight(.semibold))
+                    if PrivacyConstants.usesPlaceholderLegalURLs {
+                        Text("A public web privacy policy URL is not configured yet. Set PLATE_PRIVACY_POLICY_URL before App Store submission.")
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    } else {
+                        Link("Open web privacy policy", destination: PrivacyConstants.privacyPolicyURL)
+                            .font(Typography.supporting.weight(.semibold))
+                    }
                 }
                 .padding(Spacing.screenHorizontal)
                 .padding(.vertical, Spacing.space24)
@@ -129,7 +132,13 @@ struct TermsOfUseView: View {
                     Text("Terms of Use")
                         .font(Typography.screenTitle)
 
-                    Text("Nutrition estimates are for informational tracking and may be inaccurate. Project Plate does not provide medical advice.")
+                    Text("By using Project Plate you agree to these terms. Nutrition and calorie estimates are for informational tracking only and may be inaccurate. Project Plate does not provide medical advice, diagnosis, or treatment.")
+                        .font(Typography.body)
+                        .foregroundStyle(Color.textSecondary)
+
+                    Text("License")
+                        .font(Typography.sectionHeading)
+                    Text("We grant you a personal, non-exclusive, non-transferable license to use the app on Apple devices you own or control, as permitted by the App Store terms.")
                         .font(Typography.body)
                         .foregroundStyle(Color.textSecondary)
 
@@ -150,12 +159,32 @@ struct TermsOfUseView: View {
                     .font(Typography.body)
                     .foregroundStyle(Color.textSecondary)
 
-                    Text("Replace this draft with counsel-approved Terms before App Store review. The link below should resolve to your production Terms URL.")
-                        .font(Typography.caption)
+                    Text("Acceptable use")
+                        .font(Typography.sectionHeading)
+                    Text("Do not misuse scan or sync features, attempt to disrupt services, or use the app for unlawful purposes.")
+                        .font(Typography.body)
                         .foregroundStyle(Color.textSecondary)
 
-                    Link("Open web terms", destination: PrivacyConstants.termsURL)
-                        .font(Typography.supporting.weight(.semibold))
+                    Text("Limitation of liability")
+                        .font(Typography.sectionHeading)
+                    Text("To the fullest extent permitted by law, Project Plate and its contributors are not liable for decisions you make based on estimates in the app.")
+                        .font(Typography.body)
+                        .foregroundStyle(Color.textSecondary)
+
+                    Text("Contact")
+                        .font(Typography.sectionHeading)
+                    Text("Questions about these terms: use Support in Settings → About.")
+                        .font(Typography.body)
+                        .foregroundStyle(Color.textSecondary)
+
+                    if PrivacyConstants.usesPlaceholderLegalURLs {
+                        Text("A public web Terms URL is not configured yet. Set PLATE_TERMS_URL before App Store submission.")
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    } else {
+                        Link("Open web terms", destination: PrivacyConstants.termsURL)
+                            .font(Typography.supporting.weight(.semibold))
+                    }
                 }
                 .padding(Spacing.screenHorizontal)
                 .padding(.vertical, Spacing.space24)

@@ -300,8 +300,8 @@ struct MealAnalysisService: MealAnalysisServing {
 }
 
 enum ImagePreprocessor {
+    /// Re-encodes to JPEG (strips EXIF/GPS). Never truncates raw bytes mid-container.
     static func normalizeForUpload(_ data: Data, maxBytes: Int = 2_500_000) -> Data {
-        if data.count <= maxBytes { return data }
-        return data.prefix(maxBytes)
+        MealImageEncoder.privacySafeJPEG(from: data, maxBytes: maxBytes) ?? Data()
     }
 }

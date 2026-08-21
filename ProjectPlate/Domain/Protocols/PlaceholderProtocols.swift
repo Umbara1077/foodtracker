@@ -33,9 +33,7 @@ enum AnalyticsEvent: Sendable {
     case iCloudSyncCompleted
 }
 
-struct SettingsStore: Sendable {
-    var saveMealPhotos = true
-}
+struct SettingsStore: Sendable {}
 
 struct NoOpAnalyticsClient: AnalyticsClient {
     func track(_ event: AnalyticsEvent) {}
