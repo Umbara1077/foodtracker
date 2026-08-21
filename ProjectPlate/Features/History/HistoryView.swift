@@ -17,6 +17,8 @@ final class HistoryViewModel {
     var isLoading = true
     var errorMessage: String?
     var showQuickAdd = false
+    var undoMeal: MealRecord?
+    var undoBannerMessage: String?
 
     init(
         mealRepository: any MealRepository,
@@ -69,11 +71,31 @@ final class HistoryViewModel {
     func deleteMeal(_ meal: MealRecord) async {
         do {
             try await diary.deleteMeal(meal)
+            undoMeal = meal
+            undoBannerMessage = MealDeleteUndo.bannerMessage(for: meal)
             analytics.track(.mealDeleted)
             await load()
         } catch {
             errorMessage = "Could not delete meal."
         }
+    }
+
+    func undoDelete() async {
+        guard let meal = undoMeal else { return }
+        do {
+            try await diary.saveMeal(meal)
+            undoMeal = nil
+            undoBannerMessage = nil
+            analytics.track(.mealSaved)
+            await load()
+        } catch {
+            errorMessage = "Could not undo delete."
+        }
+    }
+
+    func dismissUndoBanner() {
+        undoMeal = nil
+        undoBannerMessage = nil
     }
 
     func duplicateToToday(_ meal: MealRecord) async {
@@ -164,93 +186,110 @@ private struct HistoryContent: View {
     @State private var editingMeal: MealRecord?
 
     var body: some View {
-        VStack(spacing: Spacing.space16) {
-            dayStrip
-            if viewModel.isLoading {
-                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                List {
-                    Section {
-                        VStack(alignment: .leading, spacing: Spacing.space8) {
-                            Text(viewModel.selectedDay.formatted(date: .complete, time: .omitted))
-                                .font(Typography.sectionHeading)
-                            Text("\(Int(viewModel.totals.nutrients.calories.rounded())) cal · P \(Int(viewModel.totals.nutrients.protein.rounded())) · C \(Int(viewModel.totals.nutrients.carbs.rounded())) · F \(Int(viewModel.totals.nutrients.fat.rounded()))")
-                                .font(Typography.supporting)
-                                .foregroundStyle(Color.textSecondary)
-                            if let target = viewModel.target {
-                                Text("Target \(target.calories) cal")
-                                    .font(Typography.caption)
+        ZStack(alignment: .bottom) {
+            VStack(spacing: Spacing.space16) {
+                dayStrip
+                if viewModel.isLoading {
+                    ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    List {
+                        Section {
+                            VStack(alignment: .leading, spacing: Spacing.space8) {
+                                Text(viewModel.selectedDay.formatted(date: .complete, time: .omitted))
+                                    .font(Typography.sectionHeading)
+                                Text("\(Int(viewModel.totals.nutrients.calories.rounded())) cal · P \(Int(viewModel.totals.nutrients.protein.rounded())) · C \(Int(viewModel.totals.nutrients.carbs.rounded())) · F \(Int(viewModel.totals.nutrients.fat.rounded()))")
+                                    .font(Typography.supporting)
                                     .foregroundStyle(Color.textSecondary)
-                            }
-                        }
-                        .listRowBackground(Color.surfacePrimary)
-                    }
-
-                    if viewModel.meals.isEmpty {
-                        ContentUnavailableView(
-                            "No meals",
-                            systemImage: "calendar",
-                            description: Text("Nothing logged on this day. Use Log to today from another meal, or add from Today.")
-                        )
-                        .listRowBackground(Color.clear)
-                        .accessibilityLabel("No meals on this day")
-                    } else {
-                        Section("Meals") {
-                            ForEach(viewModel.meals) { meal in
-                                Button {
-                                    editingMeal = meal
-                                } label: {
-                                    MealRowView(meal: meal)
-                                }
-                                .buttonStyle(.plain)
-                                .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-                                .listRowBackground(Color.clear)
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button("Delete", role: .destructive) {
-                                        Task { await viewModel.deleteMeal(meal) }
-                                    }
-                                }
-                                .swipeActions(edge: .leading) {
-                                    Button("Edit") {
-                                        editingMeal = meal
-                                    }
-                                    .tint(Color.brandPrimary)
-                                    Button("Correct") {
-                                        correctionMeal = meal
-                                    }
-                                    .tint(Color.brandInk)
-                                    Button("To today") {
-                                        Task { await viewModel.duplicateToToday(meal) }
-                                    }
-                                    .tint(Color.brandPrimary)
-                                }
-                                .contextMenu {
-                                    Button("Edit") {
-                                        editingMeal = meal
-                                    }
-                                    Button("Send correction") {
-                                        correctionMeal = meal
-                                    }
-                                    Button("Log to today") {
-                                        Task { await viewModel.duplicateToToday(meal) }
-                                    }
-                                    Button("Delete", role: .destructive) {
-                                        Task { await viewModel.deleteMeal(meal) }
-                                    }
+                                if let target = viewModel.target {
+                                    Text("Target \(target.calories) cal")
+                                        .font(Typography.caption)
+                                        .foregroundStyle(Color.textSecondary)
                                 }
                             }
+                            .listRowBackground(Color.surfacePrimary)
+                        }
+
+                        if viewModel.meals.isEmpty {
+                            ContentUnavailableView(
+                                "No meals",
+                                systemImage: "calendar",
+                                description: Text("Nothing logged on this day. Use Log to today from another meal, or add from Today.")
+                            )
+                            .listRowBackground(Color.clear)
+                            .accessibilityLabel("No meals on this day")
+                        } else {
+                            Section("Meals") {
+                                ForEach(viewModel.meals) { meal in
+                                    Button {
+                                        editingMeal = meal
+                                    } label: {
+                                        MealRowView(meal: meal)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                                    .listRowBackground(Color.clear)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                        Button("Delete", role: .destructive) {
+                                            Task { await viewModel.deleteMeal(meal) }
+                                        }
+                                    }
+                                    .swipeActions(edge: .leading) {
+                                        Button("Edit") {
+                                            editingMeal = meal
+                                        }
+                                        .tint(Color.brandPrimary)
+                                        Button("Correct") {
+                                            correctionMeal = meal
+                                        }
+                                        .tint(Color.brandInk)
+                                        Button("To today") {
+                                            Task { await viewModel.duplicateToToday(meal) }
+                                        }
+                                        .tint(Color.brandPrimary)
+                                    }
+                                    .contextMenu {
+                                        Button("Edit") {
+                                            editingMeal = meal
+                                        }
+                                        Button("Send correction") {
+                                            correctionMeal = meal
+                                        }
+                                        Button("Log to today") {
+                                            Task { await viewModel.duplicateToToday(meal) }
+                                        }
+                                        Button("Delete", role: .destructive) {
+                                            Task { await viewModel.deleteMeal(meal) }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if let error = viewModel.errorMessage {
+                            Text(error).foregroundStyle(Color.statusError).font(Typography.caption)
                         }
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                }
+            }
+            .plateReadableWidth()
 
-                    if let error = viewModel.errorMessage {
-                        Text(error).foregroundStyle(Color.statusError).font(Typography.caption)
+            if let message = viewModel.undoBannerMessage {
+                UndoDeleteBanner(
+                    message: message,
+                    onUndo: { Task { await viewModel.undoDelete() } },
+                    onDismiss: { viewModel.dismissUndoBanner() }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .task(id: message) {
+                    try? await Task.sleep(for: .seconds(6))
+                    if viewModel.undoBannerMessage == message {
+                        viewModel.dismissUndoBanner()
                     }
                 }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
             }
         }
-        .plateReadableWidth()
         .sheet(item: $correctionMeal) { meal in
             CorrectionFeedbackView(
                 mealTitle: meal.title,

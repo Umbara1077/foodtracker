@@ -29,6 +29,8 @@ final class TodayViewModel {
     var previousDayMealCount = 0
     var copyDayMessage: String?
     var showDayPicker = false
+    var undoMeal: MealRecord?
+    var undoBannerMessage: String?
 
     init(
         mealRepository: any MealRepository,
@@ -161,11 +163,31 @@ final class TodayViewModel {
     func deleteMeal(_ meal: MealRecord) async {
         do {
             try await diary.deleteMeal(meal)
+            undoMeal = meal
+            undoBannerMessage = MealDeleteUndo.bannerMessage(for: meal)
             analytics.track(.mealDeleted)
             await load()
         } catch {
             errorMessage = "Could not delete meal."
         }
+    }
+
+    func undoDelete() async {
+        guard let meal = undoMeal else { return }
+        do {
+            try await diary.saveMeal(meal)
+            undoMeal = nil
+            undoBannerMessage = nil
+            analytics.track(.mealSaved)
+            await load()
+        } catch {
+            errorMessage = "Could not undo delete."
+        }
+    }
+
+    func dismissUndoBanner() {
+        undoMeal = nil
+        undoBannerMessage = nil
     }
 
     func duplicateMeal(_ meal: MealRecord) async {
@@ -292,29 +314,46 @@ private struct TodayContent: View {
 
     var body: some View {
         GeometryReader { geo in
-            ScrollView {
-                Group {
-                    if viewModel.isLoading {
-                        TodayLoadingSkeleton()
-                            .padding(.vertical, Spacing.space8)
-                    } else if PlateLayout.prefersWideSplit(
-                        horizontalSizeClass: horizontalSizeClass,
-                        width: geo.size.width
-                    ) {
-                        wideLayout
-                    } else {
-                        compactLayout
+            ZStack(alignment: .bottom) {
+                ScrollView {
+                    Group {
+                        if viewModel.isLoading {
+                            TodayLoadingSkeleton()
+                                .padding(.vertical, Spacing.space8)
+                        } else if PlateLayout.prefersWideSplit(
+                            horizontalSizeClass: horizontalSizeClass,
+                            width: geo.size.width
+                        ) {
+                            wideLayout
+                        } else {
+                            compactLayout
+                        }
+                    }
+                    .padding(.horizontal, Spacing.screenHorizontal)
+                    .padding(.vertical, Spacing.space24)
+                    .plateReadableWidth()
+
+                    if let error = viewModel.errorMessage {
+                        Text(error)
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.statusError)
+                            .padding(.horizontal, Spacing.screenHorizontal)
                     }
                 }
-                .padding(.horizontal, Spacing.screenHorizontal)
-                .padding(.vertical, Spacing.space24)
-                .plateReadableWidth()
 
-                if let error = viewModel.errorMessage {
-                    Text(error)
-                        .font(Typography.caption)
-                        .foregroundStyle(Color.statusError)
-                        .padding(.horizontal, Spacing.screenHorizontal)
+                if let message = viewModel.undoBannerMessage {
+                    UndoDeleteBanner(
+                        message: message,
+                        onUndo: { Task { await viewModel.undoDelete() } },
+                        onDismiss: { viewModel.dismissUndoBanner() }
+                    )
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .task(id: message) {
+                        try? await Task.sleep(for: .seconds(6))
+                        if viewModel.undoBannerMessage == message {
+                            viewModel.dismissUndoBanner()
+                        }
+                    }
                 }
             }
         }
