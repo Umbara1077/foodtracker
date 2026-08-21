@@ -93,6 +93,20 @@ final class TodayViewModel {
         isLoading = false
     }
 
+    /// Plain-text day summary for the system share sheet.
+    var daySummaryShareText: String {
+        DaySummaryShare.plainText(
+            day: day,
+            totals: totals,
+            target: target,
+            meals: meals
+        )
+    }
+
+    func noteDaySummaryShared() {
+        analytics.track(.daySummaryShared)
+    }
+
     /// Copies yesterday’s meals onto today, preserving clock times.
     func copyPreviousDay(calendar: Calendar = .current) async {
         copyDayMessage = nil
@@ -183,6 +197,19 @@ struct TodayView: View {
             }
             .background(Color.backgroundPrimary.ignoresSafeArea())
             .navigationTitle("Today")
+            .toolbar {
+                if let viewModel, !viewModel.meals.isEmpty {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        ShareLink(item: viewModel.daySummaryShareText) {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        .accessibilityLabel("Share today’s summary")
+                        .simultaneousGesture(TapGesture().onEnded {
+                            viewModel.noteDaySummaryShared()
+                        })
+                    }
+                }
+            }
             .onAppear {
                 if let viewModel {
                     Task { await viewModel.load() }

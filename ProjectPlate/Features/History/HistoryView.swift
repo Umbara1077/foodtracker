@@ -99,6 +99,19 @@ final class HistoryViewModel {
         let comps = calendar.dateComponents([.year, .month, .day], from: day)
         return daysWithMeals.contains(comps)
     }
+
+    var daySummaryShareText: String {
+        DaySummaryShare.plainText(
+            day: selectedDay,
+            totals: totals,
+            target: target,
+            meals: meals
+        )
+    }
+
+    func noteDaySummaryShared() {
+        analytics.track(.daySummaryShared)
+    }
 }
 
 struct HistoryView: View {
@@ -116,6 +129,19 @@ struct HistoryView: View {
             }
             .background(Color.backgroundPrimary.ignoresSafeArea())
             .navigationTitle("History")
+            .toolbar {
+                if let viewModel, !viewModel.meals.isEmpty {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        ShareLink(item: viewModel.daySummaryShareText) {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        .accessibilityLabel("Share day summary")
+                        .simultaneousGesture(TapGesture().onEnded {
+                            viewModel.noteDaySummaryShared()
+                        })
+                    }
+                }
+            }
         }
         .task {
             if viewModel == nil {

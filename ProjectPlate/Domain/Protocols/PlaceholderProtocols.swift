@@ -39,6 +39,7 @@ enum AnalyticsEvent: Sendable, Equatable {
     case iCloudSyncCompleted
     case day2Return
     case day7Return
+    case daySummaryShared
 }
 
 struct SettingsStore: Sendable {}
