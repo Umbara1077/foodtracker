@@ -5,8 +5,9 @@ import Foundation
 struct MicronutrientTests {
     @Test("Preference defaults to enabled")
     func preferenceDefault() {
-        let defaults = UserDefaults(suiteName: "plate.test.micros.\(UUID().uuidString)")!
-        defer { defaults.removePersistentDomain(forName: defaults.suiteName!) }
+        let suite = "plate.test.micros.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
         #expect(MicronutrientPreference.isEnabled(defaults: defaults))
         MicronutrientPreference.setEnabled(false, defaults: defaults)
         #expect(!MicronutrientPreference.isEnabled(defaults: defaults))
