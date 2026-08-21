@@ -59,7 +59,11 @@ struct PrivacyPolicyView: View {
                 VStack(alignment: .leading, spacing: Spacing.space16) {
                     Text("Privacy Policy")
                         .font(Typography.screenTitle)
-                    Text("Working draft for Project Plate (working title). Replace example.com URLs before App Store submission.")
+                    Text(
+                        PrivacyConstants.usesPlaceholderLegalURLs
+                            ? "Working draft for Project Plate (working title). Set PLATE_PRIVACY_POLICY_URL before App Store submission."
+                            : "Working draft for Project Plate (working title). The web policy link below is the canonical public version."
+                    )
                         .font(Typography.supporting)
                         .foregroundStyle(Color.textSecondary)
 

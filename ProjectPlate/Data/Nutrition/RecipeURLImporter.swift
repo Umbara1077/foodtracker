@@ -8,7 +8,8 @@ struct URLSessionRecipeFetcher: RecipeURLFetching {
     func html(from url: URL) async throws -> String {
         var request = URLRequest(url: url)
         request.timeoutInterval = 20
-        request.setValue("ProjectPlate/1.0 (recipe import; +https://example.com)", forHTTPHeaderField: "User-Agent")
+        let contact = PrivacyConstants.privacyPolicyURL.absoluteString
+        request.setValue("ProjectPlate/\(AppVersion.marketing()) (recipe import; +\(contact))", forHTTPHeaderField: "User-Agent")
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse, (200..<400).contains(http.statusCode) else {

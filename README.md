@@ -1,13 +1,13 @@
 # Project Plate (working title)
 
-Native **iPhone** AI photo calorie & macro tracker.  
-Source of truth: [`docs/PRODUCT_SPEC.md`](docs/PRODUCT_SPEC.md) · Phase notes: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+Native **iPhone** (iPad + Apple Watch glance) AI photo calorie & macro tracker.  
+Source of truth: [`docs/PRODUCT_SPEC.md`](docs/PRODUCT_SPEC.md) · Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · **Next stage:** [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md)
 
 > Working title only — do not ship under “Project Plate” without App Store, trademark, domain, and social-handle clearance.
 
 ## Requirements
 
-- macOS with **Xcode 16+** (iOS 18 SDK)
+- macOS with **Xcode 16+** (iOS 18 / watchOS 11 SDK)
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`)
 
 ## Generate & run (macOS)
@@ -22,34 +22,26 @@ Or:
 
 ```bash
 ./scripts/ci-ios.sh
+./scripts/release-checklist.sh
 ```
 
 ## Phase status
 
-- **Phase 0** — App shell, design system (CI verified)
-- **Phase 1** — Onboarding + targets (CI verified)
-- **Phase 2** — Local diary / Quick Add / History (CI verified)
-- **Phase 3** — Camera scan + mock analysis → review → save (CI verified)
-- **Phase 4** — Nutrition catalog search + food editor; scan resolves via catalog (CI verified)
-- **Phase 5** — Managed cloud AI gateway (`backend/`) + iOS HTTP client / quota / validation (CI verified)
-- **Phase 6** — Barcode scan + product lookup (bundled cache → Open Food Facts) + portion add (CI verified)
-- **Phase 7** — Progress: weight logging, Swift Charts trend, calorie/protein consistency (CI verified)
-- **Phase 8** — Apple Health meal/weight sync with dedupe + Settings toggle (CI verified)
-- **Phase 9** — StoreKit 2 Pro paywall, restore, free AI-scan quota gating (CI verified)
-- **Phase 10** — Privacy consent, policy/terms, export/delete, analytics hygiene, crash breadcrumbs (CI verified)
-- **Phase 11** — TestFlight support: correction capture, fixture AI benchmark, readiness checklist; paywall A/B off by default (CI verified). Cohort ops (25–50 testers) are outside the repo.
-- **V1.1 / Phase 12** — Frequent meals on Today (auto-ranked from use count + recency); log again without AI cost (CI verified)
-- **Phase 13** — Scan retry: one auto-retry for transient failures, failed-scan recovery (retry / retake / manual), slow-analysis hints (CI verified)
-- **Phase 14** — Weekly digest on Progress (7-day tracking summary, supportive copy) (CI verified)
-- **Phase 15** — Home Screen widget (Today calories remaining via App Group snapshot) (CI verified)
-- **Phase 16** — Tracking streak (days with meals logged; supportive copy, no shame) (CI verified)
-- **Phase 17** — Voice-assisted Quick Add (Speech → parse calories/macros) (CI verified)
-- **Phase 18** — Nutrition label OCR → portion review / save (CI verified)
+Engineering through **Phase 32 (TestFlight readiness)** is implemented on stacked `cursor/project-plate-phase-*-fc9b` branches (merge order in [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md)).
 
-App Store screenshot packs and UI snapshot suites remain manual Mac follow-ups before submission. See [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md).
+| Band | Phases | Highlights |
+|------|--------|------------|
+| Foundation | 0–6 | Shell, onboarding, diary, camera mock, catalog, cloud AI gateway, barcode |
+| V1 core | 7–11 | Progress, HealthKit, StoreKit Pro, privacy, TestFlight tools |
+| V1.1 | 12–20 | Favorites, scan retry, digest, widget, streak, voice, label OCR, Live Activity, iCloud sync |
+| V1.2+ | 21–31 | Restaurant matching, adaptive goals, recipes, coach, micros, challenges, iPad, meal plan, Watch, family scaffold |
+| Ops | 32 | Configurable legal URLs, Bundle version, release checklist |
 
 ## Cloud AI backend
 
-See [`backend/README.md`](backend/README.md). The iPhone app never embeds OpenAI keys.
-Set `PLATE_API_BASE_URL` (and optional `PLATE_API_TOKEN`) in the Xcode target Info to point at a deployed Worker; leave blank to keep the on-device mock provider (default for Simulator / CI).
+See [`backend/README.md`](backend/README.md). The client never embeds OpenAI keys.  
+Set `PLATE_API_BASE_URL` (and optional `PLATE_API_TOKEN`) in the Xcode target Info to point at a deployed Worker; leave blank for the on-device mock (Simulator / CI default).
 
+## Legal URLs
+
+Set `PLATE_PRIVACY_POLICY_URL` and `PLATE_TERMS_URL` on the Archive scheme before public TestFlight / App Store. Empty values fall back to placeholders and surface a warning in Settings → About.

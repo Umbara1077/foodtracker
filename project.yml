@@ -12,8 +12,8 @@ settings:
     SWIFT_VERSION: "5.10"
     TARGETED_DEVICE_FAMILY: "1,2"
     IPHONEOS_DEPLOYMENT_TARGET: "18.0"
-    MARKETING_VERSION: "1.3.6"
-    CURRENT_PROJECT_VERSION: "31"
+    MARKETING_VERSION: "1.4.0"
+    CURRENT_PROJECT_VERSION: "32"
     SWIFT_STRICT_CONCURRENCY: complete
 targets:
   ProjectPlate:
@@ -42,6 +42,9 @@ targets:
         # Optional managed backend. Leave empty for on-device mock analysis (Simulator / CI).
         INFOPLIST_KEY_PLATE_API_BASE_URL: ""
         INFOPLIST_KEY_PLATE_API_TOKEN: ""
+        # Override before TestFlight / App Store — empty falls back to example.com placeholders.
+        INFOPLIST_KEY_PLATE_PRIVACY_POLICY_URL: ""
+        INFOPLIST_KEY_PLATE_TERMS_URL: ""
         GENERATE_INFOPLIST_FILE: YES
         CODE_SIGN_ENTITLEMENTS: ProjectPlate/Resources/ProjectPlate.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

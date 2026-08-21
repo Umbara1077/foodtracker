@@ -243,7 +243,12 @@ struct SettingsView: View {
                     }
                 }
                 Section("About") {
-                    LabeledContent("Version", value: "1.3.6")
+                    LabeledContent("Version", value: AppVersion.display())
+                    if PrivacyConstants.usesPlaceholderLegalURLs {
+                        Text("Legal web links still use placeholder hosts. Set PLATE_PRIVACY_POLICY_URL and PLATE_TERMS_URL before App Store submission.")
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    }
                     Text("Nutrition estimates are for informational tracking and may be inaccurate. This app does not provide medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)

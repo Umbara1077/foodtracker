@@ -3,8 +3,63 @@ import Foundation
 enum PrivacyConstants {
     /// Bump when the cloud-scan disclosure text changes materially.
     static let cloudAIConsentVersion = "2026-08-20"
-    static let privacyPolicyURL = URL(string: "https://example.com/project-plate/privacy")!
-    static let termsURL = URL(string: "https://example.com/project-plate/terms")!
+
+    private static let fallbackPrivacy = URL(string: "https://example.com/project-plate/privacy")!
+    private static let fallbackTerms = URL(string: "https://example.com/project-plate/terms")!
+
+    /// Prefer Info.plist `PLATE_PRIVACY_POLICY_URL` so TestFlight / Release can point at a real host without a code change.
+    static var privacyPolicyURL: URL {
+        url(infoKey: "PLATE_PRIVACY_POLICY_URL", fallback: fallbackPrivacy)
+    }
+
+    /// Prefer Info.plist `PLATE_TERMS_URL`.
+    static var termsURL: URL {
+        url(infoKey: "PLATE_TERMS_URL", fallback: fallbackTerms)
+    }
+
+    /// True when either legal URL still points at the example.com placeholder.
+    static var usesPlaceholderLegalURLs: Bool {
+        isPlaceholder(privacyPolicyURL) || isPlaceholder(termsURL)
+    }
+
+    static func isPlaceholder(_ url: URL) -> Bool {
+        (url.host ?? "").localizedCaseInsensitiveContains("example.com")
+    }
+
+    static func url(infoKey: String, fallback: URL, bundle: Bundle = .main) -> URL {
+        url(fromRaw: bundle.object(forInfoDictionaryKey: infoKey) as? String, fallback: fallback)
+    }
+
+    static func url(fromRaw raw: String?, fallback: URL) -> URL {
+        guard let raw else { return fallback }
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let parsed = URL(string: trimmed), parsed.scheme != nil else {
+            return fallback
+        }
+        return parsed
+    }
+}
+
+enum AppVersion {
+    static func marketing(bundle: Bundle = .main) -> String {
+        string(forKey: "CFBundleShortVersionString", bundle: bundle) ?? "—"
+    }
+
+    static func build(bundle: Bundle = .main) -> String {
+        string(forKey: "CFBundleVersion", bundle: bundle) ?? "—"
+    }
+
+    static func display(bundle: Bundle = .main) -> String {
+        "\(marketing(bundle: bundle)) (\(build(bundle: bundle)))"
+    }
+
+    static func display(marketing: String, build: String) -> String {
+        "\(marketing) (\(build))"
+    }
+
+    private static func string(forKey key: String, bundle: Bundle) -> String? {
+        bundle.object(forInfoDictionaryKey: key) as? String
+    }
 }
 
 struct CloudAIConsentCopy {
