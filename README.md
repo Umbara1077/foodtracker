@@ -27,7 +27,7 @@ Or:
 
 ## Phase status
 
-Engineering through **Phase 45 (haptics)** is implemented on stacked `cursor/project-plate-phase-*-fc9b` branches (merge order in [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md)). Submit using [`docs/APP_STORE_SUBMISSION.md`](docs/APP_STORE_SUBMISSION.md).
+Engineering through **Phase 45 (haptics)** is on **`main`**. Submit using [`docs/APP_STORE_SUBMISSION.md`](docs/APP_STORE_SUBMISSION.md); handoff notes in [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md).
 
 | Band | Phases | Highlights |
 |------|--------|------------|

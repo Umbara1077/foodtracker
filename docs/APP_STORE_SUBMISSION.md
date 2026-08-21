@@ -2,7 +2,7 @@
 
 Engineering compliance through **Phase 34** is in the app binary. This page is what **you** must finish in App Store Connect, Developer, and legal before approval.
 
-Current tip: **1.5.10** (build 45) on `cursor/project-plate-phase-45-haptics-fc9b`.
+Current tip: **1.5.10** (build 45) on `main`.
 
 ## Already handled in the app
 

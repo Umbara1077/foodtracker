@@ -2,11 +2,11 @@
 
 Engineering feature work through **V1.2+ (Phases 0–31)** is on branch tips with green CI. This document is the handoff into **human / App Store ops**.
 
-Current tip marketing version: **1.5.10** (build 45) — Haptics on `cursor/project-plate-phase-45-haptics-fc9b`.
+Current tip marketing version: **1.5.10** (build 45) — on `main` (Phases 0–45 merged).
 
 ## 1. Merge order (draft PRs → `main`)
 
-Merge **oldest → newest** so each PR’s tip includes prior phases:
+Historical stacked branch suffixes (already merged into `main`):
 
 | Order | PR theme | Branch suffix |
 |------:|----------|---------------|
