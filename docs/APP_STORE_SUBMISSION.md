@@ -63,10 +63,10 @@ Until those keys are set, paywall uses **in-app** Privacy/Terms screens (not `ex
 - [ ] Review notes (suggested text below)
 - [ ] Brand / trademark / display-name clearance (“Project Plate” is still a working title in docs)
 
-### 5. Merge & ship
+### 5. Ship from `main`
 
-1. Merge phase PRs oldest → newest (`docs/TESTFLIGHT.md`).
-2. Archive from `main`.
+1. Confirm `main` is green (iOS + Backend CI).
+2. Archive from `main` in Xcode with a real Development Team.
 3. Internal TestFlight → External → Submit for Review.
 
 ## Suggested App Review notes
