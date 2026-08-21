@@ -26,6 +26,8 @@ final class TodayViewModel {
     var showRecipeImport = false
     var showRecipeBuilder = false
     var showMealPlan = false
+    var previousDayMealCount = 0
+    var copyDayMessage: String?
 
     init(
         mealRepository: any MealRepository,
@@ -77,6 +79,11 @@ final class TodayViewModel {
                 now: day,
                 calendar: calendar
             )
+            if let yesterday = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: day)) {
+                previousDayMealCount = try await mealRepository.meals(on: yesterday, calendar: calendar).count
+            } else {
+                previousDayMealCount = 0
+            }
             let snapshot = WidgetSnapshotStore.make(target: target, totals: totals)
             WidgetSnapshotStore.save(snapshot)
             TodayLiveActivityController.sync(with: snapshot, calendar: calendar)
@@ -84,6 +91,34 @@ final class TodayViewModel {
             errorMessage = "Could not load today’s diary."
         }
         isLoading = false
+    }
+
+    /// Copies yesterday’s meals onto today, preserving clock times.
+    func copyPreviousDay(calendar: Calendar = .current) async {
+        copyDayMessage = nil
+        errorMessage = nil
+        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: day)) else {
+            errorMessage = "Could not find yesterday."
+            return
+        }
+        do {
+            let count = try await DayMealCopy.copyMeals(
+                from: yesterday,
+                to: day,
+                mealRepository: mealRepository,
+                diary: diary,
+                calendar: calendar
+            )
+            if count == 0 {
+                copyDayMessage = "Nothing to copy from yesterday."
+            } else {
+                analytics.track(.mealSaved)
+                copyDayMessage = "Copied \(count) meal\(count == 1 ? "" : "s") from yesterday."
+            }
+            await load(calendar: calendar)
+        } catch {
+            errorMessage = "Could not copy yesterday’s meals."
+        }
     }
 
     func deleteMeal(_ meal: MealRecord) async {
@@ -251,12 +286,22 @@ private struct TodayContent: View {
                 Task { await viewModel.load() }
             }
         }
+        .alert("Copy day", isPresented: Binding(
+            get: { viewModel.copyDayMessage != nil },
+            set: { if !$0 { viewModel.copyDayMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.copyDayMessage ?? "")
+        }
     }
 
     private var compactLayout: some View {
         VStack(alignment: .leading, spacing: Spacing.space24) {
+            greeting
             hero
             streakChip
+            copyYesterdayChip
             quickActions
             plannedSection
             frequentSection
@@ -267,8 +312,10 @@ private struct TodayContent: View {
     private var wideLayout: some View {
         HStack(alignment: .top, spacing: Spacing.space24) {
             VStack(alignment: .leading, spacing: Spacing.space24) {
+                greeting
                 hero
                 streakChip
+                copyYesterdayChip
                 quickActions
                 plannedSection
             }
@@ -279,6 +326,43 @@ private struct TodayContent: View {
                 mealsSection
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var greeting: some View {
+        Text(TodayGreeting.text())
+            .font(Typography.supporting.weight(.semibold))
+            .foregroundStyle(Color.textSecondary)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    @ViewBuilder
+    private var copyYesterdayChip: some View {
+        if viewModel.previousDayMealCount > 0, !viewModel.meals.isEmpty {
+            Button {
+                Task { await viewModel.copyPreviousDay() }
+            } label: {
+                HStack(spacing: Spacing.space12) {
+                    Image(systemName: "doc.on.doc")
+                        .foregroundStyle(Color.brandPrimary)
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: Spacing.space4) {
+                        Text("Copy yesterday’s meals")
+                            .font(Typography.supporting.weight(.semibold))
+                            .foregroundStyle(Color.textPrimary)
+                        Text("Adds \(viewModel.previousDayMealCount) meal\(viewModel.previousDayMealCount == 1 ? "" : "s") with yesterday’s times")
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(Spacing.cardPaddingCompact)
+                .background(Color.surfaceSecondary.opacity(0.7))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Duplicates yesterday's meals onto today")
         }
     }
 
@@ -647,6 +731,14 @@ private struct TodayContent: View {
                 }
                 SecondaryButton(title: "Quick add") {
                     viewModel.showQuickAdd = true
+                }
+                if viewModel.previousDayMealCount > 0 {
+                    SecondaryButton(
+                        title: "Copy yesterday’s \(viewModel.previousDayMealCount) meals"
+                    ) {
+                        Task { await viewModel.copyPreviousDay() }
+                    }
+                    .accessibilityHint("Adds copies of yesterday's meals to today")
                 }
             }
         }

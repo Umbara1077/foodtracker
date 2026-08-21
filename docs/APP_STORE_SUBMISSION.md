@@ -2,7 +2,7 @@
 
 Engineering compliance through **Phase 34** is in the app binary. This page is what **you** must finish in App Store Connect, Developer, and legal before approval.
 
-Current tip: **1.5.3** (build 38) on `cursor/project-plate-phase-38-meal-editor-fc9b`.
+Current tip: **1.5.4** (build 39) on `cursor/project-plate-phase-39-copy-day-fc9b`.
 
 ## Already handled in the app
 

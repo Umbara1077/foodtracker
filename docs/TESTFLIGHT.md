@@ -2,7 +2,7 @@
 
 Engineering feature work through **V1.2+ (Phases 0–31)** is on branch tips with green CI. This document is the handoff into **human / App Store ops**.
 
-Current tip marketing version: **1.5.3** (build 38) — Meal editor on `cursor/project-plate-phase-38-meal-editor-fc9b`.
+Current tip marketing version: **1.5.4** (build 39) — Copy previous day on `cursor/project-plate-phase-39-copy-day-fc9b`.
 
 ## 1. Merge order (draft PRs → `main`)
 
@@ -42,6 +42,7 @@ Merge **oldest → newest** so each PR’s tip includes prior phases:
 | 30 | Phase 36 A11y / analytics | `phase-36-a11y-analytics` |
 | 31 | Phase 37 Target editor | `phase-37-target-editor` |
 | 32 | Phase 38 Meal editor | `phase-38-meal-editor` |
+| 33 | Phase 39 Copy previous day | `phase-39-copy-day` |
 
 After merges, cut the Archive from `main`. Full human checklist: [`docs/APP_STORE_SUBMISSION.md`](APP_STORE_SUBMISSION.md).
 

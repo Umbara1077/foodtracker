@@ -27,7 +27,7 @@ Or:
 
 ## Phase status
 
-Engineering through **Phase 38 (meal editor)** is implemented on stacked `cursor/project-plate-phase-*-fc9b` branches (merge order in [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md)). Submit using [`docs/APP_STORE_SUBMISSION.md`](docs/APP_STORE_SUBMISSION.md).
+Engineering through **Phase 39 (copy previous day)** is implemented on stacked `cursor/project-plate-phase-*-fc9b` branches (merge order in [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md)). Submit using [`docs/APP_STORE_SUBMISSION.md`](docs/APP_STORE_SUBMISSION.md).
 
 | Band | Phases | Highlights |
 |------|--------|------------|
@@ -36,7 +36,7 @@ Engineering through **Phase 38 (meal editor)** is implemented on stacked `cursor
 | V1.1 | 12–20 | Favorites, scan retry, digest, widget, streak, voice, label OCR, Live Activity, iCloud sync |
 | V1.2+ | 21–31 | Restaurant matching, adaptive goals, recipes, coach, micros, challenges, iPad, meal plan, Watch, family scaffold |
 | Ops | 32–34 | Legal URL overrides, 3.1.2 paywall, Privacy Manifest, consent gate, App Store checklist |
-| Power / retention | 35–38 | Custom gateway, reminders, CSV, analytics, target editor, meal editor |
+| Power / retention | 35–39 | Custom gateway, reminders, CSV, analytics, target editor, meal editor, copy day |
 
 ## Cloud AI backend
 
