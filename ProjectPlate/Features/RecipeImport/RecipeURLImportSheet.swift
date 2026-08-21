@@ -83,7 +83,7 @@ struct RecipeURLImportSheet: View {
                     Section {
                         Text(errorMessage)
                             .font(Typography.caption)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.statusError)
                     }
                 }
             }

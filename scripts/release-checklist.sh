@@ -34,6 +34,13 @@ else
   echo "OK: StoreKit product IDs present (com.projectplate.pro.monthly / .annual)"
 fi
 
+if ! rg -n "SubscriptionLegalCopy|showManageSubscriptions|Privacy Policy|Terms of Use" ProjectPlate/Features/Paywall/PaywallView.swift >/dev/null; then
+  echo "FAIL: Paywall missing App Review 3.1.2 disclosures / manage subscription"
+  fail=1
+else
+  echo "OK: Paywall includes auto-renew disclosures, legal links, manage subscription"
+fi
+
 if [[ ! -f docs/TESTFLIGHT.md ]]; then
   echo "FAIL: docs/TESTFLIGHT.md missing"
   fail=1

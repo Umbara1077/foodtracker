@@ -39,7 +39,7 @@ struct OnboardingFlowView: View {
             if let error = viewModel.errorMessage {
                 Text(error)
                     .font(Typography.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(Color.statusError)
                     .padding(.horizontal, Spacing.screenHorizontal)
             }
 

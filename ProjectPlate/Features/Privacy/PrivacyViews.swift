@@ -128,9 +128,32 @@ struct TermsOfUseView: View {
                 VStack(alignment: .leading, spacing: Spacing.space16) {
                     Text("Terms of Use")
                         .font(Typography.screenTitle)
-                    Text("Nutrition estimates are for informational tracking and may be inaccurate. Project Plate does not provide medical advice. Replace this draft before App Store review.")
+
+                    Text("Nutrition estimates are for informational tracking and may be inaccurate. Project Plate does not provide medical advice.")
                         .font(Typography.body)
                         .foregroundStyle(Color.textSecondary)
+
+                    Text("Subscriptions")
+                        .font(Typography.sectionHeading)
+                        .foregroundStyle(Color.textPrimary)
+
+                    Text(
+                        """
+                        Project Plate Pro is an auto-renewable subscription sold through Apple. \
+                        \(SubscriptionLegalCopy.autoRenewSummary)
+
+                        Plans: Pro Monthly and Pro Annual. Prices appear in the App Store and on the purchase screen in your local currency.
+
+                        \(SubscriptionLegalCopy.freeKeepsHistory)
+                        """
+                    )
+                    .font(Typography.body)
+                    .foregroundStyle(Color.textSecondary)
+
+                    Text("Replace this draft with counsel-approved Terms before App Store review. The link below should resolve to your production Terms URL.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
+
                     Link("Open web terms", destination: PrivacyConstants.termsURL)
                         .font(Typography.supporting.weight(.semibold))
                 }

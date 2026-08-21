@@ -27,7 +27,7 @@ Or:
 
 ## Phase status
 
-Engineering through **Phase 32 (TestFlight readiness)** is implemented on stacked `cursor/project-plate-phase-*-fc9b` branches (merge order in [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md)).
+Engineering through **Phase 33 (App Review billing disclosures)** is implemented on stacked `cursor/project-plate-phase-*-fc9b` branches (merge order in [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md)).
 
 | Band | Phases | Highlights |
 |------|--------|------------|
@@ -35,7 +35,7 @@ Engineering through **Phase 32 (TestFlight readiness)** is implemented on stacke
 | V1 core | 7–11 | Progress, HealthKit, StoreKit Pro, privacy, TestFlight tools |
 | V1.1 | 12–20 | Favorites, scan retry, digest, widget, streak, voice, label OCR, Live Activity, iCloud sync |
 | V1.2+ | 21–31 | Restaurant matching, adaptive goals, recipes, coach, micros, challenges, iPad, meal plan, Watch, family scaffold |
-| Ops | 32 | Configurable legal URLs, Bundle version, release checklist |
+| Ops | 32–33 | Legal URL overrides, release checklist, Apple 3.1.2 paywall disclosures |
 
 ## Cloud AI backend
 

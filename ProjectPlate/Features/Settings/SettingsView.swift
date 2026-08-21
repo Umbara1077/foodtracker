@@ -1,4 +1,6 @@
+import StoreKit
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
 struct SettingsView: View {
@@ -57,12 +59,15 @@ struct SettingsView: View {
                     Button("Restore purchases") {
                         Task { await restorePurchases() }
                     }
+                    Button("Manage subscription") {
+                        Task { await manageSubscriptions() }
+                    }
                     if let subscriptionMessage {
                         Text(subscriptionMessage)
                             .font(Typography.caption)
                             .foregroundStyle(Color.textSecondary)
                     }
-                    Text("History and manual logging stay available on Free.")
+                    Text("History and manual logging stay available on Free. Subscriptions renew automatically via Apple ID unless cancelled.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                 }
@@ -382,6 +387,20 @@ struct SettingsView: View {
         } catch {
             subscriptionMessage = "Restore failed."
             environment.crashReporter.record(error: error, context: "subscriptions.restore")
+        }
+    }
+
+    private func manageSubscriptions() async {
+        subscriptionMessage = nil
+        do {
+            let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            guard let scene = scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first else {
+                await UIApplication.shared.open(SubscriptionLegalCopy.manageSubscriptionsURL)
+                return
+            }
+            try await AppStore.showManageSubscriptions(in: scene)
+        } catch {
+            await UIApplication.shared.open(SubscriptionLegalCopy.manageSubscriptionsURL)
         }
     }
 

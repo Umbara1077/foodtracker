@@ -74,7 +74,7 @@ struct QuickAddSheet: View {
                 if let errorMessage {
                     Section {
                         Text(errorMessage)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.statusError)
                             .font(Typography.caption)
                     }
                 }

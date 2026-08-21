@@ -47,7 +47,7 @@ struct MealResultView: View {
                     if let errorMessage {
                         Text(errorMessage)
                             .font(Typography.caption)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.statusError)
                     }
                     PrimaryButton(
                         title: "Add to today — \(Int(draft.nutrients.calories.rounded())) cal",

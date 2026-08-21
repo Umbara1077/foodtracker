@@ -200,7 +200,7 @@ private struct TodayContent: View {
                 if let error = viewModel.errorMessage {
                     Text(error)
                         .font(Typography.caption)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color.statusError)
                         .padding(.horizontal, Spacing.screenHorizontal)
                 }
             }
@@ -337,7 +337,7 @@ private struct TodayContent: View {
                 current: nutrients.fiber ?? 0,
                 goal: goals.fiberGrams,
                 unit: "g",
-                tint: .brandPrimary
+                tint: .macroFiber
             )
             MacroProgressView(
                 label: "Sugar",

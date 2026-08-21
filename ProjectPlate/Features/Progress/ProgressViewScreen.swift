@@ -253,7 +253,7 @@ private struct ProgressContent: View {
                     if let error = viewModel.errorMessage {
                         Text(error)
                             .font(Typography.caption)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color.statusError)
                     }
                     Text("Charts show your logged data only. They don’t explain why weight changed.")
                         .font(Typography.caption)
@@ -369,7 +369,7 @@ private struct ProgressContent: View {
                         current: fiber,
                         goal: goals.fiberGrams,
                         unit: "g",
-                        tint: .brandPrimary
+                        tint: .macroFiber
                     )
                 }
                 if let sugar = digest.averageSugar {
@@ -721,7 +721,7 @@ struct AddWeightSheet: View {
                 }
                 if let errorMessage {
                     Section {
-                        Text(errorMessage).foregroundStyle(.red)
+                        Text(errorMessage).foregroundStyle(Color.statusError)
                     }
                 }
             }

@@ -203,7 +203,7 @@ private struct HistoryContent: View {
                     }
 
                     if let error = viewModel.errorMessage {
-                        Text(error).foregroundStyle(.red).font(Typography.caption)
+                        Text(error).foregroundStyle(Color.statusError).font(Typography.caption)
                     }
                 }
                 .listStyle(.plain)

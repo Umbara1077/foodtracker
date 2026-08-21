@@ -2,7 +2,7 @@
 
 Engineering feature work through **V1.2+ (Phases 0–31)** is on branch tips with green CI. This document is the handoff into **human / App Store ops**.
 
-Current tip marketing version: **1.4.0** (build 32) — TestFlight RC marker on `cursor/project-plate-phase-32-testflight-ready-fc9b`.
+Current tip marketing version: **1.4.1** (build 33) — App Review billing / style polish on `cursor/project-plate-phase-33-app-review-billing-fc9b`.
 
 ## 1. Merge order (draft PRs → `main`)
 
@@ -36,6 +36,7 @@ Merge **oldest → newest** so each PR’s tip includes prior phases:
 | 24 | Phase 30 Apple Watch | `phase-30-apple-watch` |
 | 25 | Phase 31 Family plan | `phase-31-family-plan` |
 | 26 | Phase 32 TestFlight ready | `phase-32-testflight-ready` |
+| 27 | Phase 33 App Review billing | `phase-33-app-review-billing` |
 
 After merges, cut the Archive from `main`.
 
@@ -73,6 +74,7 @@ Empty values keep the placeholder (Settings → About warns when placeholders ar
 - [ ] Development Team + signing for App + Widget + Watch
 - [ ] Real privacy + terms hosts in the Archive scheme
 - [ ] App Store Connect IAP: `com.projectplate.pro.monthly`, `com.projectplate.pro.annual`
+- [ ] Confirm paywall shows price/period, auto-renew copy, Privacy + Terms links, Restore, Manage subscription
 - [ ] TestFlight / App Store screenshots
 - [ ] CloudKit container enabled for device sync
 - [ ] Working-title / trademark / domain clearance before public naming

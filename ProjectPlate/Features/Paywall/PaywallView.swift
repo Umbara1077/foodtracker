@@ -1,4 +1,6 @@
+import StoreKit
 import SwiftUI
+import UIKit
 
 @MainActor
 @Observable
@@ -15,6 +17,25 @@ final class PaywallViewModel {
 
     init(subscriptions: any SubscriptionServicing) {
         self.subscriptions = subscriptions
+    }
+
+    var selectedProduct: SubscriptionProductInfo? {
+        products.first(where: { $0.id == selectedProductID }) ?? products.first
+    }
+
+    var subscribeTitle: String {
+        guard let product = selectedProduct else {
+            return SubscriptionLegalCopy.subscribeButtonTitle(
+                displayPrice: nil,
+                isAnnual: true,
+                isPurchasing: isPurchasing
+            )
+        }
+        return SubscriptionLegalCopy.subscribeButtonTitle(
+            displayPrice: product.displayPrice,
+            isAnnual: product.isAnnual,
+            isPurchasing: isPurchasing
+        )
     }
 
     func load() async {
@@ -60,6 +81,28 @@ final class PaywallViewModel {
         } catch {
             errorMessage = "Restore failed."
         }
+    }
+
+    func manageSubscriptions() async {
+        errorMessage = nil
+        do {
+            guard let scene = Self.activeWindowScene() else {
+                await openManageSubscriptionsURL()
+                return
+            }
+            try await AppStore.showManageSubscriptions(in: scene)
+        } catch {
+            await openManageSubscriptionsURL()
+        }
+    }
+
+    private func openManageSubscriptionsURL() async {
+        await UIApplication.shared.open(SubscriptionLegalCopy.manageSubscriptionsURL)
+    }
+
+    private static func activeWindowScene() -> UIWindowScene? {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        return scenes.first(where: { $0.activationState == .foregroundActive }) ?? scenes.first
     }
 }
 
@@ -108,15 +151,15 @@ struct PaywallView: View {
                     Text("Log food in seconds.")
                         .font(Typography.heroNumeric(36))
                         .foregroundStyle(Color.textPrimary)
-                    Text("Unlock unlimited meal scans, faster corrections, and deeper progress insights.")
+                    Text("Unlock unlimited AI meal scans beyond the Free daily limit. Diary and history stay yours either way.")
                         .font(Typography.supporting)
                         .foregroundStyle(Color.textSecondary)
                 }
 
                 VStack(alignment: .leading, spacing: Spacing.space12) {
-                    benefit("Unlimited meal scans", systemImage: "camera.fill")
-                    benefit("Faster corrections", systemImage: "slider.horizontal.3")
-                    benefit("Deeper progress insights", systemImage: "chart.line.uptrend.xyaxis")
+                    benefit("Unlimited AI meal scans", systemImage: "camera.fill")
+                    benefit("Faster scan corrections", systemImage: "slider.horizontal.3")
+                    benefit("Priority cloud analysis", systemImage: "bolt.horizontal.circle.fill")
                 }
 
                 if viewModel.isLoading {
@@ -132,15 +175,31 @@ struct PaywallView: View {
                     }
                 }
 
+                if let product = viewModel.selectedProduct {
+                    Text(
+                        SubscriptionLegalCopy.selectedPlanDisclosure(
+                            displayPrice: product.displayPrice,
+                            periodLabel: product.periodLabel,
+                            isAnnual: product.isAnnual
+                        )
+                    )
+                    .font(Typography.caption)
+                    .foregroundStyle(Color.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityLabel(
+                        "\(product.periodLabel) plan, \(product.displayPrice) per \(SubscriptionLegalCopy.periodUnitLabel(isAnnual: product.isAnnual)), auto-renewable"
+                    )
+                }
+
                 if let error = viewModel.errorMessage {
-                    Text(error).font(Typography.caption).foregroundStyle(.red)
+                    Text(error).font(Typography.caption).foregroundStyle(Color.statusError)
                 }
                 if let status = viewModel.statusMessage {
                     Text(status).font(Typography.caption).foregroundStyle(Color.textSecondary)
                 }
 
                 PrimaryButton(
-                    title: viewModel.isPurchasing ? "Working…" : "Continue",
+                    title: viewModel.subscribeTitle,
                     isEnabled: !viewModel.isPurchasing && !viewModel.products.isEmpty
                 ) {
                     Task {
@@ -151,21 +210,50 @@ struct PaywallView: View {
                     }
                 }
 
-                Button("Restore purchases") {
-                    Task { await viewModel.restore() }
-                }
-                .frame(maxWidth: .infinity)
-                .disabled(viewModel.isPurchasing)
+                VStack(spacing: Spacing.space12) {
+                    Button("Restore purchases") {
+                        Task { await viewModel.restore() }
+                    }
+                    .disabled(viewModel.isPurchasing)
 
-                Text("Cancel anytime in your Apple ID subscriptions. Already logged meals stay available on Free.")
-                    .font(Typography.caption)
-                    .foregroundStyle(Color.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
+                    Button("Manage subscription") {
+                        Task { await viewModel.manageSubscriptions() }
+                    }
+                    .disabled(viewModel.isPurchasing)
+                }
+                .font(Typography.supporting.weight(.semibold))
+                .foregroundStyle(Color.textPrimary)
+                .frame(maxWidth: .infinity)
+
+                legalFooter
             }
             .padding(.horizontal, Spacing.screenHorizontal)
             .padding(.vertical, Spacing.space24)
         }
+    }
+
+    private var legalFooter: some View {
+        VStack(alignment: .leading, spacing: Spacing.space12) {
+            Text(SubscriptionLegalCopy.autoRenewSummary)
+                .font(Typography.caption)
+                .foregroundStyle(Color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(SubscriptionLegalCopy.freeKeepsHistory)
+                .font(Typography.caption)
+                .foregroundStyle(Color.textSecondary)
+
+            HStack(spacing: Spacing.space16) {
+                Link("Privacy Policy", destination: PrivacyConstants.privacyPolicyURL)
+                Link("Terms of Use", destination: PrivacyConstants.termsURL)
+            }
+            .font(Typography.caption.weight(.semibold))
+            .foregroundStyle(Color.brandInk)
+            .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .multilineTextAlignment(.leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .contain)
     }
 
     private func benefit(_ title: String, systemImage: String) -> some View {
@@ -204,7 +292,7 @@ struct PaywallView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: Radius.chip, style: .continuous))
                         }
                     }
-                    Text(product.displayName)
+                    Text("\(product.displayName) · \(SubscriptionLegalCopy.pricePeriodLine(displayPrice: product.displayPrice, isAnnual: product.isAnnual))")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                 }
@@ -222,7 +310,9 @@ struct PaywallView: View {
             .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(product.periodLabel), \(product.displayPrice)")
+        .accessibilityLabel(
+            "\(product.periodLabel), \(product.displayPrice) per \(SubscriptionLegalCopy.periodUnitLabel(isAnnual: product.isAnnual))"
+        )
     }
 }
 

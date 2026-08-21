@@ -100,7 +100,7 @@ struct FoodSearchView: View {
 
             if let error = viewModel.errorMessage {
                 Section {
-                    Text(error).foregroundStyle(.red)
+                    Text(error).foregroundStyle(Color.statusError)
                 }
             }
 

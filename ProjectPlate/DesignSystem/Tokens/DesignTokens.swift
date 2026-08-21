@@ -15,6 +15,10 @@ extension Color {
     static let macroProtein = Color("MacroProtein")
     static let macroCarbs = Color("MacroCarbs")
     static let macroFat = Color("MacroFat")
+    static let macroFiber = Color("MacroFiber")
+
+    /// Semantic destructive / form-error tint (prefer over raw `.red`).
+    static let statusError = Color("StatusError")
 }
 
 enum Spacing {
@@ -42,15 +46,16 @@ enum Radius {
 }
 
 enum Typography {
+    /// Fixed-size hero figures (calories remaining). Prefer Dynamic Type styles elsewhere.
     static func heroNumeric(_ size: CGFloat = 44) -> Font {
         .system(size: size, weight: .bold, design: .rounded)
     }
 
-    static let largeTitle = Font.system(size: 34, weight: .bold)
-    static let screenTitle = Font.system(size: 28, weight: .bold)
-    static let sectionHeading = Font.system(size: 20, weight: .semibold)
-    static let body = Font.system(size: 17, weight: .regular)
-    static let supporting = Font.system(size: 15, weight: .regular)
-    static let caption = Font.system(size: 13, weight: .medium)
-    static let macroValue = Font.system(size: 17, weight: .semibold, design: .rounded)
+    static let largeTitle = Font.largeTitle.weight(.bold)
+    static let screenTitle = Font.title.weight(.bold)
+    static let sectionHeading = Font.title3.weight(.semibold)
+    static let body = Font.body
+    static let supporting = Font.subheadline
+    static let caption = Font.caption.weight(.medium)
+    static let macroValue = Font.system(.body, design: .rounded).weight(.semibold)
 }
