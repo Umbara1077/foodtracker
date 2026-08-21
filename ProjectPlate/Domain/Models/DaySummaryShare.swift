@@ -55,7 +55,7 @@ enum DaySummaryShare {
         value.formatted(
             .number
                 .grouping(.automatic)
-                .locale(Locale(identifier: "en_US_POSIX"))
+                .locale(Locale(identifier: "en_US"))
         )
     }
 }
