@@ -19,6 +19,7 @@ final class HistoryViewModel {
     var showQuickAdd = false
     var undoMeal: MealRecord?
     var undoBannerMessage: String?
+    var searchQuery = ""
 
     init(
         mealRepository: any MealRepository,
@@ -34,6 +35,10 @@ final class HistoryViewModel {
 
     var weekDays: [Date] {
         (0..<7).compactMap { Calendar.current.date(byAdding: .day, value: $0, to: weekStart) }
+    }
+
+    var filteredMeals: [MealRecord] {
+        MealSearch.filter(meals, query: searchQuery)
     }
 
     func load(calendar: Calendar = .current) async {
@@ -58,6 +63,7 @@ final class HistoryViewModel {
 
     func selectDay(_ day: Date) async {
         selectedDay = day
+        searchQuery = ""
         await load()
     }
 
@@ -217,9 +223,21 @@ private struct HistoryContent: View {
                             )
                             .listRowBackground(Color.clear)
                             .accessibilityLabel("No meals on this day")
+                        } else if viewModel.filteredMeals.isEmpty {
+                            ContentUnavailableView(
+                                "No matches",
+                                systemImage: "magnifyingglass",
+                                description: Text("No meals on this day match “\(viewModel.searchQuery)”.")
+                            )
+                            .listRowBackground(Color.clear)
+                            .accessibilityLabel("No meals match the search")
                         } else {
-                            Section("Meals") {
-                                ForEach(viewModel.meals) { meal in
+                            Section(
+                                viewModel.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                    ? "Meals"
+                                    : "Meals (\(viewModel.filteredMeals.count))"
+                            ) {
+                                ForEach(viewModel.filteredMeals) { meal in
                                     Button {
                                         editingMeal = meal
                                     } label: {
@@ -271,6 +289,10 @@ private struct HistoryContent: View {
                     }
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
+                    .searchable(
+                        text: $viewModel.searchQuery,
+                        prompt: "Search this day’s meals"
+                    )
                 }
             }
             .plateReadableWidth()
