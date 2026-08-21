@@ -16,6 +16,7 @@ struct AppEnvironment: Sendable {
     var correctionStore: any CorrectionFeedbackStore
     var savedMeals: any SavedMealRepository
     var mealPlan: any MealPlanRepository
+    var householdStore: any HouseholdStore
     var diarySync: DiarySyncCoordinator
     var subscriptions: any SubscriptionServicing
     var aiScanQuota: LocalAIScanQuotaStore
@@ -75,6 +76,7 @@ struct AppEnvironment: Sendable {
             correctionStore: LocalCorrectionFeedbackStore(),
             savedMeals: savedMeals,
             mealPlan: mealPlan,
+            householdStore: UserDefaultsHouseholdStore(),
             diarySync: diarySync,
             subscriptions: StoreKitPurchaseManager(),
             aiScanQuota: LocalAIScanQuotaStore(dailyLimit: 3),
@@ -182,6 +184,9 @@ struct AppEnvironment: Sendable {
                     title: "Salmon + greens"
                 ),
             ]),
+            householdStore: UserDefaultsHouseholdStore(
+                defaults: UserDefaults(suiteName: "plate.preview.household") ?? .standard
+            ),
             diarySync: diarySync,
             subscriptions: MockPurchaseManager(),
             aiScanQuota: LocalAIScanQuotaStore(dailyLimit: 3),

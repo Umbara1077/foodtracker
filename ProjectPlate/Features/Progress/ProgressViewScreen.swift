@@ -8,6 +8,7 @@ final class ProgressViewModel {
     private let mealRepository: any MealRepository
     private let targetRepository: any TargetRepository
     private let profileRepository: any ProfileRepository
+    private let householdStore: any HouseholdStore
 
     var range: ProgressRange = .days30
     var entries: [WeightEntry] = []
@@ -18,6 +19,7 @@ final class ProgressViewModel {
     var adaptiveSuggestion: AdaptiveGoalSuggestion?
     var coachInsights: [CoachInsight] = []
     var weeklyChallenges: [WeeklyChallenge] = []
+    var household: Household?
     var unitSystem: UnitSystem = .metric
     var isLoading = true
     var errorMessage: String?
@@ -30,12 +32,14 @@ final class ProgressViewModel {
         weightRepository: any WeightRepository,
         mealRepository: any MealRepository,
         targetRepository: any TargetRepository,
-        profileRepository: any ProfileRepository
+        profileRepository: any ProfileRepository,
+        householdStore: any HouseholdStore
     ) {
         self.weightRepository = weightRepository
         self.mealRepository = mealRepository
         self.targetRepository = targetRepository
         self.profileRepository = profileRepository
+        self.householdStore = householdStore
     }
 
     var weightChangeKg: Double? {
@@ -108,6 +112,11 @@ final class ProgressViewModel {
                 )
             } else {
                 weeklyChallenges = []
+            }
+            if HouseholdPreference.isEnabled() {
+                household = await householdStore.load()
+            } else {
+                household = nil
             }
         } catch {
             errorMessage = "Could not load progress."
@@ -206,7 +215,8 @@ struct ProgressViewScreen: View {
                     weightRepository: environment.weightRepository,
                     mealRepository: environment.mealRepository,
                     targetRepository: environment.targetRepository,
-                    profileRepository: environment.profileRepository
+                    profileRepository: environment.profileRepository,
+                    householdStore: environment.householdStore
                 )
                 viewModel = vm
                 await vm.load()
@@ -268,6 +278,7 @@ private struct ProgressContent: View {
     private var compactBody: some View {
         weeklyDigestCard
         challengesCard
+        householdCard
         coachInsightsCard
         streakCard
         adaptiveGoalCard
@@ -280,6 +291,7 @@ private struct ProgressContent: View {
             VStack(alignment: .leading, spacing: Spacing.space24) {
                 weeklyDigestCard
                 challengesCard
+                householdCard
                 coachInsightsCard
                 streakCard
             }

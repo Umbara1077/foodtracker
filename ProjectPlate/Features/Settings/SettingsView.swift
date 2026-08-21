@@ -23,6 +23,7 @@ struct SettingsView: View {
     @AppStorage(CoachInsightPreference.enabledKey) private var coachInsightsEnabled = true
     @AppStorage(ChallengePreference.enabledKey) private var challengesEnabled = true
     @AppStorage(MealPlanPreference.enabledKey) private var mealPlanEnabled = true
+    @AppStorage(HouseholdPreference.enabledKey) private var householdEnabled = true
     @AppStorage(MicronutrientPreference.enabledKey) private var micronutrientsEnabled = true
     @State private var consentVersionLabel = "Not accepted"
     @State private var privacyMessage: String?
@@ -162,6 +163,13 @@ struct SettingsView: View {
                     Text("Plan upcoming meals on Today. Local only — not a grocery or shopping list.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
+                    Toggle("Show family plan", isOn: $householdEnabled)
+                        .onChange(of: householdEnabled) { _, enabled in
+                            HouseholdPreference.setEnabled(enabled)
+                        }
+                    Text("Local household roster on Progress. Cloud sharing is not on yet.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
                     Toggle("Show fiber, sugar & sodium", isOn: $micronutrientsEnabled)
                         .onChange(of: micronutrientsEnabled) { _, enabled in
                             MicronutrientPreference.setEnabled(enabled)
@@ -185,6 +193,16 @@ struct SettingsView: View {
                 }
                 Section("Apple Watch") {
                     Text("Install the Project Plate watch app for a glance of remaining calories and protein. It updates when you open Today on iPhone.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
+                }
+                Section("Family") {
+                    NavigationLink {
+                        HouseholdSettingsView()
+                    } label: {
+                        Label("Family plan", systemImage: "person.3")
+                    }
+                    Text("Local household members and invite code. Shared cloud diaries come later.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                 }
@@ -225,7 +243,7 @@ struct SettingsView: View {
                     }
                 }
                 Section("About") {
-                    LabeledContent("Version", value: "1.3.0")
+                    LabeledContent("Version", value: "1.3.6")
                     Text("Nutrition estimates are for informational tracking and may be inaccurate. This app does not provide medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
