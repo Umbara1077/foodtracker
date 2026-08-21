@@ -163,9 +163,10 @@ private struct HistoryContent: View {
                         ContentUnavailableView(
                             "No meals",
                             systemImage: "calendar",
-                            description: Text("Nothing logged on this day.")
+                            description: Text("Nothing logged on this day. Use Log to today from another meal, or add from Today.")
                         )
                         .listRowBackground(Color.clear)
+                        .accessibilityLabel("No meals on this day")
                     } else {
                         Section("Meals") {
                             ForEach(viewModel.meals) { meal in

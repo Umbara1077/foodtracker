@@ -49,11 +49,17 @@ struct SettingsView: View {
         NavigationStack {
             List {
                 Section("Profile") {
-                    Text("Goal & targets are set during onboarding.")
-                        .foregroundStyle(Color.textSecondary)
                     Text(targetSummary)
                         .font(Typography.supporting)
                         .foregroundStyle(Color.textPrimary)
+                    NavigationLink {
+                        TargetEditorView()
+                    } label: {
+                        Label("Edit calorie & macro targets", systemImage: "slider.horizontal.3")
+                    }
+                    Text("Edits apply from today forward. History keeps earlier targets for charts.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
                 }
                 Section("Subscription") {
                     LabeledContent("Plan", value: subscriptionLabel)

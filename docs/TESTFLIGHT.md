@@ -2,7 +2,7 @@
 
 Engineering feature work through **V1.2+ (Phases 0–31)** is on branch tips with green CI. This document is the handoff into **human / App Store ops**.
 
-Current tip marketing version: **1.5.1** (build 36) — A11y / analytics polish on `cursor/project-plate-phase-36-a11y-analytics-fc9b`.
+Current tip marketing version: **1.5.2** (build 37) — Target editor on `cursor/project-plate-phase-37-target-editor-fc9b`.
 
 ## 1. Merge order (draft PRs → `main`)
 
@@ -40,6 +40,7 @@ Merge **oldest → newest** so each PR’s tip includes prior phases:
 | 28 | Phase 34 App Store compliance | `phase-34-app-store-compliance` |
 | 29 | Phase 35 Gateway / reminders / CSV | `phase-35-gateway-reminders` |
 | 30 | Phase 36 A11y / analytics | `phase-36-a11y-analytics` |
+| 31 | Phase 37 Target editor | `phase-37-target-editor` |
 
 After merges, cut the Archive from `main`. Full human checklist: [`docs/APP_STORE_SUBMISSION.md`](APP_STORE_SUBMISSION.md).
 
