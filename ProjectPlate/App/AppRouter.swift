@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftUI
 
 /// Lightweight navigation coordinator for root-level presentations (scanner, onboarding).
 @Observable
@@ -65,5 +66,16 @@ enum RootTab: Hashable, CaseIterable, Identifiable {
         case .progress: "chart.line.uptrend.xyaxis"
         case .settings: "gearshape"
         }
+    }
+}
+
+private enum AppRouterKey: EnvironmentKey {
+    @MainActor static let defaultValue = AppRouter()
+}
+
+extension EnvironmentValues {
+    var appRouter: AppRouter {
+        get { self[AppRouterKey.self] }
+        set { self[AppRouterKey.self] = newValue }
     }
 }

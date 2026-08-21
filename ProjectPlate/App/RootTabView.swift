@@ -51,6 +51,7 @@ struct RootTabView: View {
                     .offset(y: horizontalSizeClass == .regular ? -12 : -28)
                     .accessibilitySortPriority(1)
                 }
+                .environment(\.appRouter, router)
                 .fullScreenCover(isPresented: $router.isScannerPresented) {
                     ScannerFlowView(
                         analysisService: environment.mealAnalysisService,
@@ -102,18 +103,7 @@ struct RootTabView: View {
     }
 
     private func openScannerOrPaywall() async {
-        if CloudAIConsentStore.needsPrompt() {
-            router.openConsent()
-            return
-        }
-        let entitlement = await environment.subscriptions.currentEntitlement()
-        let remaining = await environment.aiScanQuota.remaining(isPro: entitlement.isPro)
-        if remaining <= 0 {
-            environment.analytics.track(.paywallViewed)
-            router.openPaywall()
-        } else {
-            router.openScanner()
-        }
+        await ScanLaunchGate.open(environment: environment, router: router)
     }
 
     private func acceptConsentAndScan() async {

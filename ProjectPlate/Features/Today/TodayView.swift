@@ -309,6 +309,8 @@ struct TodayView: View {
 private struct TodayContent: View {
     @Bindable var viewModel: TodayViewModel
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.appEnvironment) private var environment
+    @Environment(\.appRouter) private var appRouter
     @State private var correctionMeal: MealRecord?
     @State private var editingMeal: MealRecord?
 
@@ -607,35 +609,20 @@ private struct TodayContent: View {
 
     private var quickActions: some View {
         VStack(spacing: Spacing.space12) {
-            HStack(spacing: Spacing.space12) {
-                Button {
-                    viewModel.showQuickAdd = true
-                } label: {
-                    Label("Quick add", systemImage: "plus.circle.fill")
-                        .font(Typography.supporting.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, Spacing.space16)
-                        .foregroundStyle(Color.brandInk)
-                        .background(Color.brandPrimary)
-                        .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Quick add meal")
-
-                Button {
-                    viewModel.showFoodSearch = true
-                } label: {
-                    Label("Search", systemImage: "magnifyingglass")
-                        .font(Typography.supporting.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, Spacing.space16)
-                        .foregroundStyle(Color.textPrimary)
-                        .background(Color.surfacePrimary)
-                        .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Search foods")
+            Button {
+                Task { await ScanLaunchGate.open(environment: environment, router: appRouter) }
+            } label: {
+                Label("Scan meal", systemImage: "camera.fill")
+                    .font(Typography.supporting.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Spacing.space16)
+                    .foregroundStyle(Color.brandInk)
+                    .background(Color.brandPrimary)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Scan meal")
+            .accessibilityHint("Opens the camera to photograph a meal")
 
             HStack(spacing: Spacing.space12) {
                 Button {
@@ -651,6 +638,36 @@ private struct TodayContent: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Scan barcode")
+
+                Button {
+                    viewModel.showQuickAdd = true
+                } label: {
+                    Label("Quick add", systemImage: "plus.circle.fill")
+                        .font(Typography.supporting.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.space16)
+                        .foregroundStyle(Color.textPrimary)
+                        .background(Color.surfacePrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Quick add meal")
+            }
+
+            HStack(spacing: Spacing.space12) {
+                Button {
+                    viewModel.showFoodSearch = true
+                } label: {
+                    Label("Search", systemImage: "magnifyingglass")
+                        .font(Typography.supporting.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.space16)
+                        .foregroundStyle(Color.textPrimary)
+                        .background(Color.surfacePrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Search foods")
 
                 Button {
                     viewModel.showLabelScan = true
@@ -847,12 +864,15 @@ private struct TodayContent: View {
             Text("Nothing logged yet.")
                 .font(Typography.sectionHeading)
                 .foregroundStyle(Color.textPrimary)
-            Text("Search the food catalog, quick-add a meal you know, or scan a plate.")
+            Text("Your first meal takes one photo — or search and quick-add if you already know the numbers.")
                 .font(Typography.supporting)
                 .foregroundStyle(Color.textSecondary)
                 .multilineTextAlignment(.center)
             VStack(spacing: Spacing.space12) {
-                PrimaryButton(title: "Search foods") {
+                PrimaryButton(title: "Scan a meal") {
+                    Task { await ScanLaunchGate.open(environment: environment, router: appRouter) }
+                }
+                SecondaryButton(title: "Search foods") {
                     viewModel.showFoodSearch = true
                 }
                 SecondaryButton(title: "Quick add") {
