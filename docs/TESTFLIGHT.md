@@ -1,15 +1,13 @@
 # Next stage: TestFlight handoff
 
-Engineering feature work through **V1.2+ (Phases 0–31)** is on branch tips with green CI. This document is the handoff into **human / App Store ops**.
+Engineering through **Phases 0–45** lives on **`main`** (marketing **1.5.10**, build **45**). Do not open stacked phase PRs — commit/push on `main`. This document is the handoff into **human / App Store ops**.
 
-Current tip marketing version: **1.5.10** (build 45) — on `main` (Phases 0–45 merged).
+## 1. What’s on `main` (historical phase list)
 
-## 1. Merge order (draft PRs → `main`)
+All of the following landed on `main` (including CloudKit CI fixes, restaurant/micronutrient test fixes that existed only as alternate commit SHAs on older branches):
 
-Historical stacked branch suffixes (already merged into `main`):
-
-| Order | PR theme | Branch suffix |
-|------:|----------|---------------|
+| Order | Theme | Historical branch suffix |
+|------:|-------|--------------------------|
 | 1 | Phase 7 Progress | `phase-7` |
 | 2 | Phase 8 Health | `phase-8` |
 | 3 | Phase 9 Paywall | `phase-9` |
@@ -50,7 +48,7 @@ Historical stacked branch suffixes (already merged into `main`):
 | 38 | Phase 44 History meal search | `phase-44-history-search` |
 | 39 | Phase 45 Haptics | `phase-45-haptics` |
 
-After merges, cut the Archive from `main`. Full human checklist: [`docs/APP_STORE_SUBMISSION.md`](APP_STORE_SUBMISSION.md).
+Cut the Archive from `main`. Full human checklist: [`docs/APP_STORE_SUBMISSION.md`](APP_STORE_SUBMISSION.md).
 
 ## 2. Build (engineering)
 

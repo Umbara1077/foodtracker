@@ -27,7 +27,7 @@ Or:
 
 ## Phase status
 
-Engineering through **Phase 45 (haptics)** is on **`main`**. Submit using [`docs/APP_STORE_SUBMISSION.md`](docs/APP_STORE_SUBMISSION.md); handoff notes in [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md).
+Engineering through **Phase 45 (haptics)** is on **`main`** (1.5.10 / 45). Work directly on `main` — no stacked phase branches. Submit using [`docs/APP_STORE_SUBMISSION.md`](docs/APP_STORE_SUBMISSION.md); handoff notes in [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md).
 
 | Band | Phases | Highlights |
 |------|--------|------------|
