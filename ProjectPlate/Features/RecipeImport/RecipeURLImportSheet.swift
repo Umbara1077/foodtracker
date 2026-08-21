@@ -64,7 +64,7 @@ struct RecipeURLImportSheet: View {
                     }
                     if !draft.ingredients.isEmpty {
                         Section("Ingredients (\(draft.ingredients.count))") {
-                            ForEach(draft.ingredients.prefix(12), id: \.self) { line in
+                            ForEach(Array(draft.ingredients.prefix(12).enumerated()), id: \.offset) { _, line in
                                 Text(line)
                                     .font(Typography.caption)
                             }
