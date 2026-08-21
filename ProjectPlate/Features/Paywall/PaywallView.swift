@@ -86,12 +86,12 @@ final class PaywallViewModel {
             entitlement = try await subscriptions.restore()
             if entitlement.isPro {
                 PlateHaptics.play(.purchaseSuccess)
-            }            if entitlement.isPro {
                 analytics.track(.purchaseRestored)
             }
             statusMessage = entitlement.isPro ? "Pro restored." : "No Pro subscription found."
         } catch {
             errorMessage = "Restore failed."
+            PlateHaptics.play(.warning)
         }
     }
 
