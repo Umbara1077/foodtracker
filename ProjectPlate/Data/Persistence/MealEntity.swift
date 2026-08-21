@@ -12,6 +12,9 @@ final class MealEntity {
     var protein: Double
     var carbs: Double
     var fat: Double
+    var fiber: Double?
+    var sugar: Double?
+    var sodiumMg: Double?
     var inputMethodRaw: String
     var healthKitAnchorsJSON: Data?
     var createdAt: Date
@@ -27,6 +30,9 @@ final class MealEntity {
         self.protein = meal.nutrients.protein
         self.carbs = meal.nutrients.carbs
         self.fat = meal.nutrients.fat
+        self.fiber = meal.nutrients.fiber
+        self.sugar = meal.nutrients.sugar
+        self.sodiumMg = meal.nutrients.sodiumMg
         self.inputMethodRaw = meal.inputMethod.rawValue
         self.healthKitAnchorsJSON = try? JSONEncoder().encode(meal.healthKitAnchors)
         self.createdAt = meal.createdAt
@@ -43,6 +49,9 @@ final class MealEntity {
         protein = meal.nutrients.protein
         carbs = meal.nutrients.carbs
         fat = meal.nutrients.fat
+        fiber = meal.nutrients.fiber
+        sugar = meal.nutrients.sugar
+        sodiumMg = meal.nutrients.sodiumMg
         inputMethodRaw = meal.inputMethod.rawValue
         healthKitAnchorsJSON = try? JSONEncoder().encode(meal.healthKitAnchors)
         createdAt = meal.createdAt
@@ -59,7 +68,15 @@ final class MealEntity {
             mealType: MealType(rawValue: mealTypeRaw) ?? .snack,
             title: title,
             notes: notes,
-            nutrients: NutrientSet(calories: calories, protein: protein, carbs: carbs, fat: fat),
+            nutrients: NutrientSet(
+                calories: calories,
+                protein: protein,
+                carbs: carbs,
+                fat: fat,
+                fiber: fiber,
+                sugar: sugar,
+                sodiumMg: sodiumMg
+            ),
             inputMethod: MealInputMethod(rawValue: inputMethodRaw) ?? .quickAdd,
             healthKitAnchors: anchors,
             createdAt: createdAt,

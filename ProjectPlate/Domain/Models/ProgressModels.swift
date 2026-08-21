@@ -99,6 +99,9 @@ struct WeeklyDigest: Sendable, Equatable {
     var mealsLogged: Int
     var averageCalories: Double
     var averageProtein: Double
+    var averageFiber: Double?
+    var averageSugar: Double?
+    var averageSodiumMg: Double?
     var targetCalories: Double
     var targetProtein: Double
     var weightChangeKg: Double?
@@ -111,6 +114,9 @@ struct WeeklyDigest: Sendable, Equatable {
         mealsLogged: 0,
         averageCalories: 0,
         averageProtein: 0,
+        averageFiber: nil,
+        averageSugar: nil,
+        averageSodiumMg: nil,
         targetCalories: 0,
         targetProtein: 0,
         weightChangeKg: nil,
@@ -172,6 +178,9 @@ enum ProgressMath {
         let targetCal = Double(target?.calories ?? 0)
         let targetPro = Double(target?.proteinGrams ?? 0)
         let weightDelta = weightChangeKg(entries: weightEntries)
+        let avgFiber = MicronutrientMath.averagePresent(loggedDays.map(\.totals.nutrients.fiber))
+        let avgSugar = MicronutrientMath.averagePresent(loggedDays.map(\.totals.nutrients.sugar))
+        let avgSodium = MicronutrientMath.averagePresent(loggedDays.map(\.totals.nutrients.sodiumMg))
         return WeeklyDigest(
             weekStart: weekStart,
             weekEnd: weekEnd,
@@ -179,6 +188,9 @@ enum ProgressMath {
             mealsLogged: mealsLogged,
             averageCalories: avgCal,
             averageProtein: avgPro,
+            averageFiber: avgFiber,
+            averageSugar: avgSugar,
+            averageSodiumMg: avgSodium,
             targetCalories: targetCal,
             targetProtein: targetPro,
             weightChangeKg: weightDelta,

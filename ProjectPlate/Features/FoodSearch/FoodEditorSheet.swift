@@ -65,6 +65,15 @@ struct FoodEditorSheet: View {
                     LabeledContent("Protein", value: "\(nutrients.protein) g")
                     LabeledContent("Carbs", value: "\(nutrients.carbs) g")
                     LabeledContent("Fat", value: "\(nutrients.fat) g")
+                    if let fiber = nutrients.fiber {
+                        LabeledContent("Fiber", value: "\(fiber) g")
+                    }
+                    if let sugar = nutrients.sugar {
+                        LabeledContent("Sugar", value: "\(sugar) g")
+                    }
+                    if let sodium = nutrients.sodiumMg {
+                        LabeledContent("Sodium", value: "\(Int(sodium.rounded())) mg")
+                    }
                 }
 
                 Section("Log") {

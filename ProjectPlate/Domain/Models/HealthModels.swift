@@ -5,9 +5,12 @@ struct MealHealthKitAnchors: Codable, Sendable, Equatable {
     var proteinUUID: String?
     var carbsUUID: String?
     var fatUUID: String?
+    var fiberUUID: String?
+    var sugarUUID: String?
+    var sodiumUUID: String?
 
     var allUUIDs: [String] {
-        [energyUUID, proteinUUID, carbsUUID, fatUUID].compactMap { $0 }
+        [energyUUID, proteinUUID, carbsUUID, fatUUID, fiberUUID, sugarUUID, sodiumUUID].compactMap { $0 }
     }
 
     var isEmpty: Bool { allUUIDs.isEmpty }

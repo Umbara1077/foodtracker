@@ -254,6 +254,10 @@ private struct TodayContent: View {
             .padding(Spacing.cardPaddingCompact)
             .background(Color.surfacePrimary)
             .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+
+            if MicronutrientPreference.isEnabled() {
+                micronutrientsCard
+            }
         } else {
             ContentUnavailableView(
                 "No target yet",
@@ -261,6 +265,45 @@ private struct TodayContent: View {
                 description: Text("Finish onboarding to set your daily calories and macros.")
             )
         }
+    }
+
+    private var micronutrientsCard: some View {
+        let goals = MicronutrientGoals.default
+        let nutrients = viewModel.totals.nutrients
+        return VStack(alignment: .leading, spacing: Spacing.space12) {
+            Text("Micronutrients")
+                .font(Typography.caption.weight(.semibold))
+                .foregroundStyle(Color.textSecondary)
+            MacroProgressView(
+                label: "Fiber",
+                current: nutrients.fiber ?? 0,
+                goal: goals.fiberGrams,
+                unit: "g",
+                tint: .brandPrimary
+            )
+            MacroProgressView(
+                label: "Sugar",
+                current: nutrients.sugar ?? 0,
+                goal: goals.sugarGrams,
+                unit: "g",
+                tint: .macroCarbs
+            )
+            MacroProgressView(
+                label: "Sodium",
+                current: nutrients.sodiumMg ?? 0,
+                goal: goals.sodiumMg,
+                unit: "mg",
+                tint: .macroFat
+            )
+            Text("Soft daily targets — not medical advice. Values appear when foods include them.")
+                .font(Typography.caption)
+                .foregroundStyle(Color.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(Spacing.cardPaddingCompact)
+        .background(Color.surfacePrimary)
+        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        .accessibilityElement(children: .contain)
     }
 
     @ViewBuilder

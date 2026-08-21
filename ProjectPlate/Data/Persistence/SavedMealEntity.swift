@@ -11,6 +11,9 @@ final class SavedMealEntity {
     var protein: Double
     var carbs: Double
     var fat: Double
+    var fiber: Double?
+    var sugar: Double?
+    var sodiumMg: Double?
     var useCount: Int
     var lastUsedAt: Date
     var createdAt: Date
@@ -24,6 +27,9 @@ final class SavedMealEntity {
         self.protein = template.nutrients.protein
         self.carbs = template.nutrients.carbs
         self.fat = template.nutrients.fat
+        self.fiber = template.nutrients.fiber
+        self.sugar = template.nutrients.sugar
+        self.sodiumMg = template.nutrients.sodiumMg
         self.useCount = template.useCount
         self.lastUsedAt = template.lastUsedAt
         self.createdAt = template.createdAt
@@ -38,6 +44,9 @@ final class SavedMealEntity {
         protein = template.nutrients.protein
         carbs = template.nutrients.carbs
         fat = template.nutrients.fat
+        fiber = template.nutrients.fiber
+        sugar = template.nutrients.sugar
+        sodiumMg = template.nutrients.sodiumMg
         useCount = template.useCount
         lastUsedAt = template.lastUsedAt
         createdAt = template.createdAt
@@ -49,7 +58,15 @@ final class SavedMealEntity {
             fingerprint: fingerprint,
             title: title,
             mealType: MealType(rawValue: mealTypeRaw) ?? .snack,
-            nutrients: NutrientSet(calories: calories, protein: protein, carbs: carbs, fat: fat),
+            nutrients: NutrientSet(
+                calories: calories,
+                protein: protein,
+                carbs: carbs,
+                fat: fat,
+                fiber: fiber,
+                sugar: sugar,
+                sodiumMg: sodiumMg
+            ),
             useCount: useCount,
             lastUsedAt: lastUsedAt,
             createdAt: createdAt

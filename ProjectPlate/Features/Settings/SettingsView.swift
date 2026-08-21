@@ -21,6 +21,7 @@ struct SettingsView: View {
     @AppStorage(CloudSyncPreference.enabledKey) private var iCloudSyncEnabled = false
     @AppStorage(AdaptiveGoalPreference.enabledKey) private var adaptiveGoalsEnabled = true
     @AppStorage(CoachInsightPreference.enabledKey) private var coachInsightsEnabled = true
+    @AppStorage(MicronutrientPreference.enabledKey) private var micronutrientsEnabled = true
     @State private var consentVersionLabel = "Not accepted"
     @State private var privacyMessage: String?
     @State private var isPrivacyWorking = false
@@ -143,6 +144,13 @@ struct SettingsView: View {
                             CoachInsightPreference.setEnabled(enabled)
                         }
                     Text("Supportive local tips from your recent logging. Not medical advice.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
+                    Toggle("Show fiber, sugar & sodium", isOn: $micronutrientsEnabled)
+                        .onChange(of: micronutrientsEnabled) { _, enabled in
+                            MicronutrientPreference.setEnabled(enabled)
+                        }
+                    Text("Soft daily targets on Today and weekly averages on Progress. Not medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                 }

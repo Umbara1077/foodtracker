@@ -299,6 +299,41 @@ private struct ProgressContent: View {
                     tint: .macroProtein
                 )
             }
+
+            if MicronutrientPreference.isEnabled(),
+               digest.averageFiber != nil || digest.averageSugar != nil || digest.averageSodiumMg != nil {
+                let goals = MicronutrientGoals.default
+                Text("Avg micronutrients")
+                    .font(Typography.caption.weight(.semibold))
+                    .foregroundStyle(Color.textSecondary)
+                if let fiber = digest.averageFiber {
+                    MacroProgressView(
+                        label: "Fiber",
+                        current: fiber,
+                        goal: goals.fiberGrams,
+                        unit: "g",
+                        tint: .brandPrimary
+                    )
+                }
+                if let sugar = digest.averageSugar {
+                    MacroProgressView(
+                        label: "Sugar",
+                        current: sugar,
+                        goal: goals.sugarGrams,
+                        unit: "g",
+                        tint: .macroCarbs
+                    )
+                }
+                if let sodium = digest.averageSodiumMg {
+                    MacroProgressView(
+                        label: "Sodium",
+                        current: sodium,
+                        goal: goals.sodiumMg,
+                        unit: "mg",
+                        tint: .macroFat
+                    )
+                }
+            }
         }
         .padding(Spacing.cardPaddingCompact)
         .background(Color.surfacePrimary)

@@ -17,6 +17,9 @@ final class HealthKitSyncClient: HealthSyncClient, @unchecked Sendable {
             HKQuantityType(.dietaryProtein),
             HKQuantityType(.dietaryCarbohydrates),
             HKQuantityType(.dietaryFatTotal),
+            HKQuantityType(.dietaryFiber),
+            HKQuantityType(.dietarySugar),
+            HKQuantityType(.dietarySodium),
             HKQuantityType(.bodyMass),
         ]
     }
@@ -87,6 +90,42 @@ final class HealthKitSyncClient: HealthSyncClient, @unchecked Sendable {
         try await store.save(fat)
         anchors.fatUUID = fat.uuid.uuidString
 
+        if let fiber = meal.nutrients.fiber, fiber > 0 {
+            let sample = HKQuantitySample(
+                type: HKQuantityType(.dietaryFiber),
+                quantity: HKQuantity(unit: .gram(), doubleValue: fiber),
+                start: date,
+                end: date,
+                metadata: metadata(for: meal)
+            )
+            try await store.save(sample)
+            anchors.fiberUUID = sample.uuid.uuidString
+        }
+
+        if let sugar = meal.nutrients.sugar, sugar > 0 {
+            let sample = HKQuantitySample(
+                type: HKQuantityType(.dietarySugar),
+                quantity: HKQuantity(unit: .gram(), doubleValue: sugar),
+                start: date,
+                end: date,
+                metadata: metadata(for: meal)
+            )
+            try await store.save(sample)
+            anchors.sugarUUID = sample.uuid.uuidString
+        }
+
+        if let sodium = meal.nutrients.sodiumMg, sodium > 0 {
+            let sample = HKQuantitySample(
+                type: HKQuantityType(.dietarySodium),
+                quantity: HKQuantity(unit: .gramUnit(with: .milli), doubleValue: sodium),
+                start: date,
+                end: date,
+                metadata: metadata(for: meal)
+            )
+            try await store.save(sample)
+            anchors.sodiumUUID = sample.uuid.uuidString
+        }
+
         return anchors
     }
 
@@ -97,6 +136,9 @@ final class HealthKitSyncClient: HealthSyncClient, @unchecked Sendable {
             .dietaryProtein,
             .dietaryCarbohydrates,
             .dietaryFatTotal,
+            .dietaryFiber,
+            .dietarySugar,
+            .dietarySodium,
         ]
         for uuidString in anchors.allUUIDs {
             guard let uuid = UUID(uuidString: uuidString) else { continue }
