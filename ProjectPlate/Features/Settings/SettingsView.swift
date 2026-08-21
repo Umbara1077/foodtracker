@@ -22,6 +22,7 @@ struct SettingsView: View {
     @AppStorage(AdaptiveGoalPreference.enabledKey) private var adaptiveGoalsEnabled = true
     @AppStorage(CoachInsightPreference.enabledKey) private var coachInsightsEnabled = true
     @AppStorage(ChallengePreference.enabledKey) private var challengesEnabled = true
+    @AppStorage(MealPlanPreference.enabledKey) private var mealPlanEnabled = true
     @AppStorage(MicronutrientPreference.enabledKey) private var micronutrientsEnabled = true
     @State private var consentVersionLabel = "Not accepted"
     @State private var privacyMessage: String?
@@ -152,6 +153,13 @@ struct SettingsView: View {
                             ChallengePreference.setEnabled(enabled)
                         }
                     Text("Optional tracking goals on Progress. Pausing never costs a streak.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
+                    Toggle("Show meal planning", isOn: $mealPlanEnabled)
+                        .onChange(of: mealPlanEnabled) { _, enabled in
+                            MealPlanPreference.setEnabled(enabled)
+                        }
+                    Text("Plan upcoming meals on Today. Local only — not a grocery or shopping list.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                     Toggle("Show fiber, sugar & sodium", isOn: $micronutrientsEnabled)

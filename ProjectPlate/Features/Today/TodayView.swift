@@ -7,12 +7,14 @@ final class TodayViewModel {
     private let targetRepository: any TargetRepository
     private let diary: DiaryService
     private let savedMeals: any SavedMealRepository
+    private let mealPlan: any MealPlanRepository
     private let analytics: any AnalyticsClient
 
     var day: Date = .now
     var target: NutritionTargetSnapshot?
     var meals: [MealRecord] = []
     var frequentMeals: [SavedMealTemplate] = []
+    var plannedMeals: [PlannedMeal] = []
     var streak: TrackingStreak = .zero
     var totals: DayNutritionTotals = .zero
     var isLoading = true
@@ -23,18 +25,21 @@ final class TodayViewModel {
     var showLabelScan = false
     var showRecipeImport = false
     var showRecipeBuilder = false
+    var showMealPlan = false
 
     init(
         mealRepository: any MealRepository,
         targetRepository: any TargetRepository,
         diary: DiaryService,
         savedMeals: any SavedMealRepository,
+        mealPlan: any MealPlanRepository,
         analytics: any AnalyticsClient
     ) {
         self.mealRepository = mealRepository
         self.targetRepository = targetRepository
         self.diary = diary
         self.savedMeals = savedMeals
+        self.mealPlan = mealPlan
         self.analytics = analytics
     }
 
@@ -56,6 +61,7 @@ final class TodayViewModel {
             async let mealsTask = mealRepository.meals(on: day, calendar: calendar)
             async let totalsTask = mealRepository.totals(on: day, calendar: calendar)
             async let frequentTask = savedMeals.frequent(limit: 5)
+            async let planTask = mealPlan.plans(on: day, calendar: calendar)
             async let streakTask = mealRepository.dailyTotals(
                 from: streakStart,
                 to: calendar.startOfDay(for: day),
@@ -65,6 +71,7 @@ final class TodayViewModel {
             meals = try await mealsTask
             totals = try await totalsTask
             frequentMeals = try await frequentTask
+            plannedMeals = MealPlanPreference.isEnabled() ? try await planTask : []
             streak = ProgressMath.trackingStreak(
                 dailyTotals: try await streakTask,
                 now: day,
@@ -115,6 +122,15 @@ final class TodayViewModel {
             errorMessage = "Could not log meal."
         }
     }
+
+    func deletePlan(_ plan: PlannedMeal) async {
+        do {
+            try await mealPlan.delete(id: plan.id)
+            await load()
+        } catch {
+            errorMessage = "Could not remove plan."
+        }
+    }
 }
 
 struct TodayView: View {
@@ -145,6 +161,7 @@ struct TodayView: View {
                     targetRepository: environment.targetRepository,
                     diary: environment.diary,
                     savedMeals: environment.savedMeals,
+                    mealPlan: environment.mealPlan,
                     analytics: environment.analytics
                 )
                 viewModel = vm
@@ -224,6 +241,11 @@ private struct TodayContent: View {
                 Task { await viewModel.load() }
             }
         }
+        .sheet(isPresented: $viewModel.showMealPlan) {
+            MealPlanSheet(initialDay: viewModel.day) {
+                Task { await viewModel.load() }
+            }
+        }
     }
 
     private var compactLayout: some View {
@@ -231,6 +253,7 @@ private struct TodayContent: View {
             hero
             streakChip
             quickActions
+            plannedSection
             frequentSection
             mealsSection
         }
@@ -242,6 +265,7 @@ private struct TodayContent: View {
                 hero
                 streakChip
                 quickActions
+                plannedSection
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -456,6 +480,62 @@ private struct TodayContent: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Build a recipe from ingredients")
+            }
+
+            if MealPlanPreference.isEnabled() {
+                Button {
+                    viewModel.showMealPlan = true
+                } label: {
+                    Label("Plan a meal", systemImage: "calendar.badge.plus")
+                        .font(Typography.supporting.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.space16)
+                        .foregroundStyle(Color.textPrimary)
+                        .background(Color.surfacePrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Plan a meal for today or later")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var plannedSection: some View {
+        if MealPlanPreference.isEnabled() {
+            VStack(alignment: .leading, spacing: Spacing.space12) {
+                Text("Planned")
+                    .font(Typography.sectionHeading)
+                    .foregroundStyle(Color.textPrimary)
+                if viewModel.plannedMeals.isEmpty {
+                    Text("Sketch tonight’s dinner or tomorrow’s lunch — planning stays local and optional.")
+                        .font(Typography.supporting)
+                        .foregroundStyle(Color.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    ForEach(viewModel.plannedMeals) { plan in
+                        HStack(spacing: Spacing.space12) {
+                            VStack(alignment: .leading, spacing: Spacing.space4) {
+                                Text(plan.title)
+                                    .font(Typography.supporting.weight(.semibold))
+                                    .foregroundStyle(Color.textPrimary)
+                                Text(plan.mealType.title)
+                                    .font(Typography.caption)
+                                    .foregroundStyle(Color.textSecondary)
+                            }
+                            Spacer(minLength: 0)
+                            Button("Remove") {
+                                Task { await viewModel.deletePlan(plan) }
+                            }
+                            .font(Typography.caption.weight(.semibold))
+                            .foregroundStyle(Color.textSecondary)
+                            .accessibilityLabel("Remove planned \(plan.title)")
+                        }
+                        .padding(Spacing.cardPaddingCompact)
+                        .background(Color.surfaceSecondary.opacity(0.7))
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+                    }
+                }
             }
         }
     }

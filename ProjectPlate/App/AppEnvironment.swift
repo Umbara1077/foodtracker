@@ -15,6 +15,7 @@ struct AppEnvironment: Sendable {
     var dataMaintenance: DataMaintenanceService
     var correctionStore: any CorrectionFeedbackStore
     var savedMeals: any SavedMealRepository
+    var mealPlan: any MealPlanRepository
     var diarySync: DiarySyncCoordinator
     var subscriptions: any SubscriptionServicing
     var aiScanQuota: LocalAIScanQuotaStore
@@ -35,6 +36,7 @@ struct AppEnvironment: Sendable {
         let targets = SwiftDataTargetRepository(modelContainer: modelContainer)
         let health: any HealthSyncClient = HealthKitSyncClient()
         let savedMeals = SwiftDataSavedMealRepository(modelContainer: modelContainer)
+        let mealPlan = UserDefaultsMealPlanRepository()
         let diary = DiaryService(
             mealRepository: meals,
             weightRepository: weights,
@@ -72,6 +74,7 @@ struct AppEnvironment: Sendable {
             ),
             correctionStore: LocalCorrectionFeedbackStore(),
             savedMeals: savedMeals,
+            mealPlan: mealPlan,
             diarySync: diarySync,
             subscriptions: StoreKitPurchaseManager(),
             aiScanQuota: LocalAIScanQuotaStore(dailyLimit: 3),
@@ -172,6 +175,13 @@ struct AppEnvironment: Sendable {
                 defaults: UserDefaults(suiteName: "plate.preview.corrections") ?? .standard
             ),
             savedMeals: savedMeals,
+            mealPlan: InMemoryMealPlanRepository(items: [
+                PlannedMeal(
+                    dayStart: today,
+                    mealType: .dinner,
+                    title: "Salmon + greens"
+                ),
+            ]),
             diarySync: diarySync,
             subscriptions: MockPurchaseManager(),
             aiScanQuota: LocalAIScanQuotaStore(dailyLimit: 3),
