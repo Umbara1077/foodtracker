@@ -76,6 +76,10 @@ struct PrivacyPolicyView: View {
                         "If you enable iCloud diary sync, meal and weight records (not meal photos) sync through your private iCloud database so other iPhones signed into the same Apple Account can restore them. You can turn this off anytime in Settings."
                     )
                     policySection(
+                        "Recipe URL import",
+                        "If you paste a recipe link, Project Plate downloads that page on your device to read ingredients and estimate nutrition. We do not permanently store the page HTML on our servers."
+                    )
+                    policySection(
                         "Apple Health",
                         "If you enable Health sync, nutrition and weight you log can be written to Apple Health, and weight can be read for Progress. You can revoke access in iOS Settings."
                     )
