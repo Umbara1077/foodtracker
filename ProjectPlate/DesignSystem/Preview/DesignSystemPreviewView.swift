@@ -21,6 +21,10 @@ struct DesignSystemPreviewView: View {
                         MacroProgressView(label: "Protein", current: 82, goal: 164, unit: "g", tint: .macroProtein)
                         MacroProgressView(label: "Carbs", current: 109, goal: 245, unit: "g", tint: .macroCarbs)
                         MacroProgressView(label: "Fat", current: 41, goal: 73, unit: "g", tint: .macroFat)
+                        MacroProgressView(label: "Fiber", current: 18, goal: 28, unit: "g", tint: .macroFiber)
+                        Text("Error sample")
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.statusError)
                     }
                     section("Confidence") {
                         HStack {

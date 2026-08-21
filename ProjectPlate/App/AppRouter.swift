@@ -1,12 +1,17 @@
 import Foundation
 import Observation
+import SwiftUI
 
-/// Lightweight navigation coordinator for root-level presentations (scanner, future sheets).
+/// Lightweight navigation coordinator for root-level presentations (scanner, onboarding).
 @Observable
 @MainActor
 final class AppRouter {
     var selectedTab: RootTab = .today
     var isScannerPresented = false
+    var isPaywallPresented = false
+    var isConsentPresented = false
+    var needsOnboarding = true
+    var isBootstrapping = true
 
     func openScanner() {
         isScannerPresented = true
@@ -14,6 +19,26 @@ final class AppRouter {
 
     func dismissScanner() {
         isScannerPresented = false
+    }
+
+    func openPaywall() {
+        isPaywallPresented = true
+    }
+
+    func dismissPaywall() {
+        isPaywallPresented = false
+    }
+
+    func openConsent() {
+        isConsentPresented = true
+    }
+
+    func dismissConsent() {
+        isConsentPresented = false
+    }
+
+    func completeOnboarding() {
+        needsOnboarding = false
     }
 }
 
@@ -41,5 +66,16 @@ enum RootTab: Hashable, CaseIterable, Identifiable {
         case .progress: "chart.line.uptrend.xyaxis"
         case .settings: "gearshape"
         }
+    }
+}
+
+private enum AppRouterKey: EnvironmentKey {
+    @MainActor static let defaultValue = AppRouter()
+}
+
+extension EnvironmentValues {
+    var appRouter: AppRouter {
+        get { self[AppRouterKey.self] }
+        set { self[AppRouterKey.self] = newValue }
     }
 }

@@ -54,10 +54,10 @@ docs/PRODUCT_SPEC.md
 4. Model IDs (`gpt-5.6-luna`, etc.) stay behind remote config in later phases; not present in Phase 0.
 5. Working title remains **Project Plate** until trademark/App Store clearance (do not ship under that name without clearance).
 
-## Phase 0 acceptance (verify on Mac)
+## Phase 1 acceptance (verify on Mac / CI)
 
-- [ ] `xcodegen generate && xcodebuild -scheme ProjectPlate -destination 'platform=iOS Simulator,name=iPhone 16' test`
-- [ ] Tabs navigate: Today / History / Progress / Settings
-- [ ] Central Scan presents full-screen placeholder and dismisses
-- [ ] Design system preview renders light + dark
-- [ ] Smoke unit test passes
+- [x] Target calculator unit tests (BMR, TDEE, pace factors, macros, units)
+- [x] Onboarding flow persists profile + target snapshot
+- [x] Fresh install shows onboarding
+- [x] Today hero uses saved calorie/macro targets
+- [ ] Manual UI pass through onboarding on Simulator

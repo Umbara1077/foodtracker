@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct MetricCard: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let title: String
     let value: String
     let subtitle: String?
@@ -25,8 +26,9 @@ struct MetricCard: View {
         .padding(Spacing.cardPaddingLarge)
         .background(Color.surfacePrimary)
         .clipShape(RoundedRectangle(cornerRadius: Radius.heroCard, style: .continuous))
-        .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
+        .shadow(color: .black.opacity(reduceMotion ? 0.04 : 0.08), radius: reduceMotion ? 4 : 12, y: reduceMotion ? 1 : 4)
         .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title), \(value)\(subtitle.map { ", \($0)" } ?? "")")
     }
 }
 
