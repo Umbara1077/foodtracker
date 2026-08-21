@@ -400,6 +400,43 @@ private struct ProgressContent: View {
     }
 
     @ViewBuilder
+    private var householdCard: some View {
+        if let household = viewModel.household, household.isActive {
+            VStack(alignment: .leading, spacing: Spacing.space16) {
+                Text(household.name)
+                    .font(Typography.sectionHeading)
+                    .foregroundStyle(Color.textPrimary)
+                Text("Family plan · invite \(household.inviteCode). Local roster only for now.")
+                    .font(Typography.caption)
+                    .foregroundStyle(Color.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                ForEach(HouseholdMath.sortedMembers(household.members)) { member in
+                    HStack {
+                        Text(member.displayName)
+                            .font(Typography.supporting.weight(.semibold))
+                            .foregroundStyle(Color.textPrimary)
+                        Spacer()
+                        if let goal = member.calorieGoal {
+                            Text("\(goal) cal")
+                                .font(Typography.macroValue)
+                                .foregroundStyle(Color.textPrimary)
+                        } else {
+                            Text(member.role.title)
+                                .font(Typography.caption)
+                                .foregroundStyle(Color.textSecondary)
+                        }
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(member.displayName), \(member.role.title)")
+                }
+            }
+            .padding(Spacing.cardPaddingCompact)
+            .background(Color.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        }
+    }
+
+    @ViewBuilder
     private var challengesCard: some View {
         if !viewModel.weeklyChallenges.isEmpty {
             VStack(alignment: .leading, spacing: Spacing.space16) {
