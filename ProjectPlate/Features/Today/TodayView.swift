@@ -21,6 +21,7 @@ final class TodayViewModel {
     var showFoodSearch = false
     var showBarcode = false
     var showLabelScan = false
+    var showRecipeImport = false
 
     init(
         mealRepository: any MealRepository,
@@ -205,6 +206,11 @@ private struct TodayContent: View {
                 Task { await viewModel.load() }
             }
         }
+        .sheet(isPresented: $viewModel.showRecipeImport) {
+            RecipeURLImportSheet {
+                Task { await viewModel.load() }
+            }
+        }
     }
 
     @ViewBuilder
@@ -338,6 +344,20 @@ private struct TodayContent: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Scan nutrition label")
             }
+
+            Button {
+                viewModel.showRecipeImport = true
+            } label: {
+                Label("Recipe URL", systemImage: "link")
+                    .font(Typography.supporting.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Spacing.space16)
+                    .foregroundStyle(Color.textPrimary)
+                    .background(Color.surfacePrimary)
+                    .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Import recipe from URL")
         }
     }
 
