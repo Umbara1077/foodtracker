@@ -26,11 +26,16 @@ struct CloudSyncTests {
 
     @Test("Meal sync record round-trips payload")
     func mealCodec() throws {
+        let stamp = Date(timeIntervalSince1970: 1_720_000_000)
         let meal = MealRecord(
+            id: UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")!,
+            eatenAt: stamp,
             mealType: .lunch,
             title: "Bowl",
             nutrients: NutrientSet(calories: 500, protein: 40, carbs: 45, fat: 12),
-            inputMethod: .quickAdd
+            inputMethod: .quickAdd,
+            createdAt: stamp,
+            updatedAt: stamp
         )
         let record = try SyncRecordCodec.makeMeal(meal)
         #expect(record.kind == .meal)
