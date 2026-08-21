@@ -17,6 +17,7 @@ final class ProgressViewModel {
     var streak: TrackingStreak = .zero
     var adaptiveSuggestion: AdaptiveGoalSuggestion?
     var coachInsights: [CoachInsight] = []
+    var weeklyChallenges: [WeeklyChallenge] = []
     var unitSystem: UnitSystem = .metric
     var isLoading = true
     var errorMessage: String?
@@ -69,9 +70,10 @@ final class ProgressViewModel {
             goalType = profile?.goalType ?? .maintainWeight
             let target = try await targetTask
             let daily = try await dailyTask
+            let weekMeals = try await weekMealsTask
             consistency = ProgressMath.consistency(dailyTotals: daily, target: target)
             weeklyDigest = ProgressMath.weeklyDigest(
-                dailyTotals: try await weekMealsTask,
+                dailyTotals: weekMeals,
                 weightEntries: try await weekWeightsTask,
                 target: target,
                 weekStart: weekStart,
@@ -97,6 +99,15 @@ final class ProgressViewModel {
                 )
             } else {
                 coachInsights = []
+            }
+            if ChallengePreference.isEnabled() {
+                weeklyChallenges = ChallengeEngine.challenges(
+                    digest: weeklyDigest,
+                    dailyTotals: weekMeals,
+                    target: target
+                )
+            } else {
+                weeklyChallenges = []
             }
         } catch {
             errorMessage = "Could not load progress."
@@ -216,6 +227,7 @@ private struct ProgressContent: View {
                     ProgressView().frame(maxWidth: .infinity)
                 } else {
                     weeklyDigestCard
+                    challengesCard
                     coachInsightsCard
                     streakCard
                     adaptiveGoalCard
@@ -340,6 +352,56 @@ private struct ProgressContent: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Weekly digest. \(digest.highlight)")
+    }
+
+    @ViewBuilder
+    private var challengesCard: some View {
+        if !viewModel.weeklyChallenges.isEmpty {
+            VStack(alignment: .leading, spacing: Spacing.space16) {
+                Text("This week’s challenges")
+                    .font(Typography.sectionHeading)
+                    .foregroundStyle(Color.textPrimary)
+                Text("Optional goals — skip anytime. No streaks are lost for pausing.")
+                    .font(Typography.caption)
+                    .foregroundStyle(Color.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                ForEach(viewModel.weeklyChallenges) { challenge in
+                    VStack(alignment: .leading, spacing: Spacing.space8) {
+                        HStack {
+                            Text(challenge.title)
+                                .font(Typography.supporting.weight(.semibold))
+                                .foregroundStyle(Color.textPrimary)
+                            Spacer()
+                            Text("\(challenge.current)/\(challenge.goal)")
+                                .font(Typography.macroValue)
+                                .foregroundStyle(Color.textPrimary)
+                        }
+                        Text(challenge.detail)
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                Capsule().fill(Color.surfaceSecondary)
+                                Capsule()
+                                    .fill(challenge.isComplete ? Color.brandPrimary : Color.macroProtein)
+                                    .frame(width: geo.size.width * challenge.progressFraction)
+                            }
+                        }
+                        .frame(height: 6)
+                        .accessibilityHidden(true)
+                        Text(challenge.statusLine)
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(challenge.title), \(challenge.current) of \(challenge.goal). \(challenge.statusLine)")
+                }
+            }
+            .padding(Spacing.cardPaddingCompact)
+            .background(Color.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        }
     }
 
     @ViewBuilder
