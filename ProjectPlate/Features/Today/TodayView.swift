@@ -175,6 +175,7 @@ private struct TodayContent: View {
     @Bindable var viewModel: TodayViewModel
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var correctionMeal: MealRecord?
+    @State private var editingMeal: MealRecord?
 
     var body: some View {
         GeometryReader { geo in
@@ -209,6 +210,11 @@ private struct TodayContent: View {
                 mealTitle: meal.title,
                 estimatedCalories: meal.nutrients.calories
             )
+        }
+        .sheet(item: $editingMeal) { meal in
+            MealDetailEditorView(meal: meal) {
+                Task { await viewModel.load() }
+            }
         }
         .sheet(isPresented: $viewModel.showQuickAdd) {
             QuickAddSheet {
@@ -597,18 +603,26 @@ private struct TodayContent: View {
                 emptyState
             } else {
                 ForEach(viewModel.meals) { meal in
-                    MealRowView(meal: meal)
-                        .contextMenu {
-                            Button("Send correction") {
-                                correctionMeal = meal
-                            }
-                            Button("Log again") {
-                                Task { await viewModel.duplicateMeal(meal) }
-                            }
-                            Button("Delete", role: .destructive) {
-                                Task { await viewModel.deleteMeal(meal) }
-                            }
+                    Button {
+                        editingMeal = meal
+                    } label: {
+                        MealRowView(meal: meal)
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        Button("Edit") {
+                            editingMeal = meal
                         }
+                        Button("Send correction") {
+                            correctionMeal = meal
+                        }
+                        Button("Log again") {
+                            Task { await viewModel.duplicateMeal(meal) }
+                        }
+                        Button("Delete", role: .destructive) {
+                            Task { await viewModel.deleteMeal(meal) }
+                        }
+                    }
                 }
             }
         }

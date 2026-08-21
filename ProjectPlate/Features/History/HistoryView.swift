@@ -135,6 +135,7 @@ struct HistoryView: View {
 private struct HistoryContent: View {
     @Bindable var viewModel: HistoryViewModel
     @State private var correctionMeal: MealRecord?
+    @State private var editingMeal: MealRecord?
 
     var body: some View {
         VStack(spacing: Spacing.space16) {
@@ -170,35 +171,47 @@ private struct HistoryContent: View {
                     } else {
                         Section("Meals") {
                             ForEach(viewModel.meals) { meal in
-                                MealRowView(meal: meal)
-                                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-                                    .listRowBackground(Color.clear)
-                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                        Button("Delete", role: .destructive) {
-                                            Task { await viewModel.deleteMeal(meal) }
-                                        }
+                                Button {
+                                    editingMeal = meal
+                                } label: {
+                                    MealRowView(meal: meal)
+                                }
+                                .buttonStyle(.plain)
+                                .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                                .listRowBackground(Color.clear)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button("Delete", role: .destructive) {
+                                        Task { await viewModel.deleteMeal(meal) }
                                     }
-                                    .swipeActions(edge: .leading) {
-                                        Button("Correct") {
-                                            correctionMeal = meal
-                                        }
-                                        .tint(Color.brandInk)
-                                        Button("To today") {
-                                            Task { await viewModel.duplicateToToday(meal) }
-                                        }
-                                        .tint(Color.brandPrimary)
+                                }
+                                .swipeActions(edge: .leading) {
+                                    Button("Edit") {
+                                        editingMeal = meal
                                     }
-                                    .contextMenu {
-                                        Button("Send correction") {
-                                            correctionMeal = meal
-                                        }
-                                        Button("Log to today") {
-                                            Task { await viewModel.duplicateToToday(meal) }
-                                        }
-                                        Button("Delete", role: .destructive) {
-                                            Task { await viewModel.deleteMeal(meal) }
-                                        }
+                                    .tint(Color.brandPrimary)
+                                    Button("Correct") {
+                                        correctionMeal = meal
                                     }
+                                    .tint(Color.brandInk)
+                                    Button("To today") {
+                                        Task { await viewModel.duplicateToToday(meal) }
+                                    }
+                                    .tint(Color.brandPrimary)
+                                }
+                                .contextMenu {
+                                    Button("Edit") {
+                                        editingMeal = meal
+                                    }
+                                    Button("Send correction") {
+                                        correctionMeal = meal
+                                    }
+                                    Button("Log to today") {
+                                        Task { await viewModel.duplicateToToday(meal) }
+                                    }
+                                    Button("Delete", role: .destructive) {
+                                        Task { await viewModel.deleteMeal(meal) }
+                                    }
+                                }
                             }
                         }
                     }
@@ -217,6 +230,11 @@ private struct HistoryContent: View {
                 mealTitle: meal.title,
                 estimatedCalories: meal.nutrients.calories
             )
+        }
+        .sheet(item: $editingMeal) { meal in
+            MealDetailEditorView(meal: meal) {
+                Task { await viewModel.load() }
+            }
         }
         .sheet(isPresented: $viewModel.showQuickAdd) {
             QuickAddSheet {
