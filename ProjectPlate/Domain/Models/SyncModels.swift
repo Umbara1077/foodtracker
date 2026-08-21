@@ -80,13 +80,14 @@ enum SyncMergePolicy {
 enum SyncRecordCodec {
     private static let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
+        // Whole seconds — ISO8601 default drops fractional seconds and breaks Date Equatable round-trips.
+        encoder.dateEncodingStrategy = .secondsSince1970
         return encoder
     }()
 
     private static let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        decoder.dateDecodingStrategy = .secondsSince1970
         return decoder
     }()
 
