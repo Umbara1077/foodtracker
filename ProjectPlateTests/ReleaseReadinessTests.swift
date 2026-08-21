@@ -37,6 +37,6 @@ struct ReleaseReadinessTests {
 
     @Test("AppVersion display formats marketing and build")
     func appVersionDisplay() {
-        #expect(AppVersion.display(marketing: "1.5.5", build: "40") == "1.5.5 (40)")
+        #expect(AppVersion.display(marketing: "1.5.6", build: "41") == "1.5.6 (41)")
     }
 }

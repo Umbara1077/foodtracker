@@ -27,7 +27,7 @@ Or:
 
 ## Phase status
 
-Engineering through **Phase 40 (share day summary)** is implemented on stacked `cursor/project-plate-phase-*-fc9b` branches (merge order in [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md)). Submit using [`docs/APP_STORE_SUBMISSION.md`](docs/APP_STORE_SUBMISSION.md).
+Engineering through **Phase 41 (Today date picker)** is implemented on stacked `cursor/project-plate-phase-*-fc9b` branches (merge order in [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md)). Submit using [`docs/APP_STORE_SUBMISSION.md`](docs/APP_STORE_SUBMISSION.md).
 
 | Band | Phases | Highlights |
 |------|--------|------------|
@@ -36,7 +36,7 @@ Engineering through **Phase 40 (share day summary)** is implemented on stacked `
 | V1.1 | 12–20 | Favorites, scan retry, digest, widget, streak, voice, label OCR, Live Activity, iCloud sync |
 | V1.2+ | 21–31 | Restaurant matching, adaptive goals, recipes, coach, micros, challenges, iPad, meal plan, Watch, family scaffold |
 | Ops | 32–34 | Legal URL overrides, 3.1.2 paywall, Privacy Manifest, consent gate, App Store checklist |
-| Power / retention | 35–40 | Custom gateway, reminders, CSV, analytics, target/meal editors, copy day, share day |
+| Power / retention | 35–41 | Gateway, reminders, CSV, analytics, editors, copy/share day, Today date picker |
 
 ## Cloud AI backend
 

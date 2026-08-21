@@ -28,6 +28,7 @@ final class TodayViewModel {
     var showMealPlan = false
     var previousDayMealCount = 0
     var copyDayMessage: String?
+    var showDayPicker = false
 
     init(
         mealRepository: any MealRepository,
@@ -54,10 +55,19 @@ final class TodayViewModel {
         remainingCalories < 0
     }
 
-    func load(calendar: Calendar = .current) async {
+    var isViewingToday: Bool {
+        TodayDayNavigation.isViewingToday(day)
+    }
+
+    var navigationTitle: String {
+        TodayDayNavigation.title(for: day)
+    }
+
+    func load(calendar: Calendar = .current, now: Date = .now) async {
         isLoading = true
         errorMessage = nil
-        let streakStart = calendar.date(byAdding: .day, value: -120, to: calendar.startOfDay(for: day)) ?? day
+        let streakAnchor = calendar.startOfDay(for: now)
+        let streakStart = calendar.date(byAdding: .day, value: -120, to: streakAnchor) ?? streakAnchor
         do {
             async let targetTask = targetRepository.currentTarget(on: day)
             async let mealsTask = mealRepository.meals(on: day, calendar: calendar)
@@ -66,7 +76,7 @@ final class TodayViewModel {
             async let planTask = mealPlan.plans(on: day, calendar: calendar)
             async let streakTask = mealRepository.dailyTotals(
                 from: streakStart,
-                to: calendar.startOfDay(for: day),
+                to: streakAnchor,
                 calendar: calendar
             )
             target = try await targetTask
@@ -76,7 +86,7 @@ final class TodayViewModel {
             plannedMeals = MealPlanPreference.isEnabled() ? try await planTask : []
             streak = ProgressMath.trackingStreak(
                 dailyTotals: try await streakTask,
-                now: day,
+                now: now,
                 calendar: calendar
             )
             if let yesterday = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: day)) {
@@ -84,13 +94,26 @@ final class TodayViewModel {
             } else {
                 previousDayMealCount = 0
             }
-            let snapshot = WidgetSnapshotStore.make(target: target, totals: totals)
-            WidgetSnapshotStore.save(snapshot)
-            TodayLiveActivityController.sync(with: snapshot, calendar: calendar)
+            // Widget / Live Activity always reflect the real today, never a browsed past day.
+            if TodayDayNavigation.isViewingToday(day, now: now, calendar: calendar) {
+                let snapshot = WidgetSnapshotStore.make(target: target, totals: totals)
+                WidgetSnapshotStore.save(snapshot)
+                TodayLiveActivityController.sync(with: snapshot, calendar: calendar)
+            }
         } catch {
-            errorMessage = "Could not load today’s diary."
+            errorMessage = "Could not load this day’s diary."
         }
         isLoading = false
+    }
+
+    func selectDay(_ newDay: Date, calendar: Calendar = .current, now: Date = .now) async {
+        day = TodayDayNavigation.clampToPastOrToday(newDay, now: now, calendar: calendar)
+        showDayPicker = false
+        await load(calendar: calendar, now: now)
+    }
+
+    func jumpToToday(calendar: Calendar = .current, now: Date = .now) async {
+        await selectDay(now, calendar: calendar, now: now)
     }
 
     /// Plain-text day summary for the system share sheet.
@@ -196,17 +219,45 @@ struct TodayView: View {
                 }
             }
             .background(Color.backgroundPrimary.ignoresSafeArea())
-            .navigationTitle("Today")
+            .navigationTitle(viewModel?.navigationTitle ?? "Today")
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                if let viewModel, !viewModel.meals.isEmpty {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        ShareLink(item: viewModel.daySummaryShareText) {
-                            Image(systemName: "square.and.arrow.up")
+                ToolbarItem(placement: .topBarTrailing) {
+                    HStack(spacing: Spacing.space12) {
+                        if let viewModel, !viewModel.isViewingToday {
+                            Button("Today") {
+                                Task { await viewModel.jumpToToday() }
+                            }
+                            .font(Typography.supporting.weight(.semibold))
+                            .accessibilityLabel("Jump to today")
                         }
-                        .accessibilityLabel("Share today’s summary")
-                        .simultaneousGesture(TapGesture().onEnded {
-                            viewModel.noteDaySummaryShared()
-                        })
+                        if let viewModel {
+                            Button {
+                                viewModel.showDayPicker = true
+                            } label: {
+                                Image(systemName: "calendar")
+                            }
+                            .accessibilityLabel("Choose day")
+                        }
+                        if let viewModel, !viewModel.meals.isEmpty {
+                            ShareLink(item: viewModel.daySummaryShareText) {
+                                Image(systemName: "square.and.arrow.up")
+                            }
+                            .accessibilityLabel("Share day summary")
+                            .simultaneousGesture(TapGesture().onEnded {
+                                viewModel.noteDaySummaryShared()
+                            })
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: Binding(
+                get: { viewModel?.showDayPicker ?? false },
+                set: { viewModel?.showDayPicker = $0 }
+            )) {
+                if let viewModel {
+                    TodayDayPickerSheet(day: viewModel.day) { picked in
+                        Task { await viewModel.selectDay(picked) }
                     }
                 }
             }
@@ -357,10 +408,19 @@ private struct TodayContent: View {
     }
 
     private var greeting: some View {
-        Text(TodayGreeting.text())
-            .font(Typography.supporting.weight(.semibold))
-            .foregroundStyle(Color.textSecondary)
-            .accessibilityAddTraits(.isHeader)
+        VStack(alignment: .leading, spacing: Spacing.space4) {
+            if viewModel.isViewingToday {
+                Text(TodayGreeting.text())
+                    .font(Typography.supporting.weight(.semibold))
+                    .foregroundStyle(Color.textSecondary)
+                    .accessibilityAddTraits(.isHeader)
+            } else {
+                Text(viewModel.day.formatted(date: .complete, time: .omitted))
+                    .font(Typography.supporting.weight(.semibold))
+                    .foregroundStyle(Color.textSecondary)
+                    .accessibilityAddTraits(.isHeader)
+            }
+        }
     }
 
     @ViewBuilder
@@ -374,10 +434,10 @@ private struct TodayContent: View {
                         .foregroundStyle(Color.brandPrimary)
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: Spacing.space4) {
-                        Text("Copy yesterday’s meals")
+                        Text(viewModel.isViewingToday ? "Copy yesterday’s meals" : "Copy previous day’s meals")
                             .font(Typography.supporting.weight(.semibold))
                             .foregroundStyle(Color.textPrimary)
-                        Text("Adds \(viewModel.previousDayMealCount) meal\(viewModel.previousDayMealCount == 1 ? "" : "s") with yesterday’s times")
+                        Text("Adds \(viewModel.previousDayMealCount) meal\(viewModel.previousDayMealCount == 1 ? "" : "s") with that day’s times")
                             .font(Typography.caption)
                             .foregroundStyle(Color.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -389,7 +449,7 @@ private struct TodayContent: View {
                 .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             }
             .buttonStyle(.plain)
-            .accessibilityHint("Duplicates yesterday's meals onto today")
+            .accessibilityHint("Duplicates the previous day's meals onto this day")
         }
     }
 
@@ -706,7 +766,7 @@ private struct TodayContent: View {
     @ViewBuilder
     private var mealsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.space12) {
-            Text("Today’s plate")
+            Text(viewModel.isViewingToday ? "Today’s plate" : "This day’s plate")
                 .font(Typography.sectionHeading)
                 .foregroundStyle(Color.textPrimary)
 
@@ -761,11 +821,13 @@ private struct TodayContent: View {
                 }
                 if viewModel.previousDayMealCount > 0 {
                     SecondaryButton(
-                        title: "Copy yesterday’s \(viewModel.previousDayMealCount) meals"
+                        title: viewModel.isViewingToday
+                            ? "Copy yesterday’s \(viewModel.previousDayMealCount) meals"
+                            : "Copy previous day’s \(viewModel.previousDayMealCount) meals"
                     ) {
                         Task { await viewModel.copyPreviousDay() }
                     }
-                    .accessibilityHint("Adds copies of yesterday's meals to today")
+                    .accessibilityHint("Adds copies of the previous day's meals to this day")
                 }
             }
         }
@@ -823,6 +885,51 @@ struct MealRowView: View {
 
     private var timeString: String {
         meal.eatenAt.formatted(date: .omitted, time: .shortened)
+    }
+}
+
+private struct TodayDayPickerSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var draft: Date
+    let onPick: (Date) -> Void
+
+    init(day: Date, onPick: @escaping (Date) -> Void) {
+        _draft = State(initialValue: day)
+        self.onPick = onPick
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: Spacing.space24) {
+                DatePicker(
+                    "Day",
+                    selection: $draft,
+                    in: ...Date(),
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.graphical)
+                .padding(.horizontal, Spacing.screenHorizontal)
+                .accessibilityLabel("Choose diary day")
+
+                PrimaryButton(title: "Show this day") {
+                    onPick(draft)
+                    dismiss()
+                }
+                .padding(.horizontal, Spacing.screenHorizontal)
+
+                Spacer(minLength: 0)
+            }
+            .padding(.top, Spacing.space16)
+            .background(Color.backgroundPrimary.ignoresSafeArea())
+            .navigationTitle("Choose day")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
     }
 }
 
