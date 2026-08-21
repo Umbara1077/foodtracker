@@ -2,7 +2,7 @@
 
 Engineering compliance through **Phase 34** is in the app binary. This page is what **you** must finish in App Store Connect, Developer, and legal before approval.
 
-Current tip: **1.5.7** (build 42) on `cursor/project-plate-phase-42-undo-delete-fc9b`.
+Current tip: **1.5.8** (build 43) on `cursor/project-plate-phase-43-scan-cta-fc9b`.
 
 ## Already handled in the app
 

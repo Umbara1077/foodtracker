@@ -2,7 +2,7 @@
 
 Engineering feature work through **V1.2+ (Phases 0–31)** is on branch tips with green CI. This document is the handoff into **human / App Store ops**.
 
-Current tip marketing version: **1.5.7** (build 42) — Undo meal delete on `cursor/project-plate-phase-42-undo-delete-fc9b`.
+Current tip marketing version: **1.5.8** (build 43) — Scan primary CTA on `cursor/project-plate-phase-43-scan-cta-fc9b`.
 
 ## 1. Merge order (draft PRs → `main`)
 
@@ -46,6 +46,7 @@ Merge **oldest → newest** so each PR’s tip includes prior phases:
 | 34 | Phase 40 Share day summary | `phase-40-share-day` |
 | 35 | Phase 41 Today date picker | `phase-41-today-date` |
 | 36 | Phase 42 Undo meal delete | `phase-42-undo-delete` |
+| 37 | Phase 43 Scan primary CTA | `phase-43-scan-cta` |
 
 After merges, cut the Archive from `main`. Full human checklist: [`docs/APP_STORE_SUBMISSION.md`](APP_STORE_SUBMISSION.md).
 
