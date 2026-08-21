@@ -22,6 +22,7 @@ final class TodayViewModel {
     var showBarcode = false
     var showLabelScan = false
     var showRecipeImport = false
+    var showRecipeBuilder = false
 
     init(
         mealRepository: any MealRepository,
@@ -211,6 +212,11 @@ private struct TodayContent: View {
                 Task { await viewModel.load() }
             }
         }
+        .sheet(isPresented: $viewModel.showRecipeBuilder) {
+            RecipeBuilderSheet {
+                Task { await viewModel.load() }
+            }
+        }
     }
 
     @ViewBuilder
@@ -345,19 +351,35 @@ private struct TodayContent: View {
                 .accessibilityLabel("Scan nutrition label")
             }
 
-            Button {
-                viewModel.showRecipeImport = true
-            } label: {
-                Label("Recipe URL", systemImage: "link")
-                    .font(Typography.supporting.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Spacing.space16)
-                    .foregroundStyle(Color.textPrimary)
-                    .background(Color.surfacePrimary)
-                    .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+            HStack(spacing: Spacing.space12) {
+                Button {
+                    viewModel.showRecipeImport = true
+                } label: {
+                    Label("Recipe URL", systemImage: "link")
+                        .font(Typography.supporting.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.space16)
+                        .foregroundStyle(Color.textPrimary)
+                        .background(Color.surfacePrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Import recipe from URL")
+
+                Button {
+                    viewModel.showRecipeBuilder = true
+                } label: {
+                    Label("Build recipe", systemImage: "list.bullet.rectangle")
+                        .font(Typography.supporting.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.space16)
+                        .foregroundStyle(Color.textPrimary)
+                        .background(Color.surfacePrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Build a recipe from ingredients")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Import recipe from URL")
         }
     }
 

@@ -9,6 +9,7 @@ enum MealInputMethod: String, Codable, Sendable {
     case voice
     case labelScan
     case recipeURL
+    case recipeBuilder
 }
 
 struct MealRecord: Identifiable, Codable, Sendable, Equatable {
