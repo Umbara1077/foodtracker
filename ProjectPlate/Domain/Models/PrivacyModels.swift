@@ -183,6 +183,24 @@ struct DataMaintenanceService: Sendable {
         }
     }
 
+    /// Flat meal diary CSV for spreadsheets (PRODUCT_SPEC §6.1).
+    func exportCSV(calendar: Calendar = .current) async throws -> Data {
+        let end = Date()
+        let start = calendar.date(byAdding: .year, value: -5, to: end) ?? end
+        var meals: [MealRecord] = []
+        var cursor = calendar.startOfDay(for: start)
+        let endDay = calendar.startOfDay(for: end)
+        while cursor <= endDay {
+            meals.append(contentsOf: try await mealRepository.meals(on: cursor, calendar: calendar))
+            guard let next = calendar.date(byAdding: .day, value: 1, to: cursor) else { break }
+            cursor = next
+        }
+        meals.sort { $0.eatenAt < $1.eatenAt }
+        let csv = DiaryCSVExporter.csv(from: meals)
+        guard let data = csv.data(using: .utf8) else { throw DataMaintenanceError.exportFailed }
+        return data
+    }
+
     func deleteAllLocalData(purgeCloudCopies: Bool = true) async throws {
         // Coordinator owns the UserDefaults suite for sync preference — do not check `.standard` here.
         if purgeCloudCopies, let diarySync {

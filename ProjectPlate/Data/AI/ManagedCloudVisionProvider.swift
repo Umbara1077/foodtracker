@@ -1,23 +1,28 @@
 import Foundation
 
-/// HTTP client for the managed `/v1/meal/analyze` gateway. Never embeds OpenAI keys.
+/// HTTP client for `/v1/meal/analyze`. Never embeds OpenAI keys — uses managed or custom gateway config.
 struct ManagedCloudVisionProvider: MealVisionProvider {
     let id = "managed-cloud"
-    var configuration: BackendConfiguration
+    /// When set, used instead of `configurationProvider` (unit tests).
+    var configurationOverride: BackendConfiguration?
+    var configurationProvider: @Sendable () -> BackendConfiguration
     var urlSession: URLSession
     var onQuotaUpdate: (@Sendable (Int, Int) -> Void)?
 
     init(
-        configuration: BackendConfiguration,
+        configuration: BackendConfiguration? = nil,
+        configurationProvider: @escaping @Sendable () -> BackendConfiguration = { BackendConfiguration.resolved() },
         urlSession: URLSession = .shared,
         onQuotaUpdate: (@Sendable (Int, Int) -> Void)? = nil
     ) {
-        self.configuration = configuration
+        self.configurationOverride = configuration
+        self.configurationProvider = configurationProvider
         self.urlSession = urlSession
         self.onQuotaUpdate = onQuotaUpdate
     }
 
     func analyze(imageData: Data, context: MealAnalysisContext) async throws -> VisionMealDraft {
+        let configuration = configurationOverride ?? configurationProvider()
         guard let baseURL = configuration.baseURL else {
             throw MealScanError.providerUnavailable
         }
@@ -99,6 +104,57 @@ struct ManagedCloudVisionProvider: MealVisionProvider {
             uncertaintyNotes: decoded.draft.uncertaintyNotes ?? []
         )
         return try VisionDraftValidator.validate(draft)
+    }
+
+    /// Lightweight connectivity check for Settings → Advanced (10s timeout).
+    static func testConnection(
+        baseURL: URL,
+        token: String?,
+        installID: String = InstallIdentity.shared.id,
+        urlSession: URLSession = .shared
+    ) async throws {
+        let endpoint = baseURL.appending(path: "v1/meal/analyze")
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 10
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("1", forHTTPHeaderField: "X-Plate-Schema-Version")
+        request.setValue(UUID().uuidString, forHTTPHeaderField: "X-Request-ID")
+        request.setValue(installID, forHTTPHeaderField: "X-Install-ID")
+        if let token, !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        // Tiny JPEG so the gateway can validate auth / schema without a real meal photo.
+        let probe = MealImageEncoder.minimalPrivacySafeJPEG
+        let body = AnalyzeAPIRequest(
+            imageBase64: probe.base64EncodedString(),
+            mimeType: "image/jpeg",
+            mealHint: nil,
+            locale: Locale.current.identifier,
+            units: "metric"
+        )
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (_, response): (Data, URLResponse)
+        do {
+            (_, response) = try await urlSession.data(for: request)
+        } catch {
+            throw CustomGatewayError.testFailed("Could not reach the gateway.")
+        }
+        guard let http = response as? HTTPURLResponse else {
+            throw CustomGatewayError.testFailed("Unexpected gateway response.")
+        }
+        switch http.statusCode {
+        case 200, 400, 422:
+            // Reachable + accepted or schema-rejected still proves the endpoint exists.
+            return
+        case 401:
+            throw CustomGatewayError.testFailed("Gateway rejected the token (401).")
+        case 404:
+            throw CustomGatewayError.testFailed("Gateway path /v1/meal/analyze was not found.")
+        default:
+            throw CustomGatewayError.testFailed("Gateway returned HTTP \(http.statusCode).")
+        }
     }
 }
 

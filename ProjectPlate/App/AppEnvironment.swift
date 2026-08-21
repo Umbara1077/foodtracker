@@ -30,7 +30,7 @@ struct AppEnvironment: Sendable {
         let nutrition = LocalNutritionRepository()
         let backend = BackendConfiguration.load()
         let quota = ScanQuotaStore()
-        let vision = makeVisionProvider(backend: backend, quota: quota)
+        let vision = makeVisionProvider(quota: quota)
         let meals = SwiftDataMealRepository(modelContainer: modelContainer)
         let profiles = SwiftDataProfileRepository(modelContainer: modelContainer)
         let weights = SwiftDataWeightRepository(modelContainer: modelContainer)
@@ -210,14 +210,12 @@ struct AppEnvironment: Sendable {
     }
 
     private static func makeVisionProvider(
-        backend: BackendConfiguration,
         quota: ScanQuotaStore
     ) -> any MealVisionProvider {
         let mock = MockMealVisionProvider(fixture: .chickenRiceBowl)
-        guard backend.isCloudEnabled else { return mock }
-
+        // Always install the managed client; router decides per-request using resolved config + consent.
         let managed = ManagedCloudVisionProvider(
-            configuration: backend,
+            configurationProvider: { BackendConfiguration.resolved() },
             onQuotaUpdate: { remaining, dailyLimit in
                 quota.update(remaining: remaining, dailyLimit: dailyLimit)
             }

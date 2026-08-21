@@ -17,22 +17,40 @@ struct AIModelConfiguration: Sendable, Equatable {
 }
 
 struct BackendConfiguration: Sendable, Equatable {
-    /// Empty means use on-device mock (no network). Set via Info.plist `PLATE_API_BASE_URL` or DEBUG override.
+    /// Empty means use on-device mock (no network). Set via Info.plist `PLATE_API_BASE_URL`, custom gateway, or DEBUG override.
     var baseURL: URL?
     var appToken: String?
     var installID: String
+    /// `managed` (Info.plist), `custom` (user gateway), or `mock`.
+    var sourceLabel: String = "mock"
 
     var isCloudEnabled: Bool { baseURL != nil }
+
+    /// Prefer an enabled custom gateway; otherwise fall back to Info.plist managed backend.
+    static func resolved(installID: String = InstallIdentity.shared.id, defaults: UserDefaults = .standard) -> BackendConfiguration {
+        if CustomGatewayStore.isEnabled(defaults: defaults),
+           let url = CustomGatewayStore.endpointURL(defaults: defaults) {
+            return BackendConfiguration(
+                baseURL: url,
+                appToken: CustomGatewayStore.loadToken(),
+                installID: installID,
+                sourceLabel: "custom"
+            )
+        }
+        return load(installID: installID)
+    }
 
     static func load(installID: String = InstallIdentity.shared.id) -> BackendConfiguration {
         let raw = Bundle.main.object(forInfoDictionaryKey: "PLATE_API_BASE_URL") as? String
         let trimmed = raw?.trimmingCharacters(in: .whitespacesAndNewlines)
         let url = (trimmed?.isEmpty == false) ? URL(string: trimmed!) : nil
         let token = Bundle.main.object(forInfoDictionaryKey: "PLATE_API_TOKEN") as? String
+        let enabled = url != nil
         return BackendConfiguration(
             baseURL: url,
             appToken: (token?.isEmpty == false) ? token : nil,
-            installID: installID
+            installID: installID,
+            sourceLabel: enabled ? "managed" : "mock"
         )
     }
 }

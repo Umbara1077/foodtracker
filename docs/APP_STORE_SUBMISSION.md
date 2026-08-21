@@ -2,7 +2,7 @@
 
 Engineering compliance through **Phase 34** is in the app binary. This page is what **you** must finish in App Store Connect, Developer, and legal before approval.
 
-Current tip: **1.4.2** (build 34) on `cursor/project-plate-phase-34-app-store-compliance-fc9b`.
+Current tip: **1.5.0** (build 35) on `cursor/project-plate-phase-35-gateway-reminders-fc9b`.
 
 ## Already handled in the app
 
@@ -21,6 +21,9 @@ Current tip: **1.4.2** (build 34) on `cursor/project-plate-phase-34-app-store-co
 | `ITSAppUsesNonExemptEncryption = false` | HTTPS-only standard encryption |
 | Support entry point | Settings → About (uses `PLATE_SUPPORT_URL`) |
 | Beta tools hidden on App Store builds | Shown only Debug / TestFlight |
+| Custom AI gateway (HTTPS + Keychain token) | Settings → Cloud AI → Custom gateway |
+| Optional meal reminders (permission after enable) | Settings → Reminders |
+| Diary export JSON + CSV | Settings → Privacy |
 
 ## You must do (blocks approval)
 

@@ -26,12 +26,24 @@ struct SettingsView: View {
     @AppStorage(MealPlanPreference.enabledKey) private var mealPlanEnabled = true
     @AppStorage(HouseholdPreference.enabledKey) private var householdEnabled = true
     @AppStorage(MicronutrientPreference.enabledKey) private var micronutrientsEnabled = true
+    @AppStorage(MealReminderPreference.enabledKey) private var mealRemindersEnabled = false
     @State private var consentVersionLabel = "Not answered"
     @State private var privacyMessage: String?
     @State private var isPrivacyWorking = false
     @State private var iCloudSyncMessage: String?
     @State private var isSyncing = false
     @State private var lastSyncLabel = "Never"
+    @State private var exportFilename = "project-plate-export"
+    @State private var exportContentType: UTType = .json
+
+    private var cloudAIModeLabel: String {
+        let config = BackendConfiguration.resolved()
+        switch config.sourceLabel {
+        case "custom": return "Custom gateway"
+        case "managed": return "Managed gateway"
+        default: return "On-device mock"
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -118,22 +130,52 @@ struct SettingsView: View {
                     }
                 }
                 Section("Cloud AI") {
-                    LabeledContent(
-                        "Mode",
-                        value: environment.backendConfiguration.isCloudEnabled ? "Managed gateway" : "On-device mock"
-                    )
+                    LabeledContent("Mode", value: cloudAIModeLabel)
                     if let remaining = environment.scanQuota.remaining,
                        let limit = environment.scanQuota.dailyLimit {
                         LabeledContent("Cloud quota", value: "\(remaining) / \(limit)")
-                    } else if environment.backendConfiguration.isCloudEnabled {
+                    } else if BackendConfiguration.resolved().isCloudEnabled {
                         Text("Cloud quota updates after the first cloud scan.")
                             .font(Typography.caption)
                             .foregroundStyle(Color.textSecondary)
                     } else {
-                        Text("Set PLATE_API_BASE_URL to use the managed backend. Photos are never stored permanently.")
+                        Text("On-device mock until you set a managed backend or custom gateway. Photos are never stored permanently.")
                             .font(Typography.caption)
                             .foregroundStyle(Color.textSecondary)
                     }
+                    NavigationLink {
+                        CustomGatewaySettingsView()
+                    } label: {
+                        Label("Custom gateway", systemImage: "server.rack")
+                    }
+                    Text("Advanced — use your own HTTPS meal-analysis endpoint. Upstream API keys stay on your server.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
+                }
+                Section("Reminders") {
+                    Toggle("Meal logging reminders", isOn: $mealRemindersEnabled)
+                        .onChange(of: mealRemindersEnabled) { _, enabled in
+                            MealReminderPreference.setEnabled(enabled)
+                            Task { await MealReminderScheduler.refresh() }
+                        }
+                    if mealRemindersEnabled {
+                        ForEach(ReminderMeal.allCases) { meal in
+                            Stepper(
+                                "\(meal.title): \(MealReminderPreference.hour(for: meal)):00",
+                                value: Binding(
+                                    get: { MealReminderPreference.hour(for: meal) },
+                                    set: { newValue in
+                                        MealReminderPreference.setHour(newValue, for: meal)
+                                        Task { await MealReminderScheduler.refresh() }
+                                    }
+                                ),
+                                in: 5...22
+                            )
+                        }
+                    }
+                    Text("Optional. Permission is requested only when you turn reminders on. Copy stays supportive — never guilt.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
                 }
                 Section("Goals") {
                     Toggle("Suggest adaptive calorie tweaks", isOn: $adaptiveGoalsEnabled)
@@ -231,8 +273,13 @@ struct SettingsView: View {
                         TermsOfUseView()
                     }
 
-                    Button("Export my data") {
-                        Task { await exportData() }
+                    Button("Export JSON") {
+                        Task { await exportData(asCSV: false) }
+                    }
+                    .disabled(isPrivacyWorking)
+
+                    Button("Export CSV") {
+                        Task { await exportData(asCSV: true) }
                     }
                     .disabled(isPrivacyWorking)
 
@@ -303,8 +350,8 @@ struct SettingsView: View {
                     set: { if !$0 { exportDocument = nil } }
                 ),
                 document: exportDocument,
-                contentType: .json,
-                defaultFilename: "project-plate-export"
+                contentType: exportContentType,
+                defaultFilename: exportFilename
             ) { result in
                 switch result {
                 case .success:
@@ -447,13 +494,22 @@ struct SettingsView: View {
             : "Cloud upload off. Photo scans stay on-device."
     }
 
-    private func exportData() async {
+    private func exportData(asCSV: Bool) async {
         isPrivacyWorking = true
         privacyMessage = nil
         defer { isPrivacyWorking = false }
         do {
-            let data = try await environment.dataMaintenance.exportJSON()
-            exportDocument = ExportDocument(data: data)
+            if asCSV {
+                let data = try await environment.dataMaintenance.exportCSV()
+                exportContentType = .commaSeparatedText
+                exportFilename = "project-plate-meals"
+                exportDocument = ExportDocument(data: data, contentType: .commaSeparatedText)
+            } else {
+                let data = try await environment.dataMaintenance.exportJSON()
+                exportContentType = .json
+                exportFilename = "project-plate-export"
+                exportDocument = ExportDocument(data: data, contentType: .json)
+            }
         } catch {
             privacyMessage = error.localizedDescription
             environment.crashReporter.record(error: error, context: "privacy.export")
@@ -533,15 +589,18 @@ struct SettingsView: View {
 }
 
 struct ExportDocument: FileDocument {
-    static var readableContentTypes: [UTType] { [.json] }
+    static var readableContentTypes: [UTType] { [.json, .commaSeparatedText] }
     var data: Data
+    var contentType: UTType
 
-    init(data: Data) {
+    init(data: Data, contentType: UTType = .json) {
         self.data = data
+        self.contentType = contentType
     }
 
     init(configuration: ReadConfiguration) throws {
         data = configuration.file.regularFileContents ?? Data()
+        contentType = configuration.contentType
     }
 
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
