@@ -16,12 +16,14 @@ final class ProgressViewModel {
     var weeklyDigest: WeeklyDigest = .empty
     var streak: TrackingStreak = .zero
     var adaptiveSuggestion: AdaptiveGoalSuggestion?
+    var coachInsights: [CoachInsight] = []
     var unitSystem: UnitSystem = .metric
     var isLoading = true
     var errorMessage: String?
     var adaptiveMessage: String?
     var showAddWeight = false
     var isApplyingAdaptive = false
+    private var goalType: GoalType = .maintainWeight
 
     init(
         weightRepository: any WeightRepository,
@@ -64,6 +66,7 @@ final class ProgressViewModel {
             latest = try await latestTask
             let profile = try await profileTask
             unitSystem = profile?.unitSystem ?? .metric
+            goalType = profile?.goalType ?? .maintainWeight
             let target = try await targetTask
             let daily = try await dailyTask
             consistency = ProgressMath.consistency(dailyTotals: daily, target: target)
@@ -85,6 +88,16 @@ final class ProgressViewModel {
                 weights: try await adaptiveWeightsTask,
                 meals: try await adaptiveMealsTask
             )
+            if CoachInsightPreference.isEnabled() {
+                coachInsights = CoachInsightEngine.insights(
+                    digest: weeklyDigest,
+                    streak: streak,
+                    consistency: consistency,
+                    goalType: goalType
+                )
+            } else {
+                coachInsights = []
+            }
         } catch {
             errorMessage = "Could not load progress."
         }
@@ -203,6 +216,7 @@ private struct ProgressContent: View {
                     ProgressView().frame(maxWidth: .infinity)
                 } else {
                     weeklyDigestCard
+                    coachInsightsCard
                     streakCard
                     adaptiveGoalCard
                     weightCard
@@ -291,6 +305,36 @@ private struct ProgressContent: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Weekly digest. \(digest.highlight)")
+    }
+
+    @ViewBuilder
+    private var coachInsightsCard: some View {
+        if !viewModel.coachInsights.isEmpty {
+            VStack(alignment: .leading, spacing: Spacing.space16) {
+                Text("Coach")
+                    .font(Typography.sectionHeading)
+                    .foregroundStyle(Color.textPrimary)
+                Text("Local tips from your recent logging — not medical advice.")
+                    .font(Typography.caption)
+                    .foregroundStyle(Color.textSecondary)
+                ForEach(viewModel.coachInsights) { tip in
+                    VStack(alignment: .leading, spacing: Spacing.space4) {
+                        Text(tip.title)
+                            .font(Typography.supporting.weight(.semibold))
+                            .foregroundStyle(Color.textPrimary)
+                        Text(tip.body)
+                            .font(Typography.supporting)
+                            .foregroundStyle(Color.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(tip.title). \(tip.body)")
+                }
+            }
+            .padding(Spacing.cardPaddingCompact)
+            .background(Color.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        }
     }
 
     private func digestStat(title: String, value: String, subtitle: String) -> some View {

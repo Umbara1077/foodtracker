@@ -20,6 +20,7 @@ struct SettingsView: View {
     @AppStorage(TodayLiveActivityPolicy.preferenceKey) private var liveActivityEnabled = true
     @AppStorage(CloudSyncPreference.enabledKey) private var iCloudSyncEnabled = false
     @AppStorage(AdaptiveGoalPreference.enabledKey) private var adaptiveGoalsEnabled = true
+    @AppStorage(CoachInsightPreference.enabledKey) private var coachInsightsEnabled = true
     @State private var consentVersionLabel = "Not accepted"
     @State private var privacyMessage: String?
     @State private var isPrivacyWorking = false
@@ -137,6 +138,13 @@ struct SettingsView: View {
                     Text("Uses recent weight trend and your goal to optionally nudge calories on Progress. Never auto-applies.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
+                    Toggle("Show coach tips", isOn: $coachInsightsEnabled)
+                        .onChange(of: coachInsightsEnabled) { _, enabled in
+                            CoachInsightPreference.setEnabled(enabled)
+                        }
+                    Text("Supportive local tips from your recent logging. Not medical advice.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
                 }
                 Section("Lock Screen") {
                     Toggle("Show today’s calories", isOn: $liveActivityEnabled)
@@ -188,7 +196,7 @@ struct SettingsView: View {
                     }
                 }
                 Section("About") {
-                    LabeledContent("Version", value: "1.2.9")
+                    LabeledContent("Version", value: "1.3.0")
                     Text("Nutrition estimates are for informational tracking and may be inaccurate. This app does not provide medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
