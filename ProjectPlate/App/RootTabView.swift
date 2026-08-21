@@ -3,6 +3,7 @@ import SwiftUI
 struct RootTabView: View {
     @Environment(\.appEnvironment) private var environment
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var router = AppRouter()
 
     var body: some View {
@@ -41,12 +42,13 @@ struct RootTabView: View {
                             .tabItem { Label(RootTab.settings.title, systemImage: RootTab.settings.systemImage) }
                             .tag(RootTab.settings)
                     }
+                    .modifier(PlateTabStyle(horizontalSizeClass: horizontalSizeClass))
 
                     ScanFAB {
                         Task { await openScannerOrPaywall() }
                     }
-                    .padding(.bottom, 8)
-                    .offset(y: -28)
+                    .padding(.bottom, horizontalSizeClass == .regular ? 16 : 8)
+                    .offset(y: horizontalSizeClass == .regular ? -12 : -28)
                     .accessibilitySortPriority(1)
                 }
                 .fullScreenCover(isPresented: $router.isScannerPresented) {
@@ -152,6 +154,19 @@ struct RootTabView: View {
             await environment.nutritionRepository.setPreferredBrandHistory(brands)
         }
         router.isBootstrapping = false
+    }
+}
+
+/// Uses the sidebar-adaptable tab chrome on iPad / regular width.
+private struct PlateTabStyle: ViewModifier {
+    var horizontalSizeClass: UserInterfaceSizeClass?
+
+    func body(content: Content) -> some View {
+        if horizontalSizeClass == .regular {
+            content.tabViewStyle(.sidebarAdaptable)
+        } else {
+            content
+        }
     }
 }
 

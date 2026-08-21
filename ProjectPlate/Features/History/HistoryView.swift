@@ -210,6 +210,7 @@ private struct HistoryContent: View {
                 .scrollContentBackground(.hidden)
             }
         }
+        .plateReadableWidth()
         .sheet(item: $correctionMeal) { meal in
             CorrectionFeedbackView(
                 mealTitle: meal.title,

@@ -156,30 +156,37 @@ struct TodayView: View {
 
 private struct TodayContent: View {
     @Bindable var viewModel: TodayViewModel
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var correctionMeal: MealRecord?
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.space24) {
-                if viewModel.isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                } else {
-                    hero
-                    streakChip
-                    quickActions
-                    frequentSection
-                    mealsSection
+        GeometryReader { geo in
+            ScrollView {
+                Group {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, Spacing.space24)
+                    } else if PlateLayout.prefersWideSplit(
+                        horizontalSizeClass: horizontalSizeClass,
+                        width: geo.size.width
+                    ) {
+                        wideLayout
+                    } else {
+                        compactLayout
+                    }
                 }
+                .padding(.horizontal, Spacing.screenHorizontal)
+                .padding(.vertical, Spacing.space24)
+                .plateReadableWidth()
 
                 if let error = viewModel.errorMessage {
                     Text(error)
                         .font(Typography.caption)
                         .foregroundStyle(.red)
+                        .padding(.horizontal, Spacing.screenHorizontal)
                 }
             }
-            .padding(.horizontal, Spacing.screenHorizontal)
-            .padding(.vertical, Spacing.space24)
         }
         .sheet(item: $correctionMeal) { meal in
             CorrectionFeedbackView(
@@ -216,6 +223,33 @@ private struct TodayContent: View {
             RecipeBuilderSheet {
                 Task { await viewModel.load() }
             }
+        }
+    }
+
+    private var compactLayout: some View {
+        VStack(alignment: .leading, spacing: Spacing.space24) {
+            hero
+            streakChip
+            quickActions
+            frequentSection
+            mealsSection
+        }
+    }
+
+    private var wideLayout: some View {
+        HStack(alignment: .top, spacing: Spacing.space24) {
+            VStack(alignment: .leading, spacing: Spacing.space24) {
+                hero
+                streakChip
+                quickActions
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(alignment: .leading, spacing: Spacing.space24) {
+                frequentSection
+                mealsSection
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 

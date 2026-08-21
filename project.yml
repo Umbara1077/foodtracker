@@ -9,10 +9,10 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.10"
-    TARGETED_DEVICE_FAMILY: "1"
+    TARGETED_DEVICE_FAMILY: "1,2"
     IPHONEOS_DEPLOYMENT_TARGET: "18.0"
-    MARKETING_VERSION: "1.3.2"
-    CURRENT_PROJECT_VERSION: "27"
+    MARKETING_VERSION: "1.3.3"
+    CURRENT_PROJECT_VERSION: "28"
     SWIFT_STRICT_CONCURRENCY: complete
 targets:
   ProjectPlate:
@@ -30,6 +30,7 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: Project Plate
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_NSCameraUsageDescription: Use your camera to scan a meal.
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Project Plate listens so you can quick-add a meal by voice.
@@ -64,6 +65,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: ProjectPlateWidget/ProjectPlateWidget.entitlements
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
         SKIP_INSTALL: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
         DEVELOPMENT_TEAM: ""
   ProjectPlateTests:
     type: bundle.unit-test

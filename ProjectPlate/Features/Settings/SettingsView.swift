@@ -228,6 +228,7 @@ struct SettingsView: View {
                 }
                 #endif
             }
+            .plateReadableWidth()
             .navigationTitle("Settings")
             .sheet(isPresented: $showPaywall) {
                 PaywallView {

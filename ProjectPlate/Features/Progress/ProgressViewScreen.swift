@@ -218,38 +218,41 @@ struct ProgressViewScreen: View {
 private struct ProgressContent: View {
     @Bindable var viewModel: ProgressViewModel
     @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.space24) {
-                rangePicker
-                if viewModel.isLoading {
-                    ProgressView().frame(maxWidth: .infinity)
-                } else {
-                    weeklyDigestCard
-                    challengesCard
-                    coachInsightsCard
-                    streakCard
-                    adaptiveGoalCard
-                    weightCard
-                    consistencyCard
-                }
-                if let adaptiveMessage = viewModel.adaptiveMessage {
-                    Text(adaptiveMessage)
+        GeometryReader { geo in
+            ScrollView {
+                VStack(alignment: .leading, spacing: Spacing.space24) {
+                    rangePicker
+                    if viewModel.isLoading {
+                        ProgressView().frame(maxWidth: .infinity)
+                    } else if PlateLayout.prefersWideSplit(
+                        horizontalSizeClass: horizontalSizeClass,
+                        width: geo.size.width
+                    ) {
+                        wideBody
+                    } else {
+                        compactBody
+                    }
+                    if let adaptiveMessage = viewModel.adaptiveMessage {
+                        Text(adaptiveMessage)
+                            .font(Typography.caption)
+                            .foregroundStyle(Color.textSecondary)
+                    }
+                    if let error = viewModel.errorMessage {
+                        Text(error)
+                            .font(Typography.caption)
+                            .foregroundStyle(.red)
+                    }
+                    Text("Charts show your logged data only. They don’t explain why weight changed.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                 }
-                if let error = viewModel.errorMessage {
-                    Text(error)
-                        .font(Typography.caption)
-                        .foregroundStyle(.red)
-                }
-                Text("Charts show your logged data only. They don’t explain why weight changed.")
-                    .font(Typography.caption)
-                    .foregroundStyle(Color.textSecondary)
+                .padding(.horizontal, Spacing.screenHorizontal)
+                .padding(.vertical, Spacing.space24)
+                .plateReadableWidth()
             }
-            .padding(.horizontal, Spacing.screenHorizontal)
-            .padding(.vertical, Spacing.space24)
         }
         .sheet(isPresented: $viewModel.showAddWeight) {
             AddWeightSheet(unitSystem: viewModel.unitSystem) {
@@ -258,6 +261,36 @@ private struct ProgressContent: View {
         }
         .onChange(of: viewModel.range) { _, _ in
             Task { await viewModel.load() }
+        }
+    }
+
+    @ViewBuilder
+    private var compactBody: some View {
+        weeklyDigestCard
+        challengesCard
+        coachInsightsCard
+        streakCard
+        adaptiveGoalCard
+        weightCard
+        consistencyCard
+    }
+
+    private var wideBody: some View {
+        HStack(alignment: .top, spacing: Spacing.space24) {
+            VStack(alignment: .leading, spacing: Spacing.space24) {
+                weeklyDigestCard
+                challengesCard
+                coachInsightsCard
+                streakCard
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(alignment: .leading, spacing: Spacing.space24) {
+                adaptiveGoalCard
+                weightCard
+                consistencyCard
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
