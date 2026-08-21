@@ -36,10 +36,11 @@ struct MicronutrientTests {
             name: "Oats",
             brand: nil,
             serving: ServingDescriptor(label: "cup", grams: 100),
-            per100g: NutrientSet(calories: 71, protein: 2.5, carbs: 12, fat: 1.5, fiber: 1.7, sugar: 0.3, sodiumMg: 4)
+            per100g: NutrientSet(calories: 71, protein: 2.5, carbs: 12, fat: 1.5, fiber: 2.0, sugar: 0.4, sodiumMg: 4)
         )
         let half = NutritionResolver.nutrients(for: food, grams: 50)
-        #expect(half.fiber == 0.8)
+        #expect(half.fiber == 1.0)
+        #expect(half.sugar == 0.2)
         #expect(half.sodiumMg == 2)
     }
 
