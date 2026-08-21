@@ -2,7 +2,7 @@
 
 Engineering compliance through **Phase 34** is in the app binary. This page is what **you** must finish in App Store Connect, Developer, and legal before approval.
 
-Current tip: **1.5.0** (build 35) on `cursor/project-plate-phase-35-gateway-reminders-fc9b`.
+Current tip: **1.5.1** (build 36) on `cursor/project-plate-phase-36-a11y-analytics-fc9b`.
 
 ## Already handled in the app
 

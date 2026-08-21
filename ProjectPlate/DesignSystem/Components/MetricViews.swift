@@ -27,6 +27,7 @@ struct MetricCard: View {
         .clipShape(RoundedRectangle(cornerRadius: Radius.heroCard, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
         .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title), \(value)\(subtitle.map { ", \($0)" } ?? "")")
     }
 }
 

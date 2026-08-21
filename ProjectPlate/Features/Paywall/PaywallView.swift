@@ -6,6 +6,7 @@ import UIKit
 @Observable
 final class PaywallViewModel {
     private let subscriptions: any SubscriptionServicing
+    private let analytics: any AnalyticsClient
 
     var products: [SubscriptionProductInfo] = []
     var selectedProductID: String = SubscriptionProductID.annual
@@ -15,8 +16,9 @@ final class PaywallViewModel {
     var errorMessage: String?
     var statusMessage: String?
 
-    init(subscriptions: any SubscriptionServicing) {
+    init(subscriptions: any SubscriptionServicing, analytics: any AnalyticsClient) {
         self.subscriptions = subscriptions
+        self.analytics = analytics
     }
 
     var selectedProduct: SubscriptionProductInfo? {
@@ -62,6 +64,9 @@ final class PaywallViewModel {
         defer { isPurchasing = false }
         do {
             entitlement = try await subscriptions.purchase(productID: selectedProductID)
+            if entitlement.isPro {
+                analytics.track(.purchaseCompleted)
+            }
             return entitlement.isPro
         } catch let error as PurchaseError where error == .userCancelled {
             return false
@@ -77,6 +82,9 @@ final class PaywallViewModel {
         defer { isPurchasing = false }
         do {
             entitlement = try await subscriptions.restore()
+            if entitlement.isPro {
+                analytics.track(.purchaseRestored)
+            }
             statusMessage = entitlement.isPro ? "Pro restored." : "No Pro subscription found."
         } catch {
             errorMessage = "Restore failed."
@@ -132,7 +140,10 @@ struct PaywallView: View {
         }
         .task {
             if viewModel == nil {
-                let vm = PaywallViewModel(subscriptions: environment.subscriptions)
+                let vm = PaywallViewModel(
+                    subscriptions: environment.subscriptions,
+                    analytics: environment.analytics
+                )
                 viewModel = vm
                 await vm.load()
             }

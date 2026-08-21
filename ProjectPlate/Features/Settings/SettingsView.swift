@@ -310,6 +310,9 @@ struct SettingsView: View {
                 Section("About") {
                     LabeledContent("Version", value: AppVersion.display())
                     Link("Support", destination: PrivacyConstants.supportURL)
+                    NavigationLink("Acknowledgments") {
+                        AcknowledgmentsView()
+                    }
                     if PrivacyConstants.usesPlaceholderLegalURLs {
                         Text("Set PLATE_PRIVACY_POLICY_URL and PLATE_TERMS_URL to your live https pages before App Store submission.")
                             .font(Typography.caption)
@@ -445,6 +448,9 @@ struct SettingsView: View {
         do {
             let entitlement = try await environment.subscriptions.restore()
             await refreshSubscription()
+            if entitlement.isPro {
+                environment.analytics.track(.purchaseRestored)
+            }
             subscriptionMessage = entitlement.isPro ? "Pro restored." : "No Pro subscription found."
         } catch {
             subscriptionMessage = "Restore failed."

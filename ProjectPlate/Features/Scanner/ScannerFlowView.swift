@@ -93,6 +93,7 @@ final class ScannerViewModel {
                 return
             }
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            analytics.track(.photoCaptured)
             if analyzeImmediately {
                 await analyze(image: image)
             } else {
@@ -121,6 +122,7 @@ final class ScannerViewModel {
                 return
             }
             phase = .retake(image)
+            analytics.track(.photoCaptured)
         } catch {
             presentFailure(
                 message: ScanRetryPolicy.userMessage(for: error),
@@ -166,6 +168,8 @@ final class ScannerViewModel {
 
         if isAutomaticRetry {
             analytics.track(.scanRetried)
+        } else {
+            analytics.track(.scanStarted)
         }
 
         phase = .analyzing(image, .preparingImage)
@@ -214,6 +218,7 @@ final class ScannerViewModel {
             _ = await aiScanQuota?.consume(isPro: isPro)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             slowAnalysisHint = nil
+            analytics.track(.scanSucceeded)
             phase = .result(draft)
         } catch is CancellationError {
             phase = .camera

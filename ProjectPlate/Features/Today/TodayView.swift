@@ -181,9 +181,8 @@ private struct TodayContent: View {
             ScrollView {
                 Group {
                     if viewModel.isLoading {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, Spacing.space24)
+                        TodayLoadingSkeleton()
+                            .padding(.vertical, Spacing.space8)
                     } else if PlateLayout.prefersWideSplit(
                         horizontalSizeClass: horizontalSizeClass,
                         width: geo.size.width

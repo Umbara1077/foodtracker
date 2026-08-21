@@ -16,21 +16,29 @@ protocol AnalyticsClient: Sendable {
     func track(_ event: AnalyticsEvent)
 }
 
-enum AnalyticsEvent: Sendable {
+enum AnalyticsEvent: Sendable, Equatable {
     case onboardingStarted
     case onboardingCompleted
     case scannerOpened
+    case photoCaptured
+    case scanStarted
+    case scanSucceeded
+    case scanFailed
+    case scanRetried
+    case scanCorrected
     case barcodeOpened
     case mealSaved
     case mealDeleted
-    case scanFailed
-    case scanRetried
     case paywallViewed
+    case purchaseCompleted
+    case purchaseRestored
     case cloudAIConsentAccepted
     case cloudAIConsentDeclined
     case dataExported
     case dataDeleted
     case iCloudSyncCompleted
+    case day2Return
+    case day7Return
 }
 
 struct SettingsStore: Sendable {}

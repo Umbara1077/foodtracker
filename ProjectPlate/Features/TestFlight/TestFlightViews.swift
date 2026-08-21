@@ -68,6 +68,7 @@ struct CorrectionFeedbackView: View {
         )
         do {
             try await environment.correctionStore.save(feedback)
+            environment.analytics.track(.scanCorrected)
             let brands = RestaurantBrandHistory.brands(from: try await environment.correctionStore.all())
             await environment.nutritionRepository.setPreferredBrandHistory(brands)
             dismiss()

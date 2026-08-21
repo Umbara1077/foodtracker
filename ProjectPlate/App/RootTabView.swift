@@ -167,6 +167,9 @@ struct RootTabView: View {
             await environment.nutritionRepository.setPreferredBrandHistory(brands)
         }
         router.isBootstrapping = false
+        if !router.needsOnboarding {
+            RetentionDayTracker.trackReturnIfNeeded(analytics: environment.analytics)
+        }
     }
 }
 
