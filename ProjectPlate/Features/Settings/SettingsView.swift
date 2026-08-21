@@ -183,6 +183,11 @@ struct SettingsView: View {
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                 }
+                Section("Apple Watch") {
+                    Text("Install the Project Plate watch app for a glance of remaining calories and protein. It updates when you open Today on iPhone.")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
+                }
                 Section("Privacy") {
                     Toggle("Save meal photos on device", isOn: $saveMealPhotos)
                         .accessibilityHint("Photos stay on this iPhone when enabled")

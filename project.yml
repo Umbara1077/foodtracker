@@ -3,6 +3,7 @@ options:
   bundleIdPrefix: com.projectplate
   deploymentTarget:
     iOS: "18.0"
+    watchOS: "11.0"
   createIntermediateGroups: true
   developmentLanguage: en
   defaultConfig: Debug
@@ -11,8 +12,8 @@ settings:
     SWIFT_VERSION: "5.10"
     TARGETED_DEVICE_FAMILY: "1,2"
     IPHONEOS_DEPLOYMENT_TARGET: "18.0"
-    MARKETING_VERSION: "1.3.4"
-    CURRENT_PROJECT_VERSION: "29"
+    MARKETING_VERSION: "1.3.5"
+    CURRENT_PROJECT_VERSION: "30"
     SWIFT_STRICT_CONCURRENCY: complete
 targets:
   ProjectPlate:
@@ -51,6 +52,9 @@ targets:
       - target: ProjectPlateWidget
         embed: true
         codeSign: false
+      - target: ProjectPlateWatch
+        embed: true
+        codeSign: false
   ProjectPlateWidget:
     type: app-extension
     platform: iOS
@@ -66,6 +70,25 @@ targets:
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
         SKIP_INSTALL: YES
         TARGETED_DEVICE_FAMILY: "1,2"
+        DEVELOPMENT_TEAM: ""
+  ProjectPlateWatch:
+    type: application
+    platform: watchOS
+    sources:
+      - path: ProjectPlateWatch
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.projectplate.app.watchkitapp
+        PRODUCT_NAME: ProjectPlateWatch
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Project Plate
+        INFOPLIST_KEY_WKCompanionAppBundleIdentifier: com.projectplate.app
+        INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp: NO
+        CODE_SIGN_ENTITLEMENTS: ProjectPlateWatch/ProjectPlateWatch.entitlements
+        TARGETED_DEVICE_FAMILY: "4"
+        SDKROOT: watchos
+        SKIP_INSTALL: YES
         DEVELOPMENT_TEAM: ""
   ProjectPlateTests:
     type: bundle.unit-test
@@ -87,6 +110,7 @@ schemes:
       targets:
         ProjectPlate: all
         ProjectPlateWidget: all
+        ProjectPlateWatch: all
         ProjectPlateTests: [test]
     run:
       config: Debug
