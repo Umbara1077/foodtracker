@@ -98,13 +98,22 @@ It walks six checks and prints a ✓ or a clear explanation for each:
 
 1. You are on macOS
 2. Xcode is installed, selected, licensed, and new enough
-3. Homebrew is installed (if not, it prints the official install command for you to run)
-4. XcodeGen is installed (installs it via Homebrew if missing)
+3. Homebrew, if you have it (entirely optional — see below)
+4. XcodeGen is installed (via Homebrew if usable, otherwise built into `~/.local`)
 5. An iPhone simulator exists; whether the watchOS SDK is present
 6. Generates `ProjectPlate.xcodeproj` and opens it
 
-It will ask for your password once or twice for the `sudo` steps — that is
-Xcode's licence and component install, which genuinely require admin rights.
+It may ask for your password once, but only if Xcode itself still needs its
+licence accepted or its components installed. If you already opened Xcode by
+hand in Step 2, nothing here needs admin rights.
+
+**No admin rights on this Mac?** Everything still works. If Homebrew is missing
+or owned by another account, the script detects it and builds XcodeGen into
+`~/.local` instead. You can force that with:
+
+```bash
+bash scripts/mac-setup.sh --local-xcodegen
+```
 
 The script is safe to re-run as many times as you like.
 
@@ -188,6 +197,8 @@ From Terminal (this is exactly what CI runs):
 | `xcodebuild: error: The directory ... does not contain an Xcode project` | Same as above — you have not generated it yet. |
 | `bash: ./scripts/mac-setup.sh: Permission denied` | Run `chmod +x scripts/*.sh` then try again. |
 | `xcode-select: error: tool 'xcodebuild' requires Xcode` | Only the Command Line Tools are installed. Run `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`, or just re-run the setup script — it fixes this. |
+| `/opt/homebrew/Cellar is not writable`, or `The following directories are not writable by your user` | Homebrew belongs to a different account on this Mac. You do not need it — re-run as `bash scripts/mac-setup.sh --local-xcodegen`, which builds XcodeGen into `~/.local` with no admin rights. |
+| `user... is not in the sudoers file` | You have no admin rights on this Mac. Everything here still works: use `--local-xcodegen` as above. The only step that would need admin is configuring Xcode itself, and that is already done if the script got past check 2. |
 | `brew: command not found` right after installing Homebrew | Homebrew printed two "Next steps" commands at the end of its install. Run them, or close and reopen Terminal. |
 | `Signing for "ProjectPlate" requires a development team` | Your destination is set to a real device. Change the destination dropdown to an **iPhone simulator**. |
 | `error: unable to find a destination matching the provided destination specifier` | No simulator installed. Xcode ▸ Settings ▸ Components ▸ iOS ▸ Get. |
