@@ -184,9 +184,17 @@ If you only have **Xcode 14.2** (iOS 16.2 SDK), use the separate legacy project:
 The legacy scheme builds the **main iPhone app only** (no Watch, Widget, or unit tests). Data is stored in JSON files under Application Support instead of SwiftData. All core diary flows work; Live Activity, Widget, and Watch extensions require the full Xcode 16 build.
 
 ```bash
+brew install xcodegen
 ./scripts/bootstrap-ios-legacy.sh   # generates ProjectPlateLegacy.xcodeproj
 open ProjectPlateLegacy.xcodeproj
-# Select scheme: ProjectPlateLegacy → Run
+```
+
+Select the **ProjectPlateLegacy** scheme → iPhone Simulator → Run.
+
+Verify from Terminal (optional):
+
+```bash
+./scripts/ci-ios-legacy.sh
 ```
 
 See `project-legacy.yml` for deployment target (iOS 16.0) and compile flags (`LEGACY_BUILD`).
