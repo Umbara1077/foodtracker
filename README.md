@@ -14,6 +14,8 @@
 | **Product thesis** | Photograph a meal → honest nutrition estimate → one-tap corrections → log in seconds |
 | **CI** | GitHub Actions: `iOS` (macOS) + `Backend` (Node/Worker tests) |
 
+> **On Xcode 14.2?** Run `./scripts/bootstrap-ios-legacy.sh`, open **ProjectPlateLegacy.xcodeproj**, scheme **ProjectPlateLegacy**. Full widget / Watch / iCloud build needs Xcode 16 (`./scripts/bootstrap-ios.sh`).
+
 ### Source-of-truth docs
 
 | Doc | Purpose |
@@ -114,9 +116,10 @@ foodtracker/
 ├── backend/                      # Cloudflare Worker meal-analyze API (OpenAI keys server-side)
 ├── docs/                         # Spec + architecture + shipping checklists
 ├── scripts/
-│   ├── bootstrap-ios.sh          # xcodegen generate
-│   ├── ci-ios.sh                 # generate + xcodebuild test (macOS)
-│   └── release-checklist.sh      # Pre-archive sanity checks
+│   ├── bootstrap-ios.sh          # xcodegen generate (full iOS 18 build)
+│   ├── bootstrap-ios-legacy.sh   # xcodegen generate (Xcode 14.2 / iOS 16)
+│   ├── ci-ios.sh                 # generate + xcodebuild test (macOS, full build)
+│   └── ci-ios-legacy.sh          # generate + xcodebuild (legacy, no tests)
 ├── project.yml                   # XcodeGen project definition (source of truth for Xcode)
 ├── .github/workflows/
 │   ├── ios.yml                   # Build & Test (iOS) on macOS runners

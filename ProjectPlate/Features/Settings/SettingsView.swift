@@ -18,7 +18,9 @@ struct SettingsView: View {
     @State private var entitlementIsPro = false
     @State private var freeScansRemaining: Int?
     @State private var subscriptionMessage: String?
+#if !LEGACY_BUILD
     @AppStorage(TodayLiveActivityPolicy.preferenceKey) private var liveActivityEnabled = true
+#endif
     @AppStorage(CloudSyncPreference.enabledKey) private var iCloudSyncEnabled = false
     @AppStorage(AdaptiveGoalPreference.enabledKey) private var adaptiveGoalsEnabled = true
     @AppStorage(CoachInsightPreference.enabledKey) private var coachInsightsEnabled = true
@@ -113,6 +115,7 @@ struct SettingsView: View {
                             .foregroundStyle(Color.textSecondary)
                     }
                 }
+#if !LEGACY_BUILD
                 Section("iCloud") {
                     Toggle("Sync diary across devices", isOn: $iCloudSyncEnabled)
                         .onChangeCompat(of: iCloudSyncEnabled) { enabled in
@@ -135,6 +138,7 @@ struct SettingsView: View {
                             .foregroundStyle(Color.textSecondary)
                     }
                 }
+#endif
                 Section("Cloud AI") {
                     LabeledContent("Mode", value: cloudAIModeLabel)
                     if let remaining = environment.scanQuota.remaining,
@@ -230,6 +234,13 @@ struct SettingsView: View {
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                 }
+#if LEGACY_BUILD
+                Section("Xcode 14 build") {
+                    Text("This build stores your diary locally on this iPhone (JSON files). iCloud sync, Home Screen widget, Apple Watch, and Live Activity need the full Xcode 16 project (`./scripts/bootstrap-ios.sh`).")
+                        .font(Typography.caption)
+                        .foregroundStyle(Color.textSecondary)
+                }
+#else
                 Section("Lock Screen") {
                     Toggle("Show today’s calories", isOn: $liveActivityEnabled)
                         .accessibilityHint("Updates a Live Activity on the Lock Screen and Dynamic Island while you log meals")
@@ -248,6 +259,7 @@ struct SettingsView: View {
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                 }
+#endif
                 Section("Family") {
                     NavigationLink {
                         HouseholdSettingsView()
@@ -535,7 +547,9 @@ struct SettingsView: View {
         do {
             try await environment.dataMaintenance.deleteAllLocalData(purgeCloudCopies: true)
             environment.analytics.track(.dataDeleted)
+#if !LEGACY_BUILD
             await TodayLiveActivityController.endAll()
+#endif
             refreshLastSyncLabel()
             privacyMessage = iCloudSyncEnabled
                 ? "Data deleted on this iPhone and marked deleted in iCloud when sync was on."

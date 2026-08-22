@@ -97,9 +97,13 @@ final class TodayViewModel: ObservableObject {
             }
             // Widget / Live Activity always reflect the real today, never a browsed past day.
             if TodayDayNavigation.isViewingToday(day, now: now, calendar: calendar) {
+#if LEGACY_BUILD
+                // Home Screen widget and Live Activity require the full Xcode 16 build.
+#else
                 let snapshot = WidgetSnapshotStore.make(target: target, totals: totals)
                 WidgetSnapshotStore.save(snapshot)
                 TodayLiveActivityController.sync(with: snapshot, calendar: calendar)
+#endif
             }
         } catch {
             errorMessage = "Could not load this day’s diary."

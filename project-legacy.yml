@@ -14,7 +14,13 @@ settings:
     MARKETING_VERSION: "1.5.10"
     CURRENT_PROJECT_VERSION: "45"
     SWIFT_STRICT_CONCURRENCY: minimal
-    SWIFT_ACTIVE_COMPILATION_CONDITIONS: LEGACY_BUILD
+configs:
+  Debug:
+    settings:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG LEGACY_BUILD
+  Release:
+    settings:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: LEGACY_BUILD
 targets:
   ProjectPlate:
     type: application
