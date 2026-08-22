@@ -9,12 +9,10 @@
 | **Canonical branch** | `main` only — do **not** open stacked phase PRs |
 | **Marketing version** | **1.5.10** |
 | **Build** | **45** |
-| **Platform** | iOS 18+ / watchOS 11+ · Swift 5.10 · SwiftUI · SwiftData (see **Xcode 14.2 legacy** below) |
+| **Platform** | iOS 18+ / watchOS 11+ · Swift 5.10 · SwiftUI · SwiftData |
 | **Bundle ID** | `com.projectplate.app` (+ `.widget` / `.watchkitapp`) |
 | **Product thesis** | Photograph a meal → honest nutrition estimate → one-tap corrections → log in seconds |
 | **CI** | GitHub Actions: `iOS` (macOS) + `Backend` (Node/Worker tests) |
-
-> **On Xcode 14.2?** Run `./scripts/bootstrap-ios-legacy.sh`, open **ProjectPlateLegacy.xcodeproj**, scheme **ProjectPlateLegacy**. Full widget / Watch / iCloud build needs Xcode 16 (`./scripts/bootstrap-ios.sh`).
 
 ### Source-of-truth docs
 
@@ -116,10 +114,9 @@ foodtracker/
 ├── backend/                      # Cloudflare Worker meal-analyze API (OpenAI keys server-side)
 ├── docs/                         # Spec + architecture + shipping checklists
 ├── scripts/
-│   ├── bootstrap-ios.sh          # xcodegen generate (full iOS 18 build)
-│   ├── bootstrap-ios-legacy.sh   # xcodegen generate (Xcode 14.2 / iOS 16)
-│   ├── ci-ios.sh                 # generate + xcodebuild test (macOS, full build)
-│   └── ci-ios-legacy.sh          # generate + xcodebuild (legacy, no tests)
+│   ├── bootstrap-ios.sh          # xcodegen generate
+│   ├── ci-ios.sh                 # generate + xcodebuild test (macOS)
+│   └── release-checklist.sh      # Pre-archive sanity checks
 ├── project.yml                   # XcodeGen project definition (source of truth for Xcode)
 ├── .github/workflows/
 │   ├── ios.yml                   # Build & Test (iOS) on macOS runners
@@ -167,37 +164,11 @@ Meals are grouped by the **user’s local calendar**, not UTC midnight. Timestam
 
 ## 5. Requirements
 
-### macOS (iOS app — full build)
+### macOS (iOS app)
 
 - macOS with **Xcode 16+** (iOS 18 / watchOS 11 SDK)
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
 - Apple Development Team (for device / TestFlight / Archive — leave empty for Simulator CI)
-
-### macOS (Xcode 14.2 legacy build)
-
-If you only have **Xcode 14.2** (iOS 16.2 SDK), use the separate legacy project:
-
-- **macOS 13** (Ventura) with **Xcode 14.2**
-- XcodeGen (same install as above)
-- iPhone running **iOS 16+** or Simulator on iOS 16.x
-
-The legacy scheme builds the **main iPhone app only** (no Watch, Widget, or unit tests). Data is stored in JSON files under Application Support instead of SwiftData. All core diary flows work; Live Activity, Widget, and Watch extensions require the full Xcode 16 build.
-
-```bash
-brew install xcodegen
-./scripts/bootstrap-ios-legacy.sh   # generates ProjectPlateLegacy.xcodeproj
-open ProjectPlateLegacy.xcodeproj
-```
-
-Select the **ProjectPlateLegacy** scheme → iPhone Simulator → Run.
-
-Verify from Terminal (optional):
-
-```bash
-./scripts/ci-ios-legacy.sh
-```
-
-See `project-legacy.yml` for deployment target (iOS 16.0) and compile flags (`LEGACY_BUILD`).
 
 ### Optional backend
 
@@ -221,6 +192,24 @@ open ProjectPlate.xcodeproj
 ```
 
 Select the **ProjectPlate** scheme → iPhone Simulator → Run.
+
+The full app includes **SwiftData**, **Home Screen widget**, **Live Activity** (Lock Screen / Dynamic Island), **Apple Watch** glance, **iCloud sync**, and all Phase 0–45 features.
+
+### Cloud Mac (MacStadium, MacinCloud, etc.)
+
+```bash
+git clone https://github.com/Umbara1077/foodtracker.git && cd foodtracker
+brew install xcodegen
+./scripts/bootstrap-ios.sh
+open ProjectPlate.xcodeproj
+```
+
+1. Scheme: **ProjectPlate** (not a legacy target — there isn’t one)
+2. Simulator: **iPhone 16** (or any iOS 18 sim)
+3. Run — onboarding → Today → scan / quick add
+4. Enable **Lock Screen Live Activity** and **iCloud sync** under Settings after onboarding
+
+For Archive / TestFlight, set your **Development Team** in Signing & Capabilities on the `ProjectPlate`, `ProjectPlateWidget`, and `ProjectPlateWatch` targets.
 
 ### CI-equivalent local verification
 
@@ -521,8 +510,7 @@ Checklists: [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md) · [`docs/APP_STORE_SUBMI
 - **Legal URLs** default empty → placeholders; ASC still needs real public Privacy Policy URL.  
 - **IAP / signing / CloudKit** require Apple Developer / ASC setup outside this repo.  
 - **Managed AI** needs a deployed Worker (or custom gateway); otherwise scans use mock/on-device paths.  
-- **Linux cannot compile** the iOS app — trust macOS GitHub Actions `iOS` workflow (full build) or your Mac for legacy builds.
-- **Xcode 14.2** uses the legacy target; CI still validates the full iOS 18 build on Xcode 16.  
+- **Linux cannot compile** the iOS app — trust macOS CI.  
 - Estimates are **not medical advice**; UI/copy must keep that clear in listing and screenshots.  
 - Spec mentions future Apple on-device multimodal APIs — gated; not required for current builds.  
 

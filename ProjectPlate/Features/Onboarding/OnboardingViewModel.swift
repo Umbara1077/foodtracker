@@ -1,5 +1,5 @@
-import Combine
 import Foundation
+import Observation
 
 enum OnboardingStep: Int, CaseIterable, Identifiable {
     case welcome
@@ -26,27 +26,28 @@ enum OnboardingStep: Int, CaseIterable, Identifiable {
     }
 }
 
+@Observable
 @MainActor
-final class OnboardingViewModel: ObservableObject {
+final class OnboardingViewModel {
     private let profileRepository: any ProfileRepository
     private let targetRepository: any TargetRepository
     private let analytics: any AnalyticsClient
     private let onFinished: () -> Void
 
-    @Published var step: OnboardingStep = .welcome
-    @Published var draft = UserProfile.blank
-    @Published var pace: PacePreference = .moderate
-    @Published var activity: ActivityLevel = .lightlyActive
-    @Published var heightFeet: Int = 5
-    @Published var heightInches: Double = 8
-    @Published var heightCmText: String = "170"
-    @Published var weightText: String = "70"
-    @Published var targetWeightText: String = ""
-    @Published var ageText: String = "30"
-    @Published var manualCaloriesText: String = "2000"
-    @Published var editedCaloriesText: String = ""
-    @Published var calculated: TargetCalculator.Output?
-    @Published var errorMessage: String?
+    var step: OnboardingStep = .welcome
+    var draft = UserProfile.blank
+    var pace: PacePreference = .moderate
+    var activity: ActivityLevel = .lightlyActive
+    var heightFeet: Int = 5
+    var heightInches: Double = 8
+    var heightCmText: String = "170"
+    var weightText: String = "70"
+    var targetWeightText: String = ""
+    var ageText: String = "30"
+    var manualCaloriesText: String = "2000"
+    var editedCaloriesText: String = ""
+    var calculated: TargetCalculator.Output?
+    var errorMessage: String?
 
     init(
         profileRepository: any ProfileRepository,
@@ -140,7 +141,7 @@ final class OnboardingViewModel: ObservableObject {
         let age = draft.age ?? 30
         let sex = draft.formulaSex ?? .skipManual
 
-        @Published var manual: Int?
+        var manual: Int?
         if draft.goalType == .trackOnly || sex == .skipManual {
             manual = Int(manualCaloriesText) ?? 2000
         }

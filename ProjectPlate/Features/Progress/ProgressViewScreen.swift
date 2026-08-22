@@ -2,29 +2,30 @@ import Charts
 import SwiftUI
 
 @MainActor
-final class ProgressViewModel: ObservableObject {
+@Observable
+final class ProgressViewModel {
     private let weightRepository: any WeightRepository
     private let mealRepository: any MealRepository
     private let targetRepository: any TargetRepository
     private let profileRepository: any ProfileRepository
     private let householdStore: any HouseholdStore
 
-    @Published var range: ProgressRange = .days30
-    @Published var entries: [WeightEntry] = []
-    @Published var latest: WeightEntry?
-    @Published var consistency: ConsistencyStats = .zero
-    @Published var weeklyDigest: WeeklyDigest = .empty
-    @Published var streak: TrackingStreak = .zero
-    @Published var adaptiveSuggestion: AdaptiveGoalSuggestion?
-    @Published var coachInsights: [CoachInsight] = []
-    @Published var weeklyChallenges: [WeeklyChallenge] = []
-    @Published var household: Household?
-    @Published var unitSystem: UnitSystem = .metric
-    @Published var isLoading = true
-    @Published var errorMessage: String?
-    @Published var adaptiveMessage: String?
-    @Published var showAddWeight = false
-    @Published var isApplyingAdaptive = false
+    var range: ProgressRange = .days30
+    var entries: [WeightEntry] = []
+    var latest: WeightEntry?
+    var consistency: ConsistencyStats = .zero
+    var weeklyDigest: WeeklyDigest = .empty
+    var streak: TrackingStreak = .zero
+    var adaptiveSuggestion: AdaptiveGoalSuggestion?
+    var coachInsights: [CoachInsight] = []
+    var weeklyChallenges: [WeeklyChallenge] = []
+    var household: Household?
+    var unitSystem: UnitSystem = .metric
+    var isLoading = true
+    var errorMessage: String?
+    var adaptiveMessage: String?
+    var showAddWeight = false
+    var isApplyingAdaptive = false
     private var goalType: GoalType = .maintainWeight
 
     init(
@@ -225,7 +226,7 @@ struct ProgressViewScreen: View {
 }
 
 private struct ProgressContent: View {
-    @ObservedObject var viewModel: ProgressViewModel
+    @Bindable var viewModel: ProgressViewModel
     @Environment(\.accessibilityReduceMotion) private var accessibilityReduceMotion
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
@@ -268,7 +269,7 @@ private struct ProgressContent: View {
                 Task { await viewModel.load() }
             }
         }
-        .onChangeCompat(of: viewModel.range) { _ in
+        .onChange(of: viewModel.range) { _, _ in
             Task { await viewModel.load() }
         }
     }
@@ -643,7 +644,7 @@ private struct ProgressContent: View {
                 .accessibilityHidden(accessibilityReduceMotion)
                 .opacity(accessibilityReduceMotion ? 0.85 : 1)
             } else {
-                PlateEmptyState(
+                ContentUnavailableView(
                     "No weight trend yet",
                     systemImage: "chart.line.uptrend.xyaxis",
                     description: Text("Log your weight to see a \(viewModel.range.title) chart.")
@@ -700,8 +701,8 @@ struct AddWeightSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appEnvironment) private var environment
 
-    @Published var unitSystem: UnitSystem
-    @Published var onSaved: (() -> Void)?
+    var unitSystem: UnitSystem
+    var onSaved: (() -> Void)?
 
     @State private var weightText = ""
     @State private var note = ""
@@ -765,9 +766,7 @@ struct AddWeightSheet: View {
     }
 }
 
-#if !LEGACY_BUILD
 #Preview {
     ProgressViewScreen()
         .environment(\.appEnvironment, .preview)
 }
-#endif

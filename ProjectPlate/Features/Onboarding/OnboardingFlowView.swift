@@ -1,13 +1,15 @@
 import SwiftUI
 
 struct OnboardingFlowView: View {
-    @StateObject private var viewModel: OnboardingViewModel
+    @State private var viewModel: OnboardingViewModel
 
     init(viewModel: OnboardingViewModel) {
-        _viewModel = StateObject(wrappedValue: viewModel)
+        _viewModel = State(initialValue: viewModel)
     }
 
     var body: some View {
+        @Bindable var viewModel = viewModel
+
         VStack(spacing: 0) {
             if viewModel.step.showsProgressBar {
                 ProgressView(value: viewModel.step.progress)

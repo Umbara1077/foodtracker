@@ -46,10 +46,8 @@ struct TodayLoadingSkeleton: View {
     }
 }
 
-#if !LEGACY_BUILD
 #Preview {
     TodayLoadingSkeleton()
         .padding()
         .background(Color.backgroundPrimary)
 }
-#endif

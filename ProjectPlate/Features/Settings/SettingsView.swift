@@ -18,9 +18,7 @@ struct SettingsView: View {
     @State private var entitlementIsPro = false
     @State private var freeScansRemaining: Int?
     @State private var subscriptionMessage: String?
-#if !LEGACY_BUILD
     @AppStorage(TodayLiveActivityPolicy.preferenceKey) private var liveActivityEnabled = true
-#endif
     @AppStorage(CloudSyncPreference.enabledKey) private var iCloudSyncEnabled = false
     @AppStorage(AdaptiveGoalPreference.enabledKey) private var adaptiveGoalsEnabled = true
     @AppStorage(CoachInsightPreference.enabledKey) private var coachInsightsEnabled = true
@@ -93,7 +91,7 @@ struct SettingsView: View {
                 Section("Apple Health") {
                     Toggle("Sync meals & weight", isOn: $healthEnabled)
                         .disabled(!environment.healthSync.isDataAvailable || isWorkingHealth)
-                        .onChangeCompat(of: healthEnabled) { enabled in
+                        .onChange(of: healthEnabled) { _, enabled in
                             Task { await setHealthEnabled(enabled) }
                         }
                     Text(healthStatusText)
@@ -115,10 +113,9 @@ struct SettingsView: View {
                             .foregroundStyle(Color.textSecondary)
                     }
                 }
-#if !LEGACY_BUILD
                 Section("iCloud") {
                     Toggle("Sync diary across devices", isOn: $iCloudSyncEnabled)
-                        .onChangeCompat(of: iCloudSyncEnabled) { enabled in
+                        .onChange(of: iCloudSyncEnabled) { _, enabled in
                             CloudSyncPreference.setEnabled(enabled)
                             if enabled {
                                 Task { await runCloudSync(triggeredByToggle: true) }
@@ -138,7 +135,6 @@ struct SettingsView: View {
                             .foregroundStyle(Color.textSecondary)
                     }
                 }
-#endif
                 Section("Cloud AI") {
                     LabeledContent("Mode", value: cloudAIModeLabel)
                     if let remaining = environment.scanQuota.remaining,
@@ -164,7 +160,7 @@ struct SettingsView: View {
                 }
                 Section("Reminders") {
                     Toggle("Meal logging reminders", isOn: $mealRemindersEnabled)
-                        .onChangeCompat(of: mealRemindersEnabled) { enabled in
+                        .onChange(of: mealRemindersEnabled) { _, enabled in
                             MealReminderPreference.setEnabled(enabled)
                             Task { await MealReminderScheduler.refresh() }
                         }
@@ -189,7 +185,7 @@ struct SettingsView: View {
                 }
                 Section("Goals") {
                     Toggle("Suggest adaptive calorie tweaks", isOn: $adaptiveGoalsEnabled)
-                        .onChangeCompat(of: adaptiveGoalsEnabled) { enabled in
+                        .onChange(of: adaptiveGoalsEnabled) { _, enabled in
                             AdaptiveGoalPreference.setEnabled(enabled)
                             if enabled {
                                 AdaptiveGoalPreference.clearDismissal()
@@ -199,52 +195,45 @@ struct SettingsView: View {
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                     Toggle("Show coach tips", isOn: $coachInsightsEnabled)
-                        .onChangeCompat(of: coachInsightsEnabled) { enabled in
+                        .onChange(of: coachInsightsEnabled) { _, enabled in
                             CoachInsightPreference.setEnabled(enabled)
                         }
                     Text("Supportive local tips from your recent logging. Not medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                     Toggle("Show weekly challenges", isOn: $challengesEnabled)
-                        .onChangeCompat(of: challengesEnabled) { enabled in
+                        .onChange(of: challengesEnabled) { _, enabled in
                             ChallengePreference.setEnabled(enabled)
                         }
                     Text("Optional tracking goals on Progress. Pausing never costs a streak.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                     Toggle("Show meal planning", isOn: $mealPlanEnabled)
-                        .onChangeCompat(of: mealPlanEnabled) { enabled in
+                        .onChange(of: mealPlanEnabled) { _, enabled in
                             MealPlanPreference.setEnabled(enabled)
                         }
                     Text("Plan upcoming meals on Today. Local only — not a grocery or shopping list.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                     Toggle("Show family plan", isOn: $householdEnabled)
-                        .onChangeCompat(of: householdEnabled) { enabled in
+                        .onChange(of: householdEnabled) { _, enabled in
                             HouseholdPreference.setEnabled(enabled)
                         }
                     Text("Local household roster on Progress. Cloud sharing is not on yet.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                     Toggle("Show fiber, sugar & sodium", isOn: $micronutrientsEnabled)
-                        .onChangeCompat(of: micronutrientsEnabled) { enabled in
+                        .onChange(of: micronutrientsEnabled) { _, enabled in
                             MicronutrientPreference.setEnabled(enabled)
                         }
                     Text("Soft daily targets on Today and weekly averages on Progress. Not medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                 }
-#if LEGACY_BUILD
-                Section("Xcode 14 build") {
-                    Text("This build stores your diary locally on this iPhone (JSON files). iCloud sync, Home Screen widget, Apple Watch, and Live Activity need the full Xcode 16 project (`./scripts/bootstrap-ios.sh`).")
-                        .font(Typography.caption)
-                        .foregroundStyle(Color.textSecondary)
-                }
-#else
                 Section("Lock Screen") {
                     Toggle("Show today’s calories", isOn: $liveActivityEnabled)
                         .accessibilityHint("Updates a Live Activity on the Lock Screen and Dynamic Island while you log meals")
-                        .onChangeCompat(of: liveActivityEnabled) { enabled in
+                        .onChange(of: liveActivityEnabled) { _, enabled in
                             TodayLiveActivityPolicy.setEnabled(enabled)
                             if !enabled {
                                 Task { await TodayLiveActivityController.endAll() }
@@ -259,7 +248,6 @@ struct SettingsView: View {
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                 }
-#endif
                 Section("Family") {
                     NavigationLink {
                         HouseholdSettingsView()
@@ -547,9 +535,7 @@ struct SettingsView: View {
         do {
             try await environment.dataMaintenance.deleteAllLocalData(purgeCloudCopies: true)
             environment.analytics.track(.dataDeleted)
-#if !LEGACY_BUILD
             await TodayLiveActivityController.endAll()
-#endif
             refreshLastSyncLabel()
             privacyMessage = iCloudSyncEnabled
                 ? "Data deleted on this iPhone and marked deleted in iCloud when sync was on."
@@ -634,6 +620,4 @@ struct ExportDocument: FileDocument {
     }
 }
 
-#if !LEGACY_BUILD
 #Preview("Settings") { SettingsView().environment(\.appEnvironment, .preview) }
-#endif

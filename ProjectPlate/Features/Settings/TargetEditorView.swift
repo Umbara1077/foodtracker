@@ -28,7 +28,7 @@ struct TargetEditorView: View {
             Section("Daily calories") {
                 TextField("Calories", text: $caloriesText)
                     .keyboardType(.numberPad)
-                    .onChangeCompat(of: caloriesText) { _ in
+                    .onChange(of: caloriesText) { _, _ in
                         if redistributeMacros { applyMacroPreference() }
                     }
             }
@@ -39,11 +39,11 @@ struct TargetEditorView: View {
                         Text(pref.title).tag(pref)
                     }
                 }
-                .onChangeCompat(of: macroPreference) { _ in
+                .onChange(of: macroPreference) { _, _ in
                     if redistributeMacros { applyMacroPreference() }
                 }
                 Toggle("Recalculate macros from calories", isOn: $redistributeMacros)
-                    .onChangeCompat(of: redistributeMacros) { enabled in
+                    .onChange(of: redistributeMacros) { _, enabled in
                         if enabled { applyMacroPreference() }
                     }
                 TextField("Protein (g)", text: $proteinText)
@@ -165,11 +165,9 @@ struct TargetEditorView: View {
     }
 }
 
-#if !LEGACY_BUILD
 #Preview {
     NavigationStack {
         TargetEditorView()
             .environment(\.appEnvironment, .preview)
     }
-#endif
 }

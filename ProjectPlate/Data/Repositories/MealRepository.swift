@@ -1,5 +1,4 @@
 import Foundation
-#if !LEGACY_BUILD
 import SwiftData
 
 @ModelActor
@@ -81,7 +80,6 @@ actor SwiftDataMealRepository: MealRepository {
         return result
     }
 }
-#endif
 
 actor InMemoryMealRepository: MealRepository {
     private var meals: [MealRecord]

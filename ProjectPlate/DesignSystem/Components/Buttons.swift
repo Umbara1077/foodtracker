@@ -40,13 +40,11 @@ struct SecondaryButton: View {
     }
 }
 
-#if !LEGACY_BUILD
 #Preview("Buttons") {
     VStack(spacing: Spacing.space16) {
         PrimaryButton(title: "Continue", action: {})
         SecondaryButton(title: "Not now", action: {})
     }
-#endif
     .padding(Spacing.screenHorizontal)
     .background(Color.backgroundPrimary)
 }

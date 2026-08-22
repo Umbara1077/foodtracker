@@ -1,7 +1,8 @@
 import SwiftUI
 
 @MainActor
-final class TodayViewModel: ObservableObject {
+@Observable
+final class TodayViewModel {
     private let mealRepository: any MealRepository
     private let targetRepository: any TargetRepository
     private let diary: DiaryService
@@ -9,27 +10,27 @@ final class TodayViewModel: ObservableObject {
     private let mealPlan: any MealPlanRepository
     private let analytics: any AnalyticsClient
 
-    @Published var day: Date = .now
-    @Published var target: NutritionTargetSnapshot?
-    @Published var meals: [MealRecord] = []
-    @Published var frequentMeals: [SavedMealTemplate] = []
-    @Published var plannedMeals: [PlannedMeal] = []
-    @Published var streak: TrackingStreak = .zero
-    @Published var totals: DayNutritionTotals = .zero
-    @Published var isLoading = true
-    @Published var errorMessage: String?
-    @Published var showQuickAdd = false
-    @Published var showFoodSearch = false
-    @Published var showBarcode = false
-    @Published var showLabelScan = false
-    @Published var showRecipeImport = false
-    @Published var showRecipeBuilder = false
-    @Published var showMealPlan = false
-    @Published var previousDayMealCount = 0
-    @Published var copyDayMessage: String?
-    @Published var showDayPicker = false
-    @Published var undoMeal: MealRecord?
-    @Published var undoBannerMessage: String?
+    var day: Date = .now
+    var target: NutritionTargetSnapshot?
+    var meals: [MealRecord] = []
+    var frequentMeals: [SavedMealTemplate] = []
+    var plannedMeals: [PlannedMeal] = []
+    var streak: TrackingStreak = .zero
+    var totals: DayNutritionTotals = .zero
+    var isLoading = true
+    var errorMessage: String?
+    var showQuickAdd = false
+    var showFoodSearch = false
+    var showBarcode = false
+    var showLabelScan = false
+    var showRecipeImport = false
+    var showRecipeBuilder = false
+    var showMealPlan = false
+    var previousDayMealCount = 0
+    var copyDayMessage: String?
+    var showDayPicker = false
+    var undoMeal: MealRecord?
+    var undoBannerMessage: String?
 
     init(
         mealRepository: any MealRepository,
@@ -97,13 +98,9 @@ final class TodayViewModel: ObservableObject {
             }
             // Widget / Live Activity always reflect the real today, never a browsed past day.
             if TodayDayNavigation.isViewingToday(day, now: now, calendar: calendar) {
-#if LEGACY_BUILD
-                // Home Screen widget and Live Activity require the full Xcode 16 build.
-#else
                 let snapshot = WidgetSnapshotStore.make(target: target, totals: totals)
                 WidgetSnapshotStore.save(snapshot)
                 TodayLiveActivityController.sync(with: snapshot, calendar: calendar)
-#endif
             }
         } catch {
             errorMessage = "Could not load this day’s diary."
@@ -198,7 +195,7 @@ final class TodayViewModel: ObservableObject {
     }
 
     func duplicateMeal(_ meal: MealRecord) async {
-        @Published var copy = meal
+        var copy = meal
         copy.id = UUID()
         copy.eatenAt = .now
         copy.inputMethod = .duplicated
@@ -314,7 +311,7 @@ struct TodayView: View {
 }
 
 private struct TodayContent: View {
-    @ObservedObject var viewModel: TodayViewModel
+    @Bindable var viewModel: TodayViewModel
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.appEnvironment) private var environment
     @Environment(\.appRouter) private var appRouter
@@ -541,7 +538,7 @@ private struct TodayContent: View {
                 micronutrientsCard
             }
         } else {
-            PlateEmptyState(
+            ContentUnavailableView(
                 "No target yet",
                 systemImage: "target",
                 description: Text("Finish onboarding to set your daily calories and macros.")
@@ -999,9 +996,7 @@ private struct TodayDayPickerSheet: View {
     }
 }
 
-#if !LEGACY_BUILD
 #Preview {
     TodayView()
         .environment(\.appEnvironment, .preview)
 }
-#endif

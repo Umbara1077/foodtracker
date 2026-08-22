@@ -3,7 +3,8 @@ import SwiftUI
 import UIKit
 
 @MainActor
-final class ScannerViewModel: ObservableObject {
+@Observable
+final class ScannerViewModel {
     enum Phase: Equatable {
         case camera
         case retake(UIImage)
@@ -17,16 +18,16 @@ final class ScannerViewModel: ObservableObject {
     private let analytics: any AnalyticsClient
     private let subscriptions: (any SubscriptionServicing)?
     private let aiScanQuota: LocalAIScanQuotaStore?
-    @Published var onQuotaExhausted: (() -> Void)?
+    var onQuotaExhausted: (() -> Void)?
 
-    @Published var phase: Phase = .camera
-    @Published var authorization: CameraAuthorizationStatus = .notDetermined
-    @Published var cameraController = CameraSessionController()
-    @Published var isFlashOn = false
-    @Published var pickerItem: PhotosPickerItem?
-    @Published var analyzeImmediately = false
-    @Published var slowAnalysisHint: String?
-    @Published var showManualAdd = false
+    var phase: Phase = .camera
+    var authorization: CameraAuthorizationStatus = .notDetermined
+    var cameraController = CameraSessionController()
+    var isFlashOn = false
+    var pickerItem: PhotosPickerItem?
+    var analyzeImmediately = false
+    var slowAnalysisHint: String?
+    var showManualAdd = false
     private var analysisStartedAt: Date?
 
     init(
@@ -274,7 +275,7 @@ struct ScannerFlowView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appEnvironment) private var environment
     @State private var viewModel: ScannerViewModel
-    @Published var onSaved: (() -> Void)?
+    var onSaved: (() -> Void)?
 
     init(
         analysisService: (any MealAnalysisServing)? = nil,
@@ -311,7 +312,7 @@ struct ScannerFlowView: View {
             // Prefer live environment analytics when presented from the app.
             await viewModel.onAppear()
         }
-        .onChangeCompat(of: viewModel.pickerItem) { _ in
+        .onChange(of: viewModel.pickerItem) { _, _ in
             Task { await viewModel.importPickerItem() }
         }
         .statusBarHidden(true)

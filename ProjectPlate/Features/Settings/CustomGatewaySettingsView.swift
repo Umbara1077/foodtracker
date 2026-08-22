@@ -131,11 +131,9 @@ struct CustomGatewaySettingsView: View {
     }
 }
 
-#if !LEGACY_BUILD
 #Preview {
     NavigationStack {
         CustomGatewaySettingsView()
             .environment(\.appEnvironment, .preview)
     }
-#endif
 }

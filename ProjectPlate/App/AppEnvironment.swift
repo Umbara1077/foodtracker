@@ -1,8 +1,6 @@
 import Foundation
-import SwiftUI
-#if !LEGACY_BUILD
 import SwiftData
-#endif
+import SwiftUI
 
 /// Composition root for feature ViewModels. Concrete services are swapped for mocks in previews/tests.
 struct AppEnvironment: Sendable {
@@ -28,70 +26,6 @@ struct AppEnvironment: Sendable {
     var analytics: any AnalyticsClient
     var crashReporter: any CrashReporting
 
-#if LEGACY_BUILD
-    static func live() -> AppEnvironment {
-        let nutrition = LocalNutritionRepository()
-        let backend = BackendConfiguration.load()
-        let quota = ScanQuotaStore()
-        let vision = makeVisionProvider(quota: quota)
-        let meals = FileMealRepository()
-        let profiles = FileProfileRepository()
-        let weights = FileWeightRepository()
-        let targets = FileTargetRepository()
-        let health: any HealthSyncClient = HealthKitSyncClient()
-        let savedMeals = FileSavedMealRepository()
-        let mealPlan = UserDefaultsMealPlanRepository()
-        let diary = DiaryService(
-            mealRepository: meals,
-            weightRepository: weights,
-            profileRepository: profiles,
-            health: health,
-            savedMeals: savedMeals
-        )
-        let crashReporter = LoggingCrashReporter()
-        let diarySync = DiarySyncCoordinator(
-            mealRepository: meals,
-            weightRepository: weights,
-            profileRepository: profiles,
-            targetRepository: targets,
-            savedMealRepository: savedMeals,
-            syncService: InMemorySyncService()
-        )
-        return AppEnvironment(
-            mealRepository: meals,
-            profileRepository: profiles,
-            targetRepository: targets,
-            weightRepository: weights,
-            nutritionRepository: nutrition,
-            mealAnalysisService: MealAnalysisService(
-                visionProvider: vision,
-                nutritionRepository: nutrition
-            ),
-            healthSync: health,
-            diary: diary,
-            dataMaintenance: DataMaintenanceService(
-                mealRepository: meals,
-                weightRepository: weights,
-                profileRepository: profiles,
-                targetRepository: targets,
-                savedMealRepository: savedMeals,
-                diarySync: diarySync
-            ),
-            correctionStore: LocalCorrectionFeedbackStore(),
-            savedMeals: savedMeals,
-            mealPlan: mealPlan,
-            householdStore: UserDefaultsHouseholdStore(),
-            diarySync: diarySync,
-            subscriptions: StoreKitPurchaseManager(),
-            aiScanQuota: LocalAIScanQuotaStore(dailyLimit: 3),
-            backendConfiguration: backend,
-            scanQuota: quota,
-            settings: SettingsStore(),
-            analytics: PrivacyAnalyticsClient(crashReporter: crashReporter),
-            crashReporter: crashReporter
-        )
-    }
-#else
     static func live(modelContainer: ModelContainer) -> AppEnvironment {
         let nutrition = LocalNutritionRepository()
         let backend = BackendConfiguration.load()
@@ -154,7 +88,6 @@ struct AppEnvironment: Sendable {
             crashReporter: crashReporter
         )
     }
-#endif
 
     static var preview: AppEnvironment {
         let target = NutritionTargetSnapshot(

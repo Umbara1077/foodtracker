@@ -94,14 +94,12 @@ struct ConfidencePill: View {
     }
 }
 
-#if !LEGACY_BUILD
 #Preview("Metrics") {
     VStack(spacing: Spacing.space16) {
         MetricCard(title: "Calories remaining", value: "1,042", subtitle: "1,138 eaten · 2,180 goal")
         MacroProgressView(label: "Protein", current: 82, goal: 164, unit: "g", tint: .macroProtein)
         ConfidencePill(confidence: .medium)
     }
-#endif
     .padding()
     .background(Color.backgroundPrimary)
 }

@@ -1,15 +1,17 @@
 import Foundation
+import Observation
 import SwiftUI
 
 /// Lightweight navigation coordinator for root-level presentations (scanner, onboarding).
+@Observable
 @MainActor
-final class AppRouter: ObservableObject {
-    @Published var selectedTab: RootTab = .today
-    @Published var isScannerPresented = false
-    @Published var isPaywallPresented = false
-    @Published var isConsentPresented = false
-    @Published var needsOnboarding = true
-    @Published var isBootstrapping = true
+final class AppRouter {
+    var selectedTab: RootTab = .today
+    var isScannerPresented = false
+    var isPaywallPresented = false
+    var isConsentPresented = false
+    var needsOnboarding = true
+    var isBootstrapping = true
 
     func openScanner() {
         isScannerPresented = true

@@ -2,7 +2,8 @@ import AVFoundation
 import SwiftUI
 
 @MainActor
-final class BarcodeFlowViewModel: ObservableObject {
+@Observable
+final class BarcodeFlowViewModel {
     enum Phase: Equatable {
         case scanning
         case lookingUp(String)
@@ -14,11 +15,11 @@ final class BarcodeFlowViewModel: ObservableObject {
     private let cameraAuth: any CameraAuthorizing
     private let analytics: any AnalyticsClient
 
-    @Published var phase: Phase = .scanning
-    @Published var authorization: CameraAuthorizationStatus = .notDetermined
-    @Published var capture = BarcodeCaptureController()
-    @Published var manualCode = ""
-    @Published var selectedFood: NutritionFood?
+    var phase: Phase = .scanning
+    var authorization: CameraAuthorizationStatus = .notDetermined
+    var capture = BarcodeCaptureController()
+    var manualCode = ""
+    var selectedFood: NutritionFood?
     private var lastHandledCode: String?
     private var lookupTask: Task<Void, Never>?
 
@@ -129,7 +130,7 @@ struct BarcodeFlowView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appEnvironment) private var environment
     @State private var viewModel: BarcodeFlowViewModel?
-    @Published var onSaved: (() -> Void)?
+    var onSaved: (() -> Void)?
 
     init(onSaved: (() -> Void)? = nil) {
         self.onSaved = onSaved
@@ -200,7 +201,7 @@ struct BarcodeFlowView: View {
             }
             .padding()
         case .notFound(let code):
-            PlateUnavailableView {
+            ContentUnavailableView {
                 Label("No product found", systemImage: "barcode.viewfinder")
             } description: {
                 Text("No nutrition data for \(code). Try Search foods or Quick add — we never invent values from barcode digits alone.")
@@ -209,7 +210,7 @@ struct BarcodeFlowView: View {
                 Button("Close") { dismiss() }
             }
         case .failed(let message):
-            PlateUnavailableView {
+            ContentUnavailableView {
                 Label("Lookup failed", systemImage: "exclamationmark.triangle")
             } description: {
                 Text(message)
@@ -220,7 +221,7 @@ struct BarcodeFlowView: View {
     }
 
     private func scanning(_ viewModel: BarcodeFlowViewModel) -> some View {
-        @ObservedObject var viewModel = viewModel
+        @Bindable var viewModel = viewModel
         return ZStack {
             Color.black.ignoresSafeArea()
 

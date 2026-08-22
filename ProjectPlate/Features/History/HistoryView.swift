@@ -1,24 +1,25 @@
 import SwiftUI
 
 @MainActor
-final class HistoryViewModel: ObservableObject {
+@Observable
+final class HistoryViewModel {
     private let mealRepository: any MealRepository
     private let targetRepository: any TargetRepository
     private let diary: DiaryService
     private let analytics: any AnalyticsClient
 
-    @Published var selectedDay: Date = .now
-    @Published var weekStart: Date = Calendar.current.date(byAdding: .day, value: -6, to: Calendar.current.startOfDay(for: .now)) ?? .now
-    @Published var meals: [MealRecord] = []
-    @Published var totals: DayNutritionTotals = .zero
-    @Published var target: NutritionTargetSnapshot?
-    @Published var daysWithMeals: Set<DateComponents> = []
-    @Published var isLoading = true
-    @Published var errorMessage: String?
-    @Published var showQuickAdd = false
-    @Published var undoMeal: MealRecord?
-    @Published var undoBannerMessage: String?
-    @Published var searchQuery = ""
+    var selectedDay: Date = .now
+    var weekStart: Date = Calendar.current.date(byAdding: .day, value: -6, to: Calendar.current.startOfDay(for: .now)) ?? .now
+    var meals: [MealRecord] = []
+    var totals: DayNutritionTotals = .zero
+    var target: NutritionTargetSnapshot?
+    var daysWithMeals: Set<DateComponents> = []
+    var isLoading = true
+    var errorMessage: String?
+    var showQuickAdd = false
+    var undoMeal: MealRecord?
+    var undoBannerMessage: String?
+    var searchQuery = ""
 
     init(
         mealRepository: any MealRepository,
@@ -108,7 +109,7 @@ final class HistoryViewModel: ObservableObject {
     }
 
     func duplicateToToday(_ meal: MealRecord) async {
-        @Published var copy = meal
+        var copy = meal
         copy.id = UUID()
         copy.eatenAt = .now
         copy.inputMethod = .duplicated
@@ -190,7 +191,7 @@ struct HistoryView: View {
 }
 
 private struct HistoryContent: View {
-    @ObservedObject var viewModel: HistoryViewModel
+    @Bindable var viewModel: HistoryViewModel
     @State private var correctionMeal: MealRecord?
     @State private var editingMeal: MealRecord?
 
@@ -219,7 +220,7 @@ private struct HistoryContent: View {
                         }
 
                         if viewModel.meals.isEmpty {
-                            PlateEmptyState(
+                            ContentUnavailableView(
                                 "No meals",
                                 systemImage: "calendar",
                                 description: Text("Nothing logged on this day. Use Log to today from another meal, or add from Today.")
@@ -227,7 +228,7 @@ private struct HistoryContent: View {
                             .listRowBackground(Color.clear)
                             .accessibilityLabel("No meals on this day")
                         } else if viewModel.filteredMeals.isEmpty {
-                            PlateEmptyState(
+                            ContentUnavailableView(
                                 "No matches",
                                 systemImage: "magnifyingglass",
                                 description: Text("No meals on this day match “\(viewModel.searchQuery)”.")

@@ -133,7 +133,7 @@ struct MealResultView: View {
                             in: max(5, item.gramRangeLow * 0.5)...max(item.gramRangeHigh * 1.5, item.grams + 1),
                             step: 5
                         )
-                        .onChangeCompat(of: item.grams) { newValue in
+                        .onChange(of: item.grams) { _, newValue in
                             item.nutrients = FixtureNutritionDatabase.scale(item.per100g, grams: newValue)
                             item.calorieRangeLow = FixtureNutritionDatabase.scale(item.per100g, grams: item.gramRangeLow).calories
                             item.calorieRangeHigh = FixtureNutritionDatabase.scale(item.per100g, grams: item.gramRangeHigh).calories

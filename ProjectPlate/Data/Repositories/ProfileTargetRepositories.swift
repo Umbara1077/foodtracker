@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 protocol ProfileRepository: Sendable {
     func loadProfile() async throws -> UserProfile?
@@ -10,9 +11,6 @@ protocol TargetRepository: Sendable {
     func saveTarget(_ snapshot: NutritionTargetSnapshot) async throws
     func allTargets() async throws -> [NutritionTargetSnapshot]
 }
-
-#if !LEGACY_BUILD
-import SwiftData
 
 @ModelActor
 actor SwiftDataProfileRepository: ProfileRepository {
@@ -70,7 +68,6 @@ actor SwiftDataTargetRepository: TargetRepository {
         return try modelContext.fetch(descriptor).map { $0.asDomain() }
     }
 }
-#endif
 
 /// In-memory fakes for previews and unit tests that avoid SwiftData.
 actor InMemoryProfileRepository: ProfileRepository {

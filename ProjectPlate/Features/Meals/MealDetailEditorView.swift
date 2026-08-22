@@ -182,7 +182,6 @@ extension MealInputMethod {
     }
 }
 
-#if !LEGACY_BUILD
 #Preview {
     MealDetailEditorView(
         meal: MealRecord(
@@ -194,4 +193,3 @@ extension MealInputMethod {
     )
     .environment(\.appEnvironment, .preview)
 }
-#endif

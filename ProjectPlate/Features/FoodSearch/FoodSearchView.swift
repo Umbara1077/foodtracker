@@ -1,13 +1,14 @@
 import SwiftUI
 
 @MainActor
-final class FoodSearchViewModel: ObservableObject {
+@Observable
+final class FoodSearchViewModel {
     private let nutritionRepository: any NutritionRepository
 
-    @Published var query = ""
-    @Published var results: [NutritionCandidate] = []
-    @Published var isSearching = false
-    @Published var errorMessage: String?
+    var query = ""
+    var results: [NutritionCandidate] = []
+    var isSearching = false
+    var errorMessage: String?
 
     init(nutritionRepository: any NutritionRepository) {
         self.nutritionRepository = nutritionRepository
@@ -80,13 +81,13 @@ struct FoodSearchView: View {
 
     @ViewBuilder
     private func searchContent(_ viewModel: FoodSearchViewModel) -> some View {
-        @ObservedObject var viewModel = viewModel
+        @Bindable var viewModel = viewModel
         List {
             Section {
                 TextField("Search foods", text: $viewModel.query)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                    .onChangeCompat(of: viewModel.query) { _ in
+                    .onChange(of: viewModel.query) { _, _ in
                         Task { await viewModel.search() }
                     }
             }
@@ -127,7 +128,7 @@ struct FoodSearchView: View {
                     }
                 }
             } else if viewModel.query.count >= 2 && !viewModel.isSearching {
-                PlateEmptyState(
+                ContentUnavailableView(
                     "No matches",
                     systemImage: "magnifyingglass",
                     description: Text("Try a simpler food name, like “chicken” or “rice”.")

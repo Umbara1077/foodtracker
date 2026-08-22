@@ -24,9 +24,10 @@ struct CameraPreviewView: UIViewRepresentable {
 }
 
 @MainActor
-final class CameraSessionController: NSObject, ObservableObject {
-    @Published var isRunning = false
-    @Published var errorMessage: String?
+@Observable
+final class CameraSessionController: NSObject {
+    var isRunning = false
+    var errorMessage: String?
 
     let session = AVCaptureSession()
     private let output = AVCapturePhotoOutput()
