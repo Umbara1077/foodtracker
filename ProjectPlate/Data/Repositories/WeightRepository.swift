@@ -1,4 +1,5 @@
 import Foundation
+#if !LEGACY_BUILD
 import SwiftData
 
 @ModelActor
@@ -44,6 +45,7 @@ actor SwiftDataWeightRepository: WeightRepository {
         }
     }
 }
+#endif
 
 actor InMemoryWeightRepository: WeightRepository {
     private var entries: [WeightEntry]

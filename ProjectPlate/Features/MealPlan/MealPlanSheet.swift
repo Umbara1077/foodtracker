@@ -104,7 +104,9 @@ struct MealPlanSheet: View {
     }
 }
 
+#if !LEGACY_BUILD
 #Preview {
     MealPlanSheet()
         .environment(\.appEnvironment, .preview)
 }
+#endif

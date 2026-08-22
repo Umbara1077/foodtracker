@@ -1,4 +1,5 @@
 import Foundation
+#if !LEGACY_BUILD
 import SwiftData
 
 @ModelActor
@@ -82,6 +83,7 @@ actor SwiftDataSavedMealRepository: SavedMealRepository {
         try modelContext.save()
     }
 }
+#endif
 
 actor InMemorySavedMealRepository: SavedMealRepository {
     private var templates: [SavedMealTemplate]

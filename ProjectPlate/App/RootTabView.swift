@@ -4,11 +4,9 @@ struct RootTabView: View {
     @Environment(\.appEnvironment) private var environment
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    @State private var router = AppRouter()
+    @StateObject private var router = AppRouter()
 
     var body: some View {
-        @Bindable var router = router
-
         Group {
             if router.isBootstrapping {
                 ProgressView("Loading…")
@@ -42,7 +40,7 @@ struct RootTabView: View {
                             .tabItem { Label(RootTab.settings.title, systemImage: RootTab.settings.systemImage) }
                             .tag(RootTab.settings)
                     }
-                    .modifier(PlateTabStyle(horizontalSizeClass: horizontalSizeClass))
+                    .modifier(PlateTabStyleModifier(horizontalSizeClass: horizontalSizeClass))
 
                     ScanFAB {
                         Task { await openScannerOrPaywall() }
@@ -84,7 +82,7 @@ struct RootTabView: View {
         .task {
             await bootstrap()
         }
-        .onChange(of: scenePhase) { _, phase in
+        .onChangeCompat(of: scenePhase) { _, phase in
             guard phase == .active, !router.needsOnboarding, !router.isBootstrapping else { return }
             Task { await syncDiaryInBackground() }
         }
@@ -163,18 +161,12 @@ struct RootTabView: View {
     }
 }
 
-/// Uses the sidebar-adaptable tab chrome on iPad / regular width.
-private struct PlateTabStyle: ViewModifier {
-    var horizontalSizeClass: UserInterfaceSizeClass?
-
-    func body(content: Content) -> some View {
-        if horizontalSizeClass == .regular {
-            content.tabViewStyle(.sidebarAdaptable)
-        } else {
-            content
-        }
-    }
+#if !LEGACY_BUILD
+#Preview("Root tabs") {
+    RootTabView()
+        .environment(\.appEnvironment, .preview)
 }
+#endif
 
 private struct ScanFAB: View {
     let action: () -> Void
@@ -194,9 +186,4 @@ private struct ScanFAB: View {
         .accessibilityLabel("Scan meal")
         .accessibilityHint("Opens the meal scanner")
     }
-}
-
-#Preview("Root tabs") {
-    RootTabView()
-        .environment(\.appEnvironment, .preview)
 }

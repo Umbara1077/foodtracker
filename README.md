@@ -9,7 +9,7 @@
 | **Canonical branch** | `main` only — do **not** open stacked phase PRs |
 | **Marketing version** | **1.5.10** |
 | **Build** | **45** |
-| **Platform** | iOS 18+ / watchOS 11+ · Swift 5.10 · SwiftUI · SwiftData |
+| **Platform** | iOS 18+ / watchOS 11+ · Swift 5.10 · SwiftUI · SwiftData (see **Xcode 14.2 legacy** below) |
 | **Bundle ID** | `com.projectplate.app` (+ `.widget` / `.watchkitapp`) |
 | **Product thesis** | Photograph a meal → honest nutrition estimate → one-tap corrections → log in seconds |
 | **CI** | GitHub Actions: `iOS` (macOS) + `Backend` (Node/Worker tests) |
@@ -164,11 +164,29 @@ Meals are grouped by the **user’s local calendar**, not UTC midnight. Timestam
 
 ## 5. Requirements
 
-### macOS (iOS app)
+### macOS (iOS app — full build)
 
 - macOS with **Xcode 16+** (iOS 18 / watchOS 11 SDK)
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
 - Apple Development Team (for device / TestFlight / Archive — leave empty for Simulator CI)
+
+### macOS (Xcode 14.2 legacy build)
+
+If you only have **Xcode 14.2** (iOS 16.2 SDK), use the separate legacy project:
+
+- **macOS 13** (Ventura) with **Xcode 14.2**
+- XcodeGen (same install as above)
+- iPhone running **iOS 16+** or Simulator on iOS 16.x
+
+The legacy scheme builds the **main iPhone app only** (no Watch, Widget, or unit tests). Data is stored in JSON files under Application Support instead of SwiftData. All core diary flows work; Live Activity, Widget, and Watch extensions require the full Xcode 16 build.
+
+```bash
+./scripts/bootstrap-ios-legacy.sh   # generates ProjectPlateLegacy.xcodeproj
+open ProjectPlateLegacy.xcodeproj
+# Select scheme: ProjectPlateLegacy → Run
+```
+
+See `project-legacy.yml` for deployment target (iOS 16.0) and compile flags (`LEGACY_BUILD`).
 
 ### Optional backend
 
@@ -492,7 +510,8 @@ Checklists: [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md) · [`docs/APP_STORE_SUBMI
 - **Legal URLs** default empty → placeholders; ASC still needs real public Privacy Policy URL.  
 - **IAP / signing / CloudKit** require Apple Developer / ASC setup outside this repo.  
 - **Managed AI** needs a deployed Worker (or custom gateway); otherwise scans use mock/on-device paths.  
-- **Linux cannot compile** the iOS app — trust macOS CI.  
+- **Linux cannot compile** the iOS app — trust macOS GitHub Actions `iOS` workflow (full build) or your Mac for legacy builds.
+- **Xcode 14.2** uses the legacy target; CI still validates the full iOS 18 build on Xcode 16.  
 - Estimates are **not medical advice**; UI/copy must keep that clear in listing and screenshots.  
 - Spec mentions future Apple on-device multimodal APIs — gated; not required for current builds.  
 

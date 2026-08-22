@@ -51,6 +51,8 @@ struct AcknowledgmentsView: View {
     }
 }
 
+#if !LEGACY_BUILD
 #Preview {
     NavigationStack { AcknowledgmentsView() }
+#endif
 }

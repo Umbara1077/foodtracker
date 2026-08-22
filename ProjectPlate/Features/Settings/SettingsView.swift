@@ -91,7 +91,7 @@ struct SettingsView: View {
                 Section("Apple Health") {
                     Toggle("Sync meals & weight", isOn: $healthEnabled)
                         .disabled(!environment.healthSync.isDataAvailable || isWorkingHealth)
-                        .onChange(of: healthEnabled) { _, enabled in
+                        .onChangeCompat(of: healthEnabled) { enabled in
                             Task { await setHealthEnabled(enabled) }
                         }
                     Text(healthStatusText)
@@ -115,7 +115,7 @@ struct SettingsView: View {
                 }
                 Section("iCloud") {
                     Toggle("Sync diary across devices", isOn: $iCloudSyncEnabled)
-                        .onChange(of: iCloudSyncEnabled) { _, enabled in
+                        .onChangeCompat(of: iCloudSyncEnabled) { enabled in
                             CloudSyncPreference.setEnabled(enabled)
                             if enabled {
                                 Task { await runCloudSync(triggeredByToggle: true) }
@@ -160,7 +160,7 @@ struct SettingsView: View {
                 }
                 Section("Reminders") {
                     Toggle("Meal logging reminders", isOn: $mealRemindersEnabled)
-                        .onChange(of: mealRemindersEnabled) { _, enabled in
+                        .onChangeCompat(of: mealRemindersEnabled) { enabled in
                             MealReminderPreference.setEnabled(enabled)
                             Task { await MealReminderScheduler.refresh() }
                         }
@@ -185,7 +185,7 @@ struct SettingsView: View {
                 }
                 Section("Goals") {
                     Toggle("Suggest adaptive calorie tweaks", isOn: $adaptiveGoalsEnabled)
-                        .onChange(of: adaptiveGoalsEnabled) { _, enabled in
+                        .onChangeCompat(of: adaptiveGoalsEnabled) { enabled in
                             AdaptiveGoalPreference.setEnabled(enabled)
                             if enabled {
                                 AdaptiveGoalPreference.clearDismissal()
@@ -195,35 +195,35 @@ struct SettingsView: View {
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                     Toggle("Show coach tips", isOn: $coachInsightsEnabled)
-                        .onChange(of: coachInsightsEnabled) { _, enabled in
+                        .onChangeCompat(of: coachInsightsEnabled) { enabled in
                             CoachInsightPreference.setEnabled(enabled)
                         }
                     Text("Supportive local tips from your recent logging. Not medical advice.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                     Toggle("Show weekly challenges", isOn: $challengesEnabled)
-                        .onChange(of: challengesEnabled) { _, enabled in
+                        .onChangeCompat(of: challengesEnabled) { enabled in
                             ChallengePreference.setEnabled(enabled)
                         }
                     Text("Optional tracking goals on Progress. Pausing never costs a streak.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                     Toggle("Show meal planning", isOn: $mealPlanEnabled)
-                        .onChange(of: mealPlanEnabled) { _, enabled in
+                        .onChangeCompat(of: mealPlanEnabled) { enabled in
                             MealPlanPreference.setEnabled(enabled)
                         }
                     Text("Plan upcoming meals on Today. Local only — not a grocery or shopping list.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                     Toggle("Show family plan", isOn: $householdEnabled)
-                        .onChange(of: householdEnabled) { _, enabled in
+                        .onChangeCompat(of: householdEnabled) { enabled in
                             HouseholdPreference.setEnabled(enabled)
                         }
                     Text("Local household roster on Progress. Cloud sharing is not on yet.")
                         .font(Typography.caption)
                         .foregroundStyle(Color.textSecondary)
                     Toggle("Show fiber, sugar & sodium", isOn: $micronutrientsEnabled)
-                        .onChange(of: micronutrientsEnabled) { _, enabled in
+                        .onChangeCompat(of: micronutrientsEnabled) { enabled in
                             MicronutrientPreference.setEnabled(enabled)
                         }
                     Text("Soft daily targets on Today and weekly averages on Progress. Not medical advice.")
@@ -233,7 +233,7 @@ struct SettingsView: View {
                 Section("Lock Screen") {
                     Toggle("Show today’s calories", isOn: $liveActivityEnabled)
                         .accessibilityHint("Updates a Live Activity on the Lock Screen and Dynamic Island while you log meals")
-                        .onChange(of: liveActivityEnabled) { _, enabled in
+                        .onChangeCompat(of: liveActivityEnabled) { enabled in
                             TodayLiveActivityPolicy.setEnabled(enabled)
                             if !enabled {
                                 Task { await TodayLiveActivityController.endAll() }
@@ -620,4 +620,6 @@ struct ExportDocument: FileDocument {
     }
 }
 
+#if !LEGACY_BUILD
 #Preview("Settings") { SettingsView().environment(\.appEnvironment, .preview) }
+#endif

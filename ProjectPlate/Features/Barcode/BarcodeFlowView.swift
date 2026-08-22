@@ -2,8 +2,7 @@ import AVFoundation
 import SwiftUI
 
 @MainActor
-@Observable
-final class BarcodeFlowViewModel {
+final class BarcodeFlowViewModel: ObservableObject {
     enum Phase: Equatable {
         case scanning
         case lookingUp(String)
@@ -15,11 +14,11 @@ final class BarcodeFlowViewModel {
     private let cameraAuth: any CameraAuthorizing
     private let analytics: any AnalyticsClient
 
-    var phase: Phase = .scanning
-    var authorization: CameraAuthorizationStatus = .notDetermined
-    var capture = BarcodeCaptureController()
-    var manualCode = ""
-    var selectedFood: NutritionFood?
+    @Published var phase: Phase = .scanning
+    @Published var authorization: CameraAuthorizationStatus = .notDetermined
+    @Published var capture = BarcodeCaptureController()
+    @Published var manualCode = ""
+    @Published var selectedFood: NutritionFood?
     private var lastHandledCode: String?
     private var lookupTask: Task<Void, Never>?
 
@@ -130,7 +129,7 @@ struct BarcodeFlowView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appEnvironment) private var environment
     @State private var viewModel: BarcodeFlowViewModel?
-    var onSaved: (() -> Void)?
+    @Published var onSaved: (() -> Void)?
 
     init(onSaved: (() -> Void)? = nil) {
         self.onSaved = onSaved
@@ -201,7 +200,7 @@ struct BarcodeFlowView: View {
             }
             .padding()
         case .notFound(let code):
-            ContentUnavailableView {
+            PlateUnavailableView {
                 Label("No product found", systemImage: "barcode.viewfinder")
             } description: {
                 Text("No nutrition data for \(code). Try Search foods or Quick add — we never invent values from barcode digits alone.")
@@ -210,7 +209,7 @@ struct BarcodeFlowView: View {
                 Button("Close") { dismiss() }
             }
         case .failed(let message):
-            ContentUnavailableView {
+            PlateUnavailableView {
                 Label("Lookup failed", systemImage: "exclamationmark.triangle")
             } description: {
                 Text(message)
@@ -221,7 +220,7 @@ struct BarcodeFlowView: View {
     }
 
     private func scanning(_ viewModel: BarcodeFlowViewModel) -> some View {
-        @Bindable var viewModel = viewModel
+        @ObservedObject var viewModel = viewModel
         return ZStack {
             Color.black.ignoresSafeArea()
 

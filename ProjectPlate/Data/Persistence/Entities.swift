@@ -1,3 +1,4 @@
+#if !LEGACY_BUILD
 import Foundation
 import SwiftData
 
@@ -159,3 +160,4 @@ final class WeightEntryEntity {
         )
     }
 }
+#endif

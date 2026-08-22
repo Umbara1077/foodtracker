@@ -3,8 +3,7 @@ import SwiftUI
 import UIKit
 
 @MainActor
-@Observable
-final class NutritionLabelScannerViewModel {
+final class NutritionLabelScannerViewModel: ObservableObject {
     enum Phase: Equatable {
         case pick
         case reading
@@ -13,8 +12,8 @@ final class NutritionLabelScannerViewModel {
     }
 
     private let ocr: any NutritionLabelOCRServing
-    var phase: Phase = .pick
-    var pickerItem: PhotosPickerItem?
+    @Published var phase: Phase = .pick
+    @Published var pickerItem: PhotosPickerItem?
 
     init(ocr: any NutritionLabelOCRServing = VisionNutritionLabelOCR()) {
         self.ocr = ocr
@@ -84,7 +83,7 @@ struct NutritionLabelScannerView: View {
                     Button("Close") { dismiss() }
                 }
             }
-            .onChange(of: viewModel.pickerItem) { _, _ in
+            .onChangeCompat(of: viewModel.pickerItem) { _ in
                 Task { await viewModel.importPickerItem() }
             }
         }

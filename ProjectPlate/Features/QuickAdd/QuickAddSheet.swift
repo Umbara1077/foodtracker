@@ -95,10 +95,10 @@ struct QuickAddSheet: View {
                     .disabled(isSaving || isListening)
                 }
             }
-            .onChange(of: calories) { _, _ in refreshWarning() }
-            .onChange(of: protein) { _, _ in refreshWarning() }
-            .onChange(of: carbs) { _, _ in refreshWarning() }
-            .onChange(of: fat) { _, _ in refreshWarning() }
+            .onChangeCompat(of: calories) { _ in refreshWarning() }
+            .onChangeCompat(of: protein) { _ in refreshWarning() }
+            .onChangeCompat(of: carbs) { _ in refreshWarning() }
+            .onChangeCompat(of: fat) { _ in refreshWarning() }
             .onDisappear {
                 _ = voiceCapturer.stop()
             }
@@ -202,7 +202,9 @@ struct QuickAddSheet: View {
     }
 }
 
+#if !LEGACY_BUILD
 #Preview {
     QuickAddSheet()
         .environment(\.appEnvironment, .preview)
 }
+#endif

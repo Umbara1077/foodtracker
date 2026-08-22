@@ -196,6 +196,8 @@ struct TermsOfUseView: View {
     }
 }
 
+#if !LEGACY_BUILD
 #Preview("Consent") {
     CloudAIConsentView(onAccept: {}, onDecline: {})
+#endif
 }

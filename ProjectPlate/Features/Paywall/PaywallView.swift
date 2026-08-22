@@ -3,18 +3,17 @@ import SwiftUI
 import UIKit
 
 @MainActor
-@Observable
-final class PaywallViewModel {
+final class PaywallViewModel: ObservableObject {
     private let subscriptions: any SubscriptionServicing
     private let analytics: any AnalyticsClient
 
-    var products: [SubscriptionProductInfo] = []
-    var selectedProductID: String = SubscriptionProductID.annual
-    var entitlement: ProEntitlement = .free
-    var isLoading = true
-    var isPurchasing = false
-    var errorMessage: String?
-    var statusMessage: String?
+    @Published var products: [SubscriptionProductInfo] = []
+    @Published var selectedProductID: String = SubscriptionProductID.annual
+    @Published var entitlement: ProEntitlement = .free
+    @Published var isLoading = true
+    @Published var isPurchasing = false
+    @Published var errorMessage: String?
+    @Published var statusMessage: String?
 
     init(subscriptions: any SubscriptionServicing, analytics: any AnalyticsClient) {
         self.subscriptions = subscriptions
@@ -122,7 +121,7 @@ struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appEnvironment) private var environment
     @State private var viewModel: PaywallViewModel?
-    var onUnlocked: (() -> Void)?
+    @Published var onUnlocked: (() -> Void)?
 
     var body: some View {
         NavigationStack {
@@ -156,7 +155,7 @@ struct PaywallView: View {
 
     @ViewBuilder
     private func content(_ viewModel: PaywallViewModel) -> some View {
-        @Bindable var viewModel = viewModel
+        @ObservedObject var viewModel = viewModel
         ScrollView {
             VStack(alignment: .leading, spacing: Spacing.space24) {
                 VStack(alignment: .leading, spacing: Spacing.space12) {
@@ -341,7 +340,9 @@ struct PaywallView: View {
     }
 }
 
+#if !LEGACY_BUILD
 #Preview {
     PaywallView()
         .environment(\.appEnvironment, .preview)
 }
+#endif

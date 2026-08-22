@@ -51,12 +51,16 @@ struct DesignSystemPreviewView: View {
     }
 }
 
+#if !LEGACY_BUILD
 #Preview("Design system") {
     DesignSystemPreviewView()
 }
+#endif
 
+#if !LEGACY_BUILD
 #Preview("Design system dark") {
     DesignSystemPreviewView()
         .preferredColorScheme(.dark)
 }
+#endif
 #endif

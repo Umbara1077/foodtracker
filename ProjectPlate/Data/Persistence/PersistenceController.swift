@@ -1,3 +1,4 @@
+#if !LEGACY_BUILD
 import Foundation
 import SwiftData
 
@@ -18,3 +19,4 @@ enum PersistenceController {
         }
     }
 }
+#endif
