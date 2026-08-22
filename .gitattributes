@@ -1,0 +1,15 @@
+# You edit on Windows; the build runs on macOS. Force LF on everything the
+# macOS toolchain executes or parses, so a CRLF checkout can never produce
+# "bad interpreter: /usr/bin/env bash^M" or a broken project spec.
+*.sh            text eol=lf
+*.swift         text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.plist         text eol=lf
+*.entitlements  text eol=lf
+*.xcprivacy     text eol=lf
+*.storekit      text eol=lf
+*.xcstrings     text eol=lf
+*.json          text eol=lf
+
+*.png binary

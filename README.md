@@ -14,10 +14,15 @@
 | **Product thesis** | Photograph a meal → honest nutrition estimate → one-tap corrections → log in seconds |
 | **CI** | GitHub Actions: `iOS` (macOS) + `Backend` (Node/Worker tests) |
 
+> **Never used Xcode before?** Go straight to **[`docs/RUN_ON_MAC.md`](docs/RUN_ON_MAC.md)** — install Xcode, run
+> `./scripts/mac-setup.sh`, press ▶. Note there is **no `.xcodeproj` in this repo**;
+> it is generated from [`project.yml`](project.yml), so run the script before looking for one.
+
 ### Source-of-truth docs
 
 | Doc | Purpose |
 |-----|---------|
+| [`docs/RUN_ON_MAC.md`](docs/RUN_ON_MAC.md) | **Start here if you are new to Xcode** — step-by-step build & run on a Mac |
 | [`docs/PRODUCT_SPEC.md`](docs/PRODUCT_SPEC.md) | Full product, design, and engineering specification |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Layered client architecture notes |
 | [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md) | TestFlight / Archive handoff |
@@ -185,10 +190,25 @@ Meals are grouped by the **user’s local calendar**, not UTC midnight. Timestam
 
 ### First-time / everyday
 
+Guided path (checks Xcode, Homebrew, XcodeGen, simulators and SDKs, then
+generates and opens the project). Safe to re-run:
+
+```bash
+./scripts/mac-setup.sh
+```
+
+Manual equivalent:
+
 ```bash
 brew install xcodegen
 ./scripts/bootstrap-ios.sh          # runs xcodegen generate
 open ProjectPlate.xcodeproj
+```
+
+No watchOS SDK installed? Generate an iPhone + widget only project:
+
+```bash
+./scripts/bootstrap-ios.sh --no-watch
 ```
 
 Select the **ProjectPlate** scheme → iPhone Simulator → Run.

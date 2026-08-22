@@ -1,1 +1,37 @@
+# ---- macOS ----
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
 
+# ---- Xcode ----
+# ProjectPlate.xcodeproj is GENERATED from project.yml by XcodeGen.
+# Never commit it: run ./scripts/bootstrap-ios.sh to recreate it.
+ProjectPlate.xcodeproj/
+.projectplate-nowatch.yml
+xcuserdata/
+DerivedData/
+build/
+*.xcuserstate
+*.xcscmblueprint
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ---- Swift / SwiftPM ----
+.build/
+.swiftpm/
+
+# ---- Node / legacy web scaffolding ----
+node_modules/
+dist/
+.wrangler/
+npm-debug.log*
+*.log
+
+# ---- Local secrets / env ----
+.env
+.env.local
+.dev.vars
